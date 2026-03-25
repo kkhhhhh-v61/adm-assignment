@@ -1,0 +1,2289 @@
+-- SHOW USER SESSION
+SQL> SHOW USER
+
+-- SHOW TABLE STRUCTURE
+SQL> SELECT TABLE_NAME FROM USER_TABLES;
+
+-- CREATE THE SAMPLE DB
+
+SQL> @FILENAME.TXT;
+SQL> START FILENAME.TXT;
+
+-- TABLE STRUCTURE
+/* Table structure for table `orderdetails` */
+
+DROP TABLE orderdetails;
+
+-- TABLE CREATION COMMAND                  -- CREATE TABLE
+-- CREATE TABLE WITH A NAME                -- ORDERDETAILS
+-- CREATE TABLE WITH ATTRIBUTES            -- ORDERNUMBER
+-- CREATE TABLE WITH DATATYPE AND DATASIZE -- NUMBER(11)
+-- CREATE TABLE WITH CONSTRAINTS           -- NOT NULL
+-- CREATE TABLE WITH KEY                   -- PRIMARY KEY
+
+CREATE TABLE orderdetails(
+orderNumber		    number(11)  NOT NULL,
+productCode		    varchar(15) NOT NULL,
+quantityOrdered		number(4)   NOT NULL,
+priceEach		      number(7,2) NOT NULL,
+orderLineNumber		number(3)   NOT NULL,
+PRIMARY KEY (orderNumber,productCode)
+);
+
+-- AFTER TABLE CREATION, THEN DATA INSERTION
+-- DATA INSERTION COMMAND   -- INSERT INTO
+-- INSERT DATA INTO A TABLE -- ORDERDETAILS
+-- INSERT DATA WITH VALUES  -- values(10100,'S18_1749',30,136,3)
+
+insert into orderdetails values(10100,'S18_1749',30,136,3);
+
+-- AFTER DATA INSERTION -- SAVE THE TRANSACTION
+SQL> COMMIT;
+
+-- IF ANY ERROR OR MISTAKES, ROLLBACK
+-- ROLLBACK, GO BACK TO THE LAST COMMIT
+
+SQL> ROLLBACK;
+
+-- DOUBLE CHECK THE CREATED STRUCTURE
+SQL> SELECT TABLE_NAME FROM USER_TABLES;
+
+-- DOUBLE CHECK THE CREATED TABLE
+SQL> DESC CUSTOMERS;
+
+-- DOUBLE CHECK THE INSERTED DATA
+-- USE SELECT STATEMENT TO DISPLAY THE DATA
+
+SQL> SELECT PRODUCTCODE, PRODUCTNAME, QUANTITYINSTOCK, BUYPRICE 
+     FROM   PRODUCTS
+     WHERE  QUANTITYINSTOCK < 1000;
+
+-- CHECK THE CURRENT SYSTEM DATE FORMAT
+SQL> SELECT SYSDATE FROM DUAL;
+
+-- IMPROVE THE OUTPUT WITH BETTER DESIGN
+
+-- ADJUST THE LINE SIZE TO ACCEPT MORE COLUMNS IN ONE LINE
+-- ADJUST THE PAGE SIZE TO ACCEPT MORE ROWS IN ONE PAGE
+
+SET LINESIZE 120
+SET PAGESIZE 100
+
+-- ADJUST THE DATE FORMATING 
+
+ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MM-YYYY';
+
+-- COLUMN FORMATTING
+
+COLUMN ORDERNUMBER     FORMAT 9999999      HEADING 'ORDER NO'
+COLUMN PRODUCTCODE     FORMAT A15          HEADING 'PRODUCT CODE'
+COLUMN PRODUCTNAME     FORMAT A25 TRUNCATE HEADING 'PRODUCT NAME'
+COLUMN QUANTITYORDERED FORMAT 9999         HEADING 'QUANTITY'
+COLUMN PRICEEACH       FORMAT $99,999.99   HEADING 'PRICE (RM)'
+COLUMN SUBTOTAL        FORMAT $999,999.99  HEADING 'SUB TOTAL (RM)'
+
+TTITLE CENTER 'ORDER DETAILS LIST PRINTED ON ' _DATE - 
+LEFT 'PAGE: ' FORMAT 999 SQL.PNO SKIP 2
+
+BREAK ON ORDERNUMBER SKIP 2
+COMPUTE SUM LABEL 'TOTAL : ' OF SUBTOTAL ON ORDERNUMBER
+
+ACCEPT V_ORDERNO NUMBER FORMAT '9999999' PROMPT 'ENTER ORDER NUMBER HERE: '
+
+SELECT ORDERNUMBER, P.PRODUCTCODE, PRODUCTNAME, 
+       QUANTITYORDERED, PRICEEACH, 
+       QUANTITYORDERED * PRICEEACH AS SUBTOTAL
+FROM   ORDERDETAILS OD, PRODUCTS P
+WHERE  OD.PRODUCTCODE = P.PRODUCTCODE AND
+       ORDERNUMBER = &V_ORDERNO;
+
+-- SAMPLE OUTPUT
+SQL> @C:\Users\admin\Downloads\P1.txt;
+
+-- REMOVE ALL THE FORMATTING
+CLEAR COLUMNS
+TTITLE OFF
+CLEAR BREAKS
+CLEAR COMPUTES\
+-- INTRODUCTION TO STORED PROCEDURE
+
+
+
+-- STORED PROCEDURE COMMAND -- CREATE OR REPLACE PROCEDURE 
+-- NAMED UNDER SAMPLE1
+-- PARAM1 IS A VARCHAR INPUT & PARAM2 IS A NUMBER INPUT
+-- VARIABLE1&2&3 -- VARIABLE ARE DEFINED WITH DATATYPE AND DATASIZE
+
+create or replace procedure sample1 (param1 IN varchar,
+                                     param2 IN number) IS
+   variable1 number(4);
+   variable2 varchar(10);
+   variable3 date;
+
+begin
+   -- OUTPUT TEXT TO THE CONSOLE
+   dbms_output.put_line('My first stored procedure');
+   variable1 := param2*5;
+   variable3 := SYSDATE+1;
+   variable2 := to_char(SYSDATE,'MONTH');
+
+   dbms_output.put_line('Hello '||param1||'!'||'How are you?');
+   dbms_output.put_line(param2||' multiply by 5 is '||variable1);
+   dbms_output.put_line('Today is the month of '||variable2);
+   dbms_output.put_line('Tomorrow is '||variable3);
+
+   dbms_output.put_line(chr(10)); 
+   dbms_output.put_line(chr(10));
+   dbms_output.put_line('End of program');
+end;
+/
+
+-- TERMINATE THE STORED PROCEDURE CREATION
+
+-- SAMPLE ERROR OUTPUT
+SQL> @C:\Users\admin\Downloads\P1.txt;
+
+-- AFTER DEBUGGING
+SQL> @C:\Users\admin\Downloads\P1.txt;
+
+-- EXECUTION OF PL/SQL:SAMPLE1
+SQL> EXEC SAMPLE1('TARUMT', 5);
+
+-- TO ENABLE THE CONSOLE OUTPUT DISPLAY
+SQL> SET SERVEROUTPUT ON
+
+
+
+-- COMMON DATA TYPE : CHAR / VARCHAR / NUMBER / DATE
+
+-- TABLE CREATION FOR BRANCH
+
+
+
+
+
+-- TABLE CREATION FOR VEHICLE
+CREATE TABLE VEHICLE(
+	VEHICLENO   CHAR(7)     NOT NULL,
+  VECHILETYPE VARCHAR(20) NOT NULL,
+  MODEL       VARCHAR(20) NOT NULL,
+  MAKEYEAR    NUMBER(4)   NOT NULL,
+  COLOUR      VARCHAR(20) NOT NULL,
+  PRIMARY KEY (VEHICLENO)
+);
+
+-- TABLE CREATION FOR MECHANIC
+CREATE TABLE MECHANIC(
+	MECHANICID    NUMBER(4)   NOT NULL,
+  MECHANICNAME  VARCHAR(20) NOT NULL,
+  MECADDRESS    VARCHAR(30) NOT NULL,
+  QUALIFICATION VARCHAR(30),
+  BRANCHNO      NUMBER(4)   NOT NULL,
+  SALARY        NUMBER(7,2) NOT NULL,
+	PRIMARY KEY(MECHANICID),
+  CONSTRAINT FK_BRANCH FOREIGN KEY (BRANCHNO) REFERENCES BRANCH (BRANCHNO)
+  CONSTRAINT CHK_SALARY CHECK SALARY BETWEEN 2000.00 AND 6000.00
+);
+
+-- ALTER THE CONSTRAINT
+ALTER TABLE MECHANIC
+DROP CHK_SALARY
+
+ALTER TABLE MECHANIC
+ADD CONSTRAINT CHK_SALARY CHECK SALARY BETWEEN 2000.00 AND 60000.00
+
+
+-- VERSION 1 FOREIGN KEY
+FOREIGN KEY(BRANCHNO) REFERENCES BRANCH (BRANCHNO)
+
+-- VERSION 2 FOREIGN KEY (CONSTRAINT-BASED)
+CONSTRAINT FK_BRANCH FOREIGN KEY (BRANCHNO) REFERENCES BRANCH (BRANCHNO)
+
+-- TABLE CREATION FOR JOBDONE
+CREATE TABLE JOBDONE(
+JOBNO		NUMBER(7)	NOT NULL,
+JDATE		DATE		NOT NULL,
+VEHICLENO	CHAR(7)		NOT NULL,
+MECHANICID	NUMBER(4)	NOT NULL,
+WORKDONE	VARCHAR(50)	NOT NULL,
+CHARGES		NUMBER(7,2)	NOT NULL CHECK (CHARGES > 0),
+PRIMARY KEY (JOBNO),
+CONSTRAINT FK_VEHICLE FOREIGN KEY (VEHICLENO) REFERENCES VEHICLE (VEHICLENO),
+CONSTRAINT FK_MECHANIC FOREIGN KEY (MECHANICID) REFERENCES MECHANIC (MECHANICID)
+);
+
+
+
+-- TABLE CREATION FLOW
+-- TABLE CREATED SUCCESSFULLY
+SQL> SELECT TABLE_NAME FROM USER_TABLES;
+
+-- IF CHECK CONSTRAINT HAVE A NAME
+	ALTER TABLE... DROP CONSTRAINT
+
+-- IF CHECK CONSTRAINT DON'T HAVE A NAME
+  RE-RUN THE TABLE CREATION
+  
+-- CHECK INSERTED DATA	
+SELECT COUNT(*) AS NOOFBRANCH   FROM BRANCH;
+SELECT COUNT(*) AS NOOFMECHANIC FROM MECHANIC;
+SELECT COUNT(*) AS NOOFVECHICLE FROM VEHICLE;
+SELECT COUNT(*) AS NOOFJOBDONE  FROM JOBDONE;
+
+SQL> COMMIT;
+
+SQL> SELECT COUNT(*) AS NOOFBRANCH   FROM BRANCH;
+SQL> SELECT COUNT(*) AS NOOFMECHANIC FROM MECHANIC;
+SQL> SELECT COUNT(*) AS NOOFVECHICLE FROM VEHICLE;
+SQL> SELECT COUNT(*) AS NOOFJOBDONE  FROM JOBDONE;
+
+
+SQL> DESC CUSTOMERS;
+
+
+-- SET CREDIT LIMIT
+ALTER TABLE CUSTOMERS
+ADD CONSTRAINT DEFAULT VALUE...
+
+-- SET CONSTRAINT VALUE CHECK ON NEGATIVE VALUE
+
+ALTER TABLE PRODUCTS
+ADD CONSTRAINT CHK_BUYPRICE CHECK (BUYPRICE > 0);
+
+ALTER TABLE PRODUCTS
+ADD CONSTRAINT CHK_MSRP CHECK (MSRP > 0);
+
+-- ANONYMOUS BLOCK EXECUTION
+-- FOR ONE-TIME EXECUTION WITHOUT USER INTERACTION
+
+DECLARE
+	V_CLASSNAME VARCHAR(50) := 'DATABASE';
+  
+BEGIN
+	DBMS_OUTPUT.PUT_LINE('WELCOME TO ' || V_CLASSNAME || '!');
+END;
+/
+
+-- COMPARISON WITH PRACTICAL 1 -- NAMED BLOCK EXECUTION
+-- PROCEDURE EXEUCTION
+SQL> EXEC SAMPLE1('DATABASE', 50);
+
+
+-- FUNCTION
+CREATE OR REPLACE FUNCTION GET_GREETING(P_NAME IN VARCHAR) RETURN VARCHAR IS
+
+V_GREETING VARCHAR(100);
+
+BEGIN
+	V_GREETING := 'HELLO ' || P_NAME || '!';
+  RETURN V_GREETING;
+
+END GET_GREETING;
+/
+
+-- SAMPLE OUTPUT 
+SQL> @C:\Users\admin\Downloads\P3.txt;
+
+SELECT GET_GREETING('ABC') AS GREETING FROM DUAL;
+
+
+-- DECLARE A FUNCTION TO CALCULATE AGE AND RETURN AGE TO STORED PROCEDURE
+CREATE OR REPLACE FUNCTION FUNC_GET_AGE(V_DOB IN DATE) RETURN NUMBER IS
+
+BEGIN
+	RETURN EXTRACT(YEAR FROM (SYSDATE - V_DOB) YEAR TO MONTH);
+END;
+/
+
+-- CREATE STORED PROCEDURE TO DISPLAY SOME OUTPUT WITH FUNCTION VALUE PASSING
+-- HEADING SECTION WITH INPUT PARAMETER TO ACCEPT STRING AND DATE
+CREATE OR REPLACE PROCEDURE PRC_HELLO (V_SALUTATION IN VARCHAR, 
+                                       V_NAME IN VARCHAR, 
+                                       V_DOB IN DATE) IS	
+
+-- DECLARATION SECTION -- DECLARE VARIABLE TO HOLD TEMPORARY VALUE
+V_TODAY DATE;
+V_DAY   VARCHAR(10);
+
+-- EXECUTION SECTION 
+BEGIN
+	-- DECLARE VARIABLE TO HOLD SYSDATE
+  -- ASSIGN SYSDATE TO DECLARED VARIABLE
+  -- CONVERT SYSDATE INTO "DAY"
+	V_TODAY := SYSDATE;
+  V_DAY   := TO_CHAR(SYSDATE, 'DAY');
+  
+  DBMS_OUTPUT.PUT_LINE('TODAY IS ' || V_TODAY || ' (' || V_DAY || ')');
+  DBMS_OUTPUT.PUT_LINE('GOOD DAY ' || V_SALUTATION || ' ' || V_NAME || '!');
+  
+  -- BEFORE PRINT ENTIRE LINE, GO INTO FUNC_GET_AGE FUNCTION AND GET THE RETURNED VALUE
+  DBMS_OUTPUT.PUT_LINE('TODAY, YOU ARE ' || FUNC_GET_AGE(V_DOB) || ' YEARS OLD.');
+
+END;
+/
+
+EXEC PRC_HELLO('MR ', 'JOHN', '23=DEC-1990');
+;
+-- VARIABLE AND CONSTANT DECLARATION
+DECLARE 
+  wages NUMBER(7,2); 
+	hours_worked NUMBER not null:= 40; 
+	hourly_salary NUMBER := 22.50; 
+	country VARCHAR2(128); 
+	counter NUMBER := 0; 
+	done BOOLEAN; 
+	valid_id BOOLEAN; 
+  postcode CHAR(5);
+  emp_dob DATE;
+
+	-- DECLARE A VARIABLE USING %TYPE TO MATCH/ TO COPY THE DATA TYPE FROM A COLUMN IN A TABLE
+	cust_fname  customers.contactFirstName%TYPE;
+  
+  -- DECLARE A VARIABLE AS A RECORD BASED ON THE STRUCTURE OF A TABLE
+	cust_rec1 customers%ROWTYPE;
+	cust_rec2 customers%ROWTYPE; 
+
+	-- DECALRE A CONSTANT WITH A MAXIMUM VALUE FOR PROPERTIES CALCULATION
+	MAX_PROPERTIES CONSTANT NUMBER:=30;
+
+	-- COMMISSIONS IS A NEW DECLARED DATA TYPE
+  -- A NEW NESTED TABLE DATA TYPE INDEXED BY INTEGER
+  -- EACH INTEGER INDEX ABLE TO ASSIGN WITH ONE NUMBER VALUE
+	TYPE commissions IS TABLE OF NUMBER INDEX BY BINARY_INTEGER; 
+  -- COMMISSION IS A NEW DATA TYPE FOR COMM_TAB
+  -- COMM_TAB IS CONSIDERED AS AN ASSOCIATIVE ARRAY
+  -- comm_tab(5)
+	comm_tab commissions;
+
+BEGIN 
+  wages := (hours_worked * hourly_salary); 
+	country := 'France'; 
+	country := UPPER('Canada'); 
+	done := (counter > 100); 
+	valid_id := TRUE; 
+	comm_tab(5) := 20000 * 0.15;
+
+	DBMS_OUTPUT.PUT_LINE('WAGES : ' || TO_CHAR(WAGES));
+  DMBS_OUTPUT.PUT_LINE('COMMISSION LEVEL 5 : ' || COMM_TAB(5));
+END;
+/
+
+
+--------------- 3. Control Statements ---------------
+-- Conditional statements
+-- IF..END IF
+-- SYNTAX
+IF CONDITION THEN
+	STATEMENTS TO EXECUTE IF CONDITION IS TRUE
+ELSIF CONDITION THEN
+	STATEMENTS TO EXECUTE IF ANOTHER CONDITION IS TRUE
+ELSE
+	STATEMENTS TO EXECUTE IF NONE OF THE ABOVE CONDITION IS TRUE
+END IF;
+
+
+-- SAMPLE TESTING
+ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MON-YYYY';
+
+DECLARE 
+	-- SIMULATE THE ORDER ATTRIBUTES USING THE ORDERS TABLE'S DATA TYPE
+  -- DECLARATION SECTION
+  V_ORDERNUMBER		ORDERS.ORDERNUMBER%TYPE := 10101;
+  V_SHIPPEDDATE		ORDERS.SHIPPEDDATE%TYPE := NULL;
+  V_REQUIREDDATE	ORDERS.REQUIREDDATE%TYPE := '12-DEC-2005';
+  
+  -- EXECUTION SECTION
+  BEGIN
+  	DBMS_OUTPUT.PUT_LINE('CHECKING STATUS FOR ORDER NUMBER : ' || V_ORDERNUMBER);
+    IF V_SHIPPEDDATE IS NULL THEN
+    	DBMS_OUTPUT.PUT_LINE('STATUS : NOT SHIPPED');
+  		IF V_REQUIREDDATE < SYSDATE THEN
+      	DBMS_OUTPUT.PUT_LINE('WARNING! THE REQUIRED SHIPMENT DATE ON ' || V_REQUIREDDATE || ' HAS PASSED!'); 
+ 			ELSE
+      	DBMS_OUTPUT.PUT_LINE('PLEASE SHIP THE ORDER BY ' || V_REQUIREDDATE);
+      END IF;
+    ELSE
+    	DBMS_OUTPUT.PUT_LINE('ORDER SHIPPED ON ' || V_SHIPPEDDATE);
+    END IF;
+  END;
+  /
+
+
+
+-- CASE
+-- SYNTAX
+CASE SELECTOR_EXPRESSION 
+	WHEN VALUE1 THEN STATEMENT1;
+  WHEN VALUE2 THEN STATEMENT2;
+  .
+  .
+  .
+  WHEN VALUEN THEN STATEMENTN;
+  
+  ELSE
+  DEFAULT_STATEMENTS;	
+END CASE;
+
+-- SAMPLE TESTING
+DECLARE
+  V_ORDERNUMBER		ORDERS.ORDERNUMBER%TYPE  := 10101;
+  V_STATUS  			ORDERS.STATUS%TYPE       := 'IN PROCESS';
+  V_REQUIREDDATE	ORDERS.REQUIREDDATE%TYPE := '12-DEC-2005';
+	V_MESSAGE				VARCHAR(100);
+
+BEGIN
+	V_MESSAGE := CASE V_STATUS
+  	WHEN 'IN PROCESS' THEN 'ORDER IS STILL BEING PROCESSED'
+    WHEN 'SHIPPED'    THEN 'ORDER HAS BEEN SHIPPED'
+    WHEN 'CANCELLED'  THEN 'ORDER HAS BEEN CANCELLED'
+    ELSE 'ORDER STATUS IS UNKNOWN.'
+  END ;
+  
+  DBMS_OUTPUT.PUT_LINE('ORDER NUMBER ' || V_ORDERNUMBER || ': ' || V_MESSAGE);
+END;
+/
+
+
+
+
+
+
+
+
+
+
+
+-- REPETITIVE STATEMENT
+-- LOOP..END LOOP
+-- SYNTAX
+	LOOP
+	  STATEMENTS TO REPEAT
+  	EXIT WHEN CONDITION;
+  END LOOP
+  
+-- SAMPLE CODE
+	DECLARE 
+  	I NUMBER := 1;
+    
+  BEGIN
+  	LOOP
+    	DBMS_OUTPUT.PUT_LINE('ITERATION : ' || I);
+      I := I + 1;
+      EXIT WHEN I > 5;
+    END LOOP;
+  END;
+/
+
+-- WHILE loop
+WHILE CONDITION LOOP
+	-- STATEMENT TO REPEAT
+END LOOP;
+
+--WHILE LOOP
+
+DECLARE
+i number;
+
+
+BEGIN
+i := 0;
+
+
+--Testing WHILE-LOOP-END LOOP, 5 times
+WHILE i <= 4 LOOP
+dbms_output.put_line('Testing WHILE-LOOP-END LOOP => i is now: ' || i);
+i := i + 1;
+END LOOP;
+END;
+/
+
+
+--Testing LOOP - EXIT WHEN - END LOOP
+LOOP
+dbms_output.put_line('Testing LOOP - EXIT WHEN - END LOOP: ' || i);
+i := i + 1;
+EXIT WHEN i >= 4;
+CONTINUE WHEN i > 0;
+END LOOP; 
+
+END;
+/
+
+-- FOR loop
+FOR COUNTER IN [REVERSE] LOWER_BOUND..UPPER_BOUND
+-- STATEMENT TO REPEAT
+END LOOP;
+/
+
+
+-- SAMPLE
+set serveroutput on;
+--For loop
+DECLARE
+i number(4);
+v_end number(4);
+
+BEGIN
+i := 1;
+
+SELECT COUNT(*) INTO v_end
+FROM customers;
+
+
+FOR i IN 1..v_end LOOP
+dbms_output.put_line('i in ascending: ' || i);
+END LOOP;
+
+dbms_output.put_line('--------------');
+dbms_output.put_line('--------------');
+
+--For loop in reverse order
+FOR i IN REVERSE 1..3 LOOP
+dbms_output.put_line('i in descending: ' || i);
+END LOOP;
+
+END;	
+/
+
+-- TABLE CREATION SAMPLE
+create table Price_Audit
+(  IN_Product_Id	VARCHAR(15),
+   v_productname	varchar(70),
+   v_oldprice		number(7,2),
+   v_newprice		number(7,2),
+   user_name		varchar(20),
+   date_change	date
+);
+
+
+-- STORED PROCEDURE SAMPLE
+CREATE OR REPLACE PROCEDURE PRC_PRICE_INCR(IN_Product_Code IN VARCHAR) IS 
+	v_productname varchar2(70);
+	v_oldprice number(7,2);
+	v_newprice number(7,2);
+BEGIN
+-- GET THE PRODUCT PRICE
+        SELECT ProductName, MSRP INTO v_productname, v_oldprice
+           From PRODUCTS
+           WHERE ProductCode = IN_Product_Code;
+
+        v_newprice := round(v_oldprice *1.1,2);
+
+-- UPDATE the record
+        UPDATE PRODUCTS 
+        SET MSRP = v_newprice
+	      WHERE ProductCode = IN_Product_Code;
+
+-- WRITE DATA TO THE PRICE_AUDIT TABLE   
+        INSERT INTO Price_Audit VALUES(IN_Product_Code, v_productname, 
+               v_oldprice, v_newprice, USER, SYSDATE);
+	
+        DBMS_OUTPUT.PUT_LINE('Product '||IN_Product_Code||' '||v_productname||
+                ' new price is $' ||v_newprice);
+END;
+/
+
+
+  -- FUNCTIONS AND LOCAL PROCEDURES
+  Create or replace function NumberOrders (v_custNo IN number)
+    return number as v_count NUMBER;
+  begin
+        select count(*)
+    into v_count
+    from orders
+    where customernumber = v_custno;
+        return v_count;
+  end;
+  /
+
+  declare
+     cEmployee_ID   employees.employeenumber%type;
+     cFirstName 	  employees.FirstName%type;
+     status 	      boolean;
+     cust_num       orders.customernumber%type;
+
+    -- LOCAL PROCEDURE
+    procedure GetEmployeeDetails (
+      EmplNo 	 in 	employees.Employeenumber%type,
+      EmpName  out 	employees.FirstName%type,
+      status 	 out 	Boolean) is
+
+    begin
+            select FirstName
+            into EmpName   
+            from Employees E 
+            where E.Employeenumber= EmplNo;
+
+        status :=true;
+
+        exception
+           when no_data_found then
+               status :=false;
+     end;
+
+  begin
+       cEmployee_ID:= '1611';
+       GetEmployeeDetails(cEmployee_ID,cFirstName,status);
+       if (status) then
+            dbms_output.put_line(cEmployee_ID||'  '||cFirstName);
+       else 
+            dbms_output.put_line (' Employee '||cEmployee_ID||'  not  found');
+       end if;
+				
+        -- NOT RELATED TO EMPLOYEES PRINTING
+        cust_num := 496;
+        dbms_output.put_line ('Number of orders by customer '||cust_num|| 
+                           ' is '|| NumberOrders(cust_num) );	
+  end;
+  /
+
+-- CHANGE YOUR DATA
+--- TO CHECK LAST DATE CUSTOMER MADE PURCHASE
+SELECT *
+FROM (
+SELECT O.CUSTOMERNUMBER, MAX(ORDERDATE) AS LASTDAY
+FROM ORDERS O, CUSTOMERS C
+WHERE O.CUSTOMERNUMBER = C.CUSTOMERNUMBER
+GROUP BY O.CUSTOMERNUMBER
+ORDER BY LASTDAY DESC )
+WHERE ROWNUM <= 20;
+--- GIVEN DATE TOO OLD, UPDATE THE DATE TO LATEST DATE
+--- ONLY UPDATE ONCE, IF UPDATE WRONG VALUE, ROLLBACK (WITHOUT COMMIT, AND RE-RUN)
+UPDATE ORDERS
+SET ORDERDATE = ADD_MONTHS(ORDERDATE, 249),
+REQUIREDDATE = ADD_MONTHS(REQUIREDDATE, 249),
+SHIPPEDDATE = ADD_MONTHS(SHIPPEDDATE, 249);
+--- BASED ON YEAR 2026 --> 2005 (MAY) = 20 YEARS X 12 = 240 + 9 = (249)
+
+
+--- IF MISTAKENLY COMMIT THE WRONG DATA, USE THIS
+UPDATE ORDERS
+SET ORDERDATE = ADD_MONTHS(ORDERDATE, -242),
+REQUIREDDATE = ADD_MONTHS(REQUIREDDATE, -242),
+SHIPPEDDATE = ADD_MONTHS(SHIPPEDDATE, -242);
+--- MINUS 238 BACK TO ORIGINAL VALUE, AND RE-RUN THE CORRECT ONE
+
+
+
+-- HEADING SECTION WITH INPUT PARAMETER
+-- ACCEPT CUSTOMERNUMBER AS AN INPUT TO VALIDATE
+CREATE OR REPLACE PROCEDURE PRC_LAST_ORDER (V_CUSTNO IN NUMBER) IS
+
+-- DECLARATION SECTION
+V_ORDERDATE DATE;
+V_DURATION	NUMBER(4);   -- 9999 DAYS
+V_MONTHS    NUMBER(4,1); -- 999.9 MONTHS 
+
+-- EXECUTION SECTION
+BEGIN
+	-- SELECT INTO STATEMENT TO EXTRACT THE DATA FROM THE DATABASE
+  -- EXTRACT LAST ORDERDATE FROM ORDER TABLE TO IDENTIFY LAST ORDER MADE
+  SELECT MAX(ORDERDATE) INTO V_ORDERDATE 
+  FROM   ORDERS
+  WHERE  CUSTOMERNUMBER = V_CUSTNO;
+
+	-- PRINT CUSTOMER INFORMATION AND ORDER INFORMATION
+  IF (V_ORDERDATE IS NOT NULL) THEN
+		DBMS_OUTPUT.PUT_LINE('CUSTOMER ' || V_CUSTNO || ' LAST MADE AN ORDER ON ' ||
+                       TO_CHAR(V_ORDERDATE, 'DD/MM/YYYY') || '.');
+	
+  	-- CALCULATE THE DURATION WITH THE LAST ORDER MADE
+  	V_DURATION := ROUND(SYSDATE - V_ORDERDATE, 0);
+  
+  	IF (V_DURATION < 30) THEN
+  		DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_DURATION || ' DAYS AGO.');
+    
+    ELSE
+  		V_MONTHS := MONTHS_BETWEEN(SYSDATE, V_ORDERDATE);
+    	DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_MONTHS || ' MONTHS AGO.');
+  	END IF;
+  
+  ELSE
+  		-- CALL THE EXCEPTION SECTION
+   	  -- NO_DATA_FOUND IS A DEFAULT 
+  		RAISE NO_DATA_FOUND;    
+  END IF;
+
+  	-- EXCEPTION SECTION -- WITH DEFAULT EXCEPTION HANDLING
+  EXCEPTION 
+  	WHEN NO_DATA_FOUND THEN
+			DBMS_OUTPUT.PUT_LINE('CUSTOMER NOT FOUND!');  
+END;
+/
+
+-- SAMPLE OUTPUT
+SQL> EXEC PRC_LAST_ORDER(999);
+SQL> EXEC PRC_LAST_ORDER(496);
+SQL> EXEC PRC_LAST_ORDER(382);
+
+-- VERSION 2 -- WITH RAISE_APPLICATION_ERROR
+CREATE OR REPLACE PROCEDURE PRC_LAST_ORDER (V_CUSTNO IN NUMBER) IS
+
+-- DECLARATION SECTION
+V_ORDERDATE DATE;
+V_DURATION	NUMBER(4);   -- 9999 DAYS
+V_MONTHS    NUMBER(4,1); -- 999.9 MONTHS 
+
+-- EXECUTION SECTION
+BEGIN
+	-- SELECT INTO STATEMENT TO EXTRACT THE DATA FROM THE DATABASE
+  -- EXTRACT LAST ORDERDATE FROM ORDER TABLE TO IDENTIFY LAST ORDER MADE
+  SELECT MAX(ORDERDATE) INTO V_ORDERDATE 
+  FROM   ORDERS
+  WHERE  CUSTOMERNUMBER = V_CUSTNO;
+
+	-- PRINT CUSTOMER INFORMATION AND ORDER INFORMATION
+  IF (V_ORDERDATE IS NOT NULL) THEN
+		DBMS_OUTPUT.PUT_LINE('CUSTOMER ' || V_CUSTNO || ' LAST MADE AN ORDER ON ' ||
+                       TO_CHAR(V_ORDERDATE, 'DD/MM/YYYY') || '.');
+	
+  	-- CALCULATE THE DURATION WITH THE LAST ORDER MADE
+  	V_DURATION := ROUND(SYSDATE - V_ORDERDATE, 0);
+  
+  	IF (V_DURATION < 30) THEN
+  		DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_DURATION || ' DAYS AGO.');
+    
+    ELSE
+  		V_MONTHS := MONTHS_BETWEEN(SYSDATE, V_ORDERDATE);
+    	DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_MONTHS || ' MONTHS AGO.');
+  	END IF;
+  
+  ELSE
+  		-- CALL THE EXCEPTION SECTION
+   	  -- NO_DATA_FOUND IS A DEFAULT 
+  		RAISE_APPLICATION_ERROR(-20000, 'CUSTOMER: ' || V_CUSTNO || ' IS NOT FOUND!');   
+  END IF;
+END;
+/
+
+-- VERSION 2 OUTPUT
+SQL> EXEC PRC_LAST_ORDER(999);
+
+
+-- VERSION 3 -- WITH CUSTOM EXCEPTION
+CREATE OR REPLACE PROCEDURE PRC_LAST_ORDER (V_CUSTNO IN NUMBER) IS
+
+-- DECLARATION SECTION
+V_ORDERDATE DATE;
+V_DURATION	NUMBER(4);   -- 9999 DAYS
+V_MONTHS    NUMBER(4,1); -- 999.9 MONTHS 
+EMPTY_DATA	EXCEPTION;   -- DECLARE AN EXCEPTION VARIABLE NAMED EMPTY_DATA
+
+-- EXECUTION SECTION
+BEGIN
+	-- SELECT INTO STATEMENT TO EXTRACT THE DATA FROM THE DATABASE
+  -- EXTRACT LAST ORDERDATE FROM ORDER TABLE TO IDENTIFY LAST ORDER MADE
+  SELECT MAX(ORDERDATE) INTO V_ORDERDATE 
+  FROM   ORDERS
+  WHERE  CUSTOMERNUMBER = V_CUSTNO;
+
+	-- PRINT CUSTOMER INFORMATION AND ORDER INFORMATION
+  IF (V_ORDERDATE IS NOT NULL) THEN
+		DBMS_OUTPUT.PUT_LINE('CUSTOMER ' || V_CUSTNO || ' LAST MADE AN ORDER ON ' ||
+                         TO_CHAR(V_ORDERDATE, 'DD/MM/YYYY') || '.');
+	
+  	-- CALCULATE THE DURATION WITH THE LAST ORDER MADE
+  	V_DURATION := ROUND(SYSDATE - V_ORDERDATE, 0);
+  
+  	IF (V_DURATION < 30) THEN
+  		DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_DURATION || ' DAYS AGO.');
+    
+    ELSE
+  		V_MONTHS := MONTHS_BETWEEN(SYSDATE, V_ORDERDATE);
+    	DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_MONTHS || ' MONTHS AGO.');
+  	END IF;
+  
+  ELSE
+  		-- CALL THE EXCEPTION SECTION
+      -- JUMP TO EMPTY_DATA SECTION
+  		RAISE EMPTY_DATA;    
+  END IF;
+  
+  -- EXCEPTION SECTION
+  EXCEPTION
+  WHEN EMPTY_DATA THEN
+  	DBMS_OUTPUT.PUT_LINE('CUSTOMER NOT FOUND!');  
+END;
+/
+
+-- VERSION 3 OUTPUT
+SQL> EXEC PRC_LAST_ORDER(999);
+
+-- HEADING SECTION WITH INPUT PARAMETER - ACCEPT ORDERNO AND PRODUCTCODE
+CREATE OR REPLACE PROCEDURE PRC_DISCOUNT_CLAIM (V_ORDERNO IN NUMBER, V_PRODUCTCODE IN VARCHAR) IS
+
+-- DECLARATION SECTION
+V_ORDERDATE   ORDERS.ORDERDATE%TYPE;
+V_ACTUALPRICE	ORDERDETAILS.PRICEEACH%TYPE;
+V_BUYPRICE		PRODUCTS.BUYPRICE%TYPE;
+
+V_DURATION  NUMBER(4);
+
+-- EXECUTION SECTION -- WITH SELECT INTO STATEMENT AND NESTED IF ELSE STATEMENT
+
+BEGIN
+-- DISPLAY ORDERS INFORMATION
+  -- EXTRACT CLAIM DATA -- CLAIM MUST BE LESS THAN 30 DAYS
+  -- USE SELECT INTO STATEMENT AND FILTER BY INPUT PARAMETER
+	SELECT ORDERDATE INTO V_ORDERDATE
+  FROM   ORDERS
+  WHERE  ORDERNUMBER = V_ORDERNO AND
+  			 (SYSDATE - ORDERDATE) < 30;
+  
+  -- V_DURATION ONLY ACCEPT ORDERDATE LESS THAN 30 DAYS
+  V_DURATION := ROUND(SYSDATE - V_ORDERDATE);
+  
+  -- DISPLAY ORDER INFORMATION TO THE CUSTOMER
+  DBMS_OUTPUT.PUT_LINE('CUSTOMER LAST MADE AN ORDER ON ' || 
+                       TO_CHAR(V_ORDERDATE, 'DD-MON-YYYY') || '.');
+  DBMS_OUTPUT.PUT_LINE('THAT WAS ' || V_DURATION || ' DAYS AGO.');
+
+	-- EXTRACT ORDERDETAILS AND PRODUCTS DATA 
+	-- BUYPRICE = PRICE PURCHASED BY THE COMPANY
+  -- PRICEEACH - PRICE THAT SOLD TO THE CUSTOMER
+  
+  -- EXTRACT ACTUAL PRICE (SELLING PRICE)
+  SELECT PRICEEACH INTO V_ACTUALPRICE
+  FROM   ORDERDETAILS
+  WHERE  ORDERNUMBER = V_ORDERNO AND PRODUCTCODE = V_PRODUCTCODE;
+
+	-- EXTRACT PURCHASE PRICE (BUYING PRICE)
+  SELECT BUYPRICE INTO V_BUYPRICE 
+  FROM   PRODUCTS
+  WHERE  PRODUCTCODE = V_PRODUCTCODE;
+  
+  -- MAKE SURE AT LEAST EARN 5% 
+  V_MINPRICE        := V_BUYPRICE * 1.05;
+  V_DISCOUNTEDPRICE := V_ACTUALPRICE * 0.95;
+
+-- NESTED IF ELSE STATEMENT -- CHECK THE ORDERDATE VALIDITY AND DISCOUNT VALIDITY
+-- SELECT INTO STATEMENT -- DEAL WITH ORDERS, ORDERDETAILS AND PRODUCTS TABLE TO EXTRACT THE DATA
+	 IF (V_DURATION < 30) THEN
+   	IF (V_DISCOUNTEDPRICE >= V_MINPRICE) THEN
+    	UPDATE ORDERDETAILS 
+      SET    PRICEEACH = ROUND(V_DISCOUNTEDPRICE, 2)
+      WHERE  ORDERNUMBER = V_ORDERNO AND
+             PRODUCTCODE = V_PRODUCTCODE;
+    	DBMS_OUTPUT.PUT_LINE('PAID : ' || V_ACTUALPRICE);
+    	DBMS_OUTPUT.PUT_LINE('NEW DISCOUNTED PRICE : ' || V_DISCOUNTEDPRICE);
+    
+    ELSE
+    	DBMS_OUTPUT.PUT_LINE('PAID : ' || V_ACTUALPRICE);
+      DBMS_OUTPUT.PUT_LINE('ALREADY LOWEST PRICE!');
+    END IF;
+  ELSE
+  	RAISE NO_DATA_FOUND;
+  END IF;
+  
+-- EXCEPTION SECTION WITH CUSTOM EXCEPTION
+	EXCEPTION
+  	DBMS_OUTPUT.PUT_LINE('UNABLE TO PROCESS DISCOUNT');
+    DBMS_OUTPUT.PUT_LINE('ORDER NOT FOUND OR MORE THAN 30 DAYS');
+END;
+/
+
+create or replace procedure adjust_price(in_productcode varchar) is
+begin
+    UPDATE products 
+       SET buyprice = buyprice * 1.05 
+       WHERE productcode = in_productcode;
+       
+    IF SQL%NOTFOUND THEN
+        dbms_output.put_line('No such product - '|| in_productCode);
+    elsif SQL%FOUND THEN
+        dbms_output.put_line('Product '|| in_productCode|| ' - buy price is adjusted successfully');
+    END IF;
+
+end;
+/
+
+-- SAMPLE TESTING
+SELECT PRODUCTCODE, BUYPRICE 
+FROM   PRODUCTS;
+
+EXEC adjust_price('S9999');
+EXEC adjust_price('S72_1253');
+
+-- REFERENCE TO PRACTICAL 3 -- PRC_PRICE_INCR
+-- IN_Product_Code changed to varchar
+CREATE OR REPLACE PROCEDURE PRC_PRICE_INCR2(IN_Product_Code IN varchar) IS 
+	v_productname varchar2(70);
+	v_oldprice number(7,2);
+	v_newprice number(7,2);
+  
+BEGIN
+-- GET THE PRODUCT PRICE
+	SELECT ProductName, MSRP INTO v_productname, v_oldprice
+  FROM PRODUCTS
+  WHERE ProductCode = IN_Product_Code;
+
+	v_newprice := round(v_oldprice *1.1,2);
+
+-- UPDATE the record
+	UPDATE PRODUCTS
+	SET MSRP = v_newprice
+	WHERE ProductCode = IN_Product_Code;
+
+-- WRITE DATA TO THE PRICE_AUDIT TABLE   
+	INSERT INTO Price_Audit VALUES(IN_Product_Code, v_productname, v_oldprice, v_newprice, USER, SYSDATE);
+
+	DBMS_OUTPUT.PUT_LINE('Product '||IN_Product_Code||' '||v_productname||' new price is $' ||v_newprice);
+
+EXCEPTION
+   WHEN no_data_found THEN
+	DBMS_OUTPUT.PUT_LINE('Product Code '||IN_Product_Code||' does not exist. Please enter another product code.');       
+END;
+/
+
+-- SAMPLE OUTPUT
+SQL> @C:\Users\admin\Downloads\P4.txt;
+
+
+-- EXPLICIT CURSOR
+CREATE OR REPLACE PROCEDURE prc_Low_Stock(v_lowQty IN NUMBER) IS
+ 	-- VARIABLE DECLARATION
+  v_prodCode	PRODUCTS.productCode%TYPE;
+  v_prodName	PRODUCTS.productName%TYPE;
+  v_prodLine	PRODUCTS.ProductLine%TYPE;
+  v_prodScale	PRODUCTS.productScale%TYPE;
+  v_prodVendor	PRODUCTS.productVendor%TYPE;
+  v_prodqty	PRODUCTS.quantityInStock%TYPE;
+  v_buyPrice	PRODUCTS.buyPrice%TYPE;
+
+ v_indicator     char(5);      
+-- CURSOR DECLARATION
+CURSOR PROD_CURSOR IS
+   SELECT productCode, productName, productLine, productScale, productVendor, quantityInStock, buyPrice
+   FROM PRODUCTS;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('PRODUCTS RUNNING LOW ON STOCK');
+  DBMS_OUTPUT.PUT_LINE('=============================');
+  DBMS_OUTPUT.PUT_LINE('====PLS=====INSERT==SUB-HEADING===HERE===============');
+
+	-- OPEN THE CURSOR
+  OPEN PROD_CURSOR;
+  
+  -- USE LOOP TO FETCH ALL THE ROWS FROM THE CURSOR
+  LOOP
+  	 -- FETCH THE DATA ROW ONE-BY-ONE INTO PROCEDURAL ENVIRONMENT 
+     FETCH PROD_CURSOR INTO 
+          v_prodCode,  v_prodName,  v_prodLine,  v_prodScale,  
+          v_prodVendor,  v_prodQty,  v_buyPrice;
+     -- CHECK WITH THERE ARE STILL RECORDS IN THE CURSOR
+     EXIT WHEN PROD_CURSOR%NOTFOUND;
+	
+  	 -- IN ROW 1 -- CHECK ROW 1
+     -- IN ROW N -- CHECK ROW N
+     if v_prodQty < v_lowQty then
+        v_indicator := '#<---';
+     else
+        v_indicator := '     ';
+     end if;
+
+  	 -- IN ROW 1 -- PRINT ROW 1
+     -- IN ROW N -- PRINT ROW N
+     DBMS_OUTPUT.PUT_LINE(v_prodCode||'-'||v_prodName||'-'||v_prodLine||'-'||
+        v_prodScale||'-'||v_prodVendor||'-'||v_prodQty||'-'||v_buyPrice||v_indicator);
+  END LOOP;
+
+  DBMS_OUTPUT.PUT_LINE('======================================');
+  -- %ROWCOUNT -- HELPS TO CALCULATE THE ROW FETCHED
+  DBMS_OUTPUT.PUT_LINE('TOTAL PRODUCTS PROCESSED ' || PROD_CURSOR%ROWCOUNT); 
+  DBMS_OUTPUT.PUT_LINE('# indicates products low in quantity -- less than :'||v_lowQty); 
+  DBMS_OUTPUT.PUT_LINE('--- END OF REPORT ----');
+  
+  -- CLOSE THE CURSOR (OPTIONAL)
+  CLOSE PROD_CURSOR;
+-- cursor by default will be closed when procedure ends
+END;
+/
+
+
+-- TASK:	The output has not been adjusted/formatted properly. 
+-- Modify the code to produce a readable report.
+  CREATE OR REPLACE PROCEDURE prc_Low_Stock(v_lowQty IN NUMBER) IS
+ 	-- VARIABLE DECLARATION
+  v_prodCode	PRODUCTS.productCode%TYPE;
+  v_prodName	PRODUCTS.productName%TYPE;
+  v_prodqty	PRODUCTS.quantityInStock%TYPE;
+  v_buyPrice	PRODUCTS.buyPrice%TYPE;
+
+ v_indicator     char(5);      
+-- CURSOR DECLARATION
+CURSOR PROD_CURSOR IS
+   SELECT productCode, productName, quantityInStock, buyPrice
+   FROM PRODUCTS;
+
+BEGIN
+  DBMS_OUTPUT.PUT_LINE('PRODUCTS RUNNING LOW ON STOCK');
+  DBMS_OUTPUT.PUT_LINE(RPAD('=', 70, '='));
+  DBMS_OUTPUT.PUT_LINE(RPAD('PRODUCT CODE', 12, '-') || ' ' ||
+                        RPAD('PRODUCT NAME', 40, ' ') || ' ' ||
+                        RPAD('QUANTITY', 8, ' ')      || ' ' ||
+                        LPAD('BUY PRICE', 10, ' ')
+                       ); 
+  DBMS_OUTPUT.PUT_LINE(RPAD('=', 70, '='));
+	-- OPEN THE CURSOR
+  OPEN PROD_CURSOR;
+  
+  -- USE LOOP TO FETCH ALL THE ROWS FROM THE CURSOR
+  LOOP
+  	 -- FETCH THE DATA ROW ONE-BY-ONE INTO PROCEDURAL ENVIRONMENT 
+     FETCH PROD_CURSOR INTO 
+          v_prodCode,  v_prodName,  v_prodQty,  v_buyPrice;
+     -- CHECK WITH THERE ARE STILL RECORDS IN THE CURSOR
+     EXIT WHEN PROD_CURSOR%NOTFOUND;
+	
+  	 -- IN ROW 1 -- CHECK ROW 1
+     -- IN ROW N -- CHECK ROW N
+     if v_prodQty < v_lowQty then
+        v_indicator := '#<---';
+     else
+        v_indicator := '     ';
+     end if;
+
+  	 -- IN ROW 1 -- PRINT ROW 1
+     -- IN ROW N -- PRINT ROW N
+     -- DATA OUTPUT -- DESIGN IT WITH PADDING 
+     DBMS_OUTPUT.PUT_LINE(RPAD(TO_CHAR(v_prodCode), 12, '-') || ' ' ||
+                          RPAD(TO_CHAR(v_prodName), 40, ' ') || ' ' ||
+                          RPAD(TO_CHAR(v_prodQty), 8, ' ')   || ' ' ||
+                          LPAD(TO_CHAR(v_buyPrice, '$99,999.99'), 10, ' ') || ' ' || 
+                          v_indicator
+                         );   
+  END LOOP;
+
+  DBMS_OUTPUT.PUT_LINE('======================================');
+  -- %ROWCOUNT -- HELPS TO CALCULATE THE ROW FETCHED
+  DBMS_OUTPUT.PUT_LINE('TOTAL PRODUCTS PROCESSED ' || PROD_CURSOR%ROWCOUNT); 
+  DBMS_OUTPUT.PUT_LINE('# indicates products low in quantity -- less than :'||v_lowQty); 
+  DBMS_OUTPUT.PUT_LINE('--- END OF REPORT ----');
+  
+  -- CLOSE THE CURSOR (OPTIONAL)
+  CLOSE PROD_CURSOR;
+-- cursor by default will be closed when procedure ends
+END;
+/
+
+
+-- MULTIPLE CURSOR
+CREATE OR REPLACE PROCEDURE prc_order_details AS
+   -- VARIABLE DECLARATION
+   v_orderNo		ORDERS.orderNumber%TYPE;
+   v_orderDate		ORDERS.orderDate%TYPE;
+   v_requiredDate	ORDERS.requiredDate%TYPE;
+   v_shippedDate	ORDERS.shippedDate%TYPE;
+   v_custNo		ORDERS.customerNumber%TYPE;
+   v_productCode	ORDERDETAILS.productCode%TYPE;
+   v_qtyOrd		ORDERDETAILS.quantityOrdered%TYPE;
+   v_priceEach		ORDERDETAILS.priceEach%TYPE;
+
+-- FIRST CURSOR DECLARATION
+cursor order_cursor is
+       select customerNumber, orderNumber, orderDate, requiredDate, shippedDate
+       from ORDERS;
+       
+-- SECOND CURSOR DECLARATION
+cursor orderDetail_cursor is
+       select productCode, quantityOrdered, priceEach
+       from ORDERDETAILS
+       where orderNumber = v_orderNo;
+-- EXECUTION SECTION        
+BEGIN
+   OPEN order_cursor;
+   FETCH order_cursor
+         INTO v_custNo, v_orderNo, v_orderDate, v_requiredDate, v_shippedDate;
+   WHILE order_cursor%FOUND
+   LOOP
+   -- USE WHILE LOOP TO DISPLAY ALL OF THE CUSTOMERS WITH ORDERS MADE
+      DBMS_OUTPUT.PUT_LINE('Customer No : '||v_custNo);
+      DBMS_OUTPUT.PUT_LINE('Order    No : '||v_orderNo);
+      DBMS_OUTPUT.PUT_LINE('Order Date     : '||v_orderDate);
+      DBMS_OUTPUT.PUT_LINE('Shipped        : '||v_shippedDate);
+      DBMS_OUTPUT.PUT_LINE('Required Date  : '||v_requiredDate);
+      dbms_output.put_line(chr(10));
+
+			
+      OPEN orderDetail_cursor;
+      FETCH orderDetail_cursor
+            INTO v_productCode, v_qtyOrd, v_priceEach;
+
+      WHILE orderDetail_cursor%FOUND 
+      LOOP
+      -- USE WHILE LOOP TO DISPLAY ALL OF THE ORDER DETAILS INFORMATION
+         DBMS_OUTPUT.PUT_LINE(v_productCode||'***'||v_qtyOrd||'***'||v_priceEach);
+
+         FETCH orderDetail_cursor
+            INTO v_productCode, v_qtyOrd, v_priceEach;
+      END LOOP;
+      CLOSE orderDetail_cursor;
+
+      DBMS_OUTPUT.PUT_LINE('End of Customer '||v_custNo||'************************');
+      dbms_output.put_line(chr(10));
+
+   FETCH order_cursor
+         INTO v_custNo, v_orderNo, v_orderDate, v_requiredDate, v_shippedDate;
+   END LOOP;
+   CLOSE order_cursor;
+END;
+/
+
+-- TASK: Suggest how this report can be improved.
+-- TASK: Modify the procedure to accept CustomerCode as input and print all order details for that customer.
+
+-- SAMPLE CODE
+-- HEADING SECTION WITH INPUT PARAMETER TO ACCEPT CUSTOMERNUMBER AS AN INPUT
+CREATE OR REPLACE PROCEDURE prc_order_details_task2(custNo in number) AS
+
+	-- VARIABLE DECLARATION SECTION -- WITH %TYPE FUNCTION
+	v_orderNo ORDERS.orderNumber%TYPE;
+	v_orderDate ORDERS.orderDate%TYPE;
+	v_requiredDate ORDERS.requiredDate%TYPE;
+	v_shippedDate ORDERS.shippedDate%TYPE;
+	v_custNo ORDERS.customerNumber%TYPE;
+	v_productCode ORDERDETAILS.productCode%TYPE;
+	v_qtyOrd ORDERDETAILS.quantityOrdered%TYPE;
+	v_priceEach ORDERDETAILS.priceEach%TYPE;
+
+	-- CURSOR DECLARATION -- TO EXTRACT ORDER INFORMATION
+  -- FILTER BY CUSTOMER NUMBER FROM INPUT PARAMETER
+  -- EXTRACT ORDERNUMBER FILTER BY CUSTOMER NUMBER
+	cursor order_cursor is
+		select orderNumber, orderDate, requiredDate, shippedDate
+		from ORDERS where customerNumber = custNo;
+	
+  -- CURSOR DECLARATION -- TO EXTRACT ORDER DETAILS INFORMATION
+  -- FILTER BY ORDER NUMBER
+  -- PASS IN ORDERNUMBER TO FILTER ORDER DETAILS
+	cursor orderDetail_cursor is
+		select productCode, quantityOrdered, priceEach
+		from ORDERDETAILS
+		where orderNumber = v_orderNo;
+
+-- EXECUTION SECTION
+BEGIN
+	-- OPEN THE FIRST CURSOR -- OPEN ORDERCURSOR AND PASS VALUE TO VARIABLE
+	OPEN order_cursor;
+	FETCH order_cursor
+    -- V_ORDERNO NOW PASSED IN WITH A VALUE (WILL BE USED ON SECOND CURSOR)
+		INTO v_orderNo, v_orderDate, v_requiredDate, v_shippedDate;
+    
+    -- DISPLAY CUSTOMER AND ORDER INFORMATION
+		DBMS_OUTPUT.PUT_LINE('Order by Customer No : '||custNo);
+		DBMS_OUTPUT.PUT_LINE(RPAD('=',30,'='));
+		dbms_output.put_line(chr(10));
+    
+    -- USE WHILE LOOP TO DISPLAY ALL THE ORDERS FILTER BY CUSTOMERNUMBER
+    -- DISPLAY THE ROW OF RECORD ONE-BY-ONE
+		WHILE order_cursor%FOUND
+			LOOP
+      	-- BOTH HEADING AND VALUE IS PRINTED OUT
+				DBMS_OUTPUT.PUT_LINE('Order No : '||v_orderNo);
+				DBMS_OUTPUT.PUT_LINE('Order Date : '||v_orderDate);
+				DBMS_OUTPUT.PUT_LINE('Shipped : '||v_shippedDate);
+				DBMS_OUTPUT.PUT_LINE('Required Date : '||v_requiredDate);
+				dbms_output.put_line(chr(10));
+        
+        -- BEFORE ANOTHER CURSOR AND WHILE LOOP -- CREATE ORDER DETAILS HEADER
+				DBMS_OUTPUT.PUT_LINE(RPAD('Product Code',12,' ')||' '||
+														 LPAD('Quantity',8,' ')     ||' '||
+																	'Unit Price');
+        -- PRINT A SIMPLE LINE FOR THE HEADER USE                                                            
+				DBMS_OUTPUT.PUT_LINE(RPAD('=',12,'=') ||' '||
+														 LPAD('=',8,'=')  ||' '||
+														 LPAD('=',9,'=')  ||' ');
+				-- OPEN THE SECOND CURSOR -- OPEN THE ORDERDETAILS CURSOR AND PASS THE VALUE TO THE VARIABLE
+				OPEN orderDetail_cursor;
+				FETCH orderDetail_cursor
+					INTO v_productCode, v_qtyOrd, v_priceEach;
+					-- USE WHILE LOOP TO DISPLAY ALL OF THE ORDER DETAILS INFORMATION
+        	WHILE orderDetail_cursor%FOUND
+					LOOP
+						DBMS_OUTPUT.PUT_LINE(RPAD(to_char(v_productCode),12,' ')||' '||
+															 	 LPAD(to_char(v_qtyOrd),8,' ')||' '||
+															 	 LPAD(to_char(v_priceEach),9,' '));
+
+	FETCH orderDetail_cursor
+	INTO v_productCode, v_qtyOrd, v_priceEach;
+	END LOOP;
+	CLOSE orderDetail_cursor;
+	DBMS_OUTPUT.PUT_LINE(RPAD('-',30,'-'));
+	dbms_output.put_line(chr(10));
+	
+  FETCH order_cursor
+	INTO v_orderNo, v_orderDate, v_requiredDate, v_shippedDate;
+	END LOOP;
+	CLOSE order_cursor;
+END;
+/
+
+EXEC prc_order_details_task2(495);
+
+
+
+-- Prac4_proc3
+CREATE OR REPLACE PROCEDURE prc_emp_list AS
+      CURSOR emp_cursor IS
+	SELECT Emp.employeeNumber as empnumber, emp.lastName as emplname, emp.firstName as empfname, 
+        emp.email as empemail, emp.officeCode as empcode, 
+        Mgr.employeenumber as MgrNumber, Mgr.lastname as MgrName
+	FROM Employees Emp left join Employees Mgr on emp.reportsto = mgr.employeenumber
+              order by employeeNumber;
+
+BEGIN
+     FOR emp_rec IN emp_cursor LOOP
+           DBMS_OUTPUT.PUT_LINE(  emp_cursor%rowcount ||'. '||emp_rec.empnumber||'  '||
+                           emp_rec.emplname||',' ||emp_rec.empfname ||
+                            '  '||emp_rec.empemail||' '||emp_rec.empcode || ' ' || emp_rec.mgrnumber
+                            || ' ' || emp_rec.MgrName);
+    END LOOP;
+END;
+/
+
+
+
+
+
+
+--- PRACTICAL 4 ---
+CREATE OR REPLACE PROCEDURE prc_emp_list AS
+  CURSOR emp_cursor IS
+	SELECT employeeNumber, lastName, firstName, email, officeCode
+	FROM   Employees
+  order by employeeNumber;
+
+BEGIN
+     FOR emp_rec IN emp_cursor LOOP
+           DBMS_OUTPUT.PUT_LINE(  emp_cursor%rowcount ||'. '||emp_rec.employeeNumber||'  '||
+                           emp_rec.lastName||',' ||emp_rec.firstName ||
+                            '  '||emp_rec.email||' '||emp_rec.officeCode);
+    END LOOP;
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE prc_emp_list AS
+  CURSOR emp_cursor IS
+	SELECT Emp.employeeNumber AS EMPNO, Emp.lastName AS EMPLNAME, Emp.firstName AS EMPFNAME,
+         Mng.employeenumber AS MNGNO, Mng.lastname AS MNGLNAME
+	FROM   Employees Emp LEFT JOIN Employees Mng ON Emp.reportsto = Mng.employeenumber
+  order by Emp.employeeNumber;
+
+BEGIN
+     FOR emp_rec IN emp_cursor LOOP
+           DBMS_OUTPUT.PUT_LINE(emp_cursor%rowcount ||'. '||
+                                rpad(to_char(emp_rec.EMPNO), 5, ' ') ||'  '||
+                                rpad(to_char(emp_rec.EMPLNAME), 20, ' ')||',' ||
+                                rpad(to_char(emp_rec.EMPFNAME), 20, ' ') ||'  '||
+                                rpad(to_char(emp_rec.MNGNO), 5, ' ') ||'  '||
+                                rpad(to_char(emp_rec.mngLNAME), 20, ' '));
+    END LOOP;
+END;
+/
+
+
+-- SAMPLE 4 WITH NESTED CURSOR
+DECLARE
+	 -- USE TYPE FUNCTION TO CREATE A NEW OBJECT TYPE -- REFERENCE CURSOR
+   -- products_cursor_typ IS NOW A NESTED CURSOR OBJECT TYPE
+   TYPE products_cursor_typ IS REF CURSOR;
+   productList_cursor	products_cursor_typ;
+
+   v_productline  productLines.productLine%TYPE;
+   v_Desc		      productLines.textDescription%TYPE;
+   v_productCode	products.productCode%TYPE;
+   v_productName	products.productName%TYPE;
+   v_MSRP		      products.MSRP%TYPE;
+
+	 -- CURSOR DECLARATION WITH A C1 NAME
+   -- PRODUCTS SELECT STATEMENT -- PRODUCTLINE -- PRODUCTS
+   CURSOR c1 IS
+      select a.productLine, a.textDescription,
+             CURSOR ( select b.productCode, b.productName, b.MSRP
+                      from products b
+                      where b.productLine = a.productLine
+                    ) products_info
+      from productLines a;
+  
+BEGIN
+   OPEN c1;
+   LOOP -- Process each row of query result set
+        FETCH c1 INTO v_productLine,v_Desc, productList_cursor;
+          EXIT WHEN c1%NOTFOUND;
+       dbms_output.put_line(chr(10));
+       DBMS_OUTPUT.PUT_LINE('Product line: ' || v_productLine);
+       DBMS_OUTPUT.PUT_LINE('Description : ' || v_Desc);
+       LOOP -- Process each row of subquery result set
+             FETCH productList_cursor INTO v_productCode, v_productName, v_MSRP;
+                 EXIT WHEN productList_cursor%NOTFOUND;
+             DBMS_OUTPUT.PUT_LINE('Product Code: ' ||v_productCode||' price is '||v_MSRP);
+            DBMS_OUTPUT.PUT_LINE('Product Name: ' ||v_productName);
+       END LOOP;
+       DBMS_OUTPUT.PUT_LINE('No. of products in this line :' || productList_cursor%rowcount); 
+
+   END LOOP;
+   DBMS_OUTPUT.PUT_LINE('Total Product lines :' || c1%rowcount); 
+   CLOSE c1;
+END;
+/
+
+
+
+-- SAMPLE 5
+DECLARE
+--Cursor1 is called a FOR UPDATE cursor
+   CURSOR cursor1 IS
+      SELECT * FROM PRODUCTS                        
+      FOR UPDATE;
+
+   v_new_price Products.MSRP%TYPE;
+
+BEGIN
+   FOR cursor1_rec IN cursor1 LOOP
+      IF (cursor1_rec.MSRP < 100.00) THEN
+         UPDATE PRODUCTS
+         SET MSRP = ROUND((1.2*MSRP),2)
+         WHERE CURRENT OF cursor1;
+--Only a FOR UPDATE cursor can appear in the CURRENT OF clause of an UPDATE or DELETE statement. 
+
+         v_new_price := ROUND((1.2* cursor1_rec.MSRP),2);
+
+         DBMS_OUTPUT.PUT_LINE('Price of Product '||cursor1_rec.productCode||' '||
+                RPAD(cursor1_rec.ProductName,40, ' ')||' changed from $'||
+                cursor1_rec.MSRP ||' to $' || v_new_price);
+      END IF;
+   END LOOP;
+END;
+/
+
+
+
+
+-- QUESTION 1
+CREATE OR REPLACE PROCEDURE CHK_PROD_LINE(V_PRODLINE IN VARCHAR) IS
+	 -- USE TYPE FUNCTION TO CREATE A NEW OBJECT TYPE -- REFERENCE CURSOR
+   -- products_cursor_typ IS NOW A NESTED CURSOR OBJECT TYPE
+   TYPE products_cursor_typ IS REF CURSOR;
+   productList_cursor	products_cursor_typ;
+
+   v_productline  productLines.productLine%TYPE;
+   v_Desc		      productLines.textDescription%TYPE;
+   v_productCode	products.productCode%TYPE;
+   v_productName	products.productName%TYPE;
+   v_MSRP		      products.MSRP%TYPE;
+   v_qty					products.quantityinstock%TYPE;
+
+	 -- CURSOR DECLARATION WITH A C1 NAME
+   -- PRODUCTS SELECT STATEMENT -- PRODUCTLINE -- PRODUCTS
+   CURSOR c1 IS
+      select a.productLine, a.textDescription,
+             CURSOR ( select b.productCode, b.productName, b.MSRP, b.quantityinstock
+                      from products b
+                      where b.productLine = a.productLine
+                    ) products_info
+      from productLines a
+      WHERE PRODUCTLINE = V_PRODLINE;
+  
+BEGIN
+   OPEN c1;
+   LOOP -- Process each row of query result set
+        FETCH c1 INTO v_productLine,v_Desc, productList_cursor;
+          EXIT WHEN c1%NOTFOUND;
+       dbms_output.put_line(chr(10));
+       DBMS_OUTPUT.PUT_LINE('Product line: ' || v_productLine);
+       DBMS_OUTPUT.PUT_LINE('Description : ' || v_Desc);
+       dbms_output.put_line(chr(10));
+       DBMS_OUTPUT.PUT_LINE(RPAD('=', 75, '='));
+       DBMS_OUTPUT.PUT_LINE(RPAD('PRODUCT CODE', 12, ' ') || ' ' || 
+                            RPAD('PRODUCT NAME', 40, ' ') || ' ' || 
+                            LPAD('MSRP', 10, ' ')  || ' ' ||
+                            RPAD('QUANTITY', 8, ' '));
+       DBMS_OUTPUT.PUT_LINE(RPAD('=', 75, '='));
+       
+       LOOP -- Process each row of subquery result set
+             FETCH productList_cursor INTO v_productCode, v_productName, v_MSRP, v_qty;
+                 EXIT WHEN productList_cursor%NOTFOUND;
+             DBMS_OUTPUT.PUT_LINE(RPAD(TO_CHAR(v_productCode), 12, ' ') || ' ' || 
+                                  RPAD(TO_CHAR(v_productName), 40, ' ') || ' ' || 
+                                  LPAD(TO_CHAR(v_MSRP, '$9,999.99'), 10, ' ')  || ' ' ||
+                                  RPAD(TO_CHAR(v_qty), 8, ' '));
+             
+       END LOOP;
+             DBMS_OUTPUT.PUT_LINE(RPAD('-', 75, '-'));
+       DBMS_OUTPUT.PUT_LINE('No. of products in this line :' || productList_cursor%rowcount); 
+
+   END LOOP;
+   DBMS_OUTPUT.PUT_LINE('Total Product lines :' || c1%rowcount); 
+   CLOSE c1;
+END;
+/
+
+-- QUESTION 2
+
+-- HEADING SECTION WITH INPUT PARAMETER TO ACCEPT ORDER DATE RANGE
+CREATE OR REPLACE PROCEDURE SHOW_ORDER(V_STARTDATE IN DATE, V_ENDDDATE IN DATE) IS
+
+-- VARIABLE DECLARATION SECTION
+V_ORDERNUMBER		ORDERS.ORDERNUMBER%TYPE;
+V_ORDERDATE			ORDERS.ORDERDATE%TYPE;
+
+V_PRODUCTCODE		PRODUCTS.PRODUCTCODE%TYPE;
+V_PRODUCTNAME		PRODUCTS.PRODUCTNAME%TYPE;
+
+V_QTY						ORDERDETAILS.QUANTITYORDERED%TYPE;
+V_PRICE					ORDERDETAILS.PRICEEACH%TYPE;
+
+V_SUBTOTAL			NUMBER(9,2) := 0.0;
+V_ORDERTOTAL		NUMBER(9,2) := 0.0;
+V_GRANDTOTAL		NUMBER(11,2) := 0.0;
+
+-- DECLARE A REF CURSOR
+TYPE ORDER_CURSOR_TYP IS REF CURSOR;
+ORDER_CURSOR ORDER_CURSOR_TYP; -- ORDER_CURSOR NOW IS A NESTED CURSOR VARIABLE
+
+
+-- CURSOR DECLARATION SECTION
+-- USE REF CURSOR -- NESTED CURSOR TO EXTRACT ORDERS AND ORDERDETAILS INFORMATION
+-- OUTER CURSOR -- SELECT ORDERNUMBER AND ORDERDATE
+-- INNER CURSOR -- SELECT PRODUCTCODE, PRODUCTNAME, QUANTITYORDERED, PRICEEACH
+CURSOR C1  IS
+	SELECT ORDERNUMBER, ORDERDATE, 
+  			 CURSOR (SELECT P.PRODUCTCODE, PRODUCTNAME, QUANTITYORDERED, PRICEEACH
+                 FROM   ORDERDETAILS OD, PRODUCTS P
+                 WHERE  OD.PRODUCTCODE = P.PRODUCTCODE AND
+                        OD.ORDERNUMBER = O.ORDERNUMBER)
+  FROM ORDERS O
+  WHERE ORDERDATE BETWEEN V_STARTDATE AND V_ENDDDATE;
+
+-- EXECUTION SECTION
+BEGIN
+	-- OPEN THE CURSOR 
+  OPEN C1;
+  
+  -- USE LOOP STATEMENT TO FETCH ALL THE VALUE IN C1
+  LOOP
+  	FETCH C1 INTO V_ORDERNUMBER, V_ORDERDATE, ORDER_CURSOR;
+    EXIT WHEN C1%NOTFOUND;
+    
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 85, '='));
+    DBMS_OUTPUT.PUT_LINE('ORDER NUMBER : ' || V_ORDERNUMBER);
+    DBMS_OUTPUT.PUT_LINE('ORDER DATE   : ' || TO_CHAR(V_ORDERDATE, 'DD-MON-YYYY'));
+    
+    DBMS_OUTPUT.PUT_LINE(RPAD('.', 85, '.'));
+    DBMS_OUTPUT.PUT_LINE(RPAD('PRODUCT CODE', 12, ' ') || ' ' || 
+                         RPAD('PRODUCT NAME', 40, ' ') || ' ' || 
+                         LPAD('QUANTITY', 10, ' ')     || ' ' ||
+                         LPAD('PRICE EACH', 10, ' ')  || ' ' ||
+                         LPAD('SUB TOTAL', 10, ' '));
+    DBMS_OUTPUT.PUT_LINE(RPAD('.', 85, '.'));
+    
+		-- USE LOOP STATEMENT TO FETCH ALL THE VALUE IN ORDER_CURSOR
+    LOOP
+    	FETCH ORDER_CURSOR INTO V_PRODUCTCODE, V_PRODUCTNAME, V_QTY, V_PRICE;
+      	EXIT WHEN ORDER_CURSOR%NOTFOUND;
+        
+        -- CALCULATE THE SUBTOTAL WITH QUANTITY * PRICEEACH
+        V_SUBTOTAL   := V_QTY * V_PRICE;
+        
+        -- ACCUMULATE THE ORDERTOTAL IN LOOP
+        V_ORDERTOTAL := V_ORDERTOTAL + V_SUBTOTAL;
+        
+   	 		DBMS_OUTPUT.PUT_LINE(RPAD(V_PRODUCTCODE, 12, ' ') || ' ' || 
+                         		 RPAD(V_PRODUCTNAME, 40, ' ') || ' ' || 
+                         	   LPAD(V_QTY, 10, ' ')     || ' ' ||
+                         		 LPAD(TO_CHAR(V_PRICE, '$9,999.99'), 10, ' ')  || ' ' ||
+                         		 LPAD(TO_CHAR(V_SUBTOTAL, '$9,999.99'), 10, ' '));        
+        
+        -- END OF INNER LOOP FROM ORDER_CURSOR
+        END LOOP;
+        
+        -- PRINT OUT THE ACCUMULATED ORDERTOTAL FROM THE FIRST ORDER
+        DBMS_OUTPUT.PUT_LINE(RPAD('*', 85, '*'));
+        DBMS_OUTPUT.PUT_LINE('TOTAL PURCHASED ' || ORDER_CURSOR%ROWCOUNT || ' PRODUCTS');
+        DBMS_OUTPUT.PUT_LINE('ORDER TOTAL : ' || TO_CHAR(V_ORDERTOTAL, '$999,999.99'));
+        DBMS_OUTPUT.PUT_LINE(RPAD('*', 85, '*'));
+        DBMS_OUTPUT.PUT_LINE(CHR(10));
+        
+        V_GRANDTOTAL := V_GRANDTOTAL + V_ORDERTOTAL;
+      
+      -- END OF OUTER LOOP FROM C1
+      END LOOP;
+    	DBMS_OUTPUT.PUT_LINE('GRAND TOTAL : ' || TO_CHAR(V_GRANDTOTAL, '$999,999,999.99'));
+      
+		-- CLOSE THE CURSOR
+    CLOSE C1;
+END;
+/
+
+
+-- QUESTION 3
+-- HEADING SECTION WITHOUT INPUT PARAMETER -- SHOW ALL CUSTOMERS
+CREATE OR REPLACE PROCEDURE SHOW_CUSTOMER IS
+
+-- VARIABLE DECLARATION SECTION
+V_ORDERTOTAL NUMBER(18,2) := 0.0;
+
+-- CURSOR DECLARATION SECTION
+-- FIRST CURSOR -- SHOW CUSTOMER AND ORDER INFORMATION (LAST ORDER MADE)
+CURSOR LAST_ORDER IS
+	SELECT O.CUSTOMERNUMBER, CUSTOMERNAME, O.ORDERNUMBER, ORDERDATE
+  FROM   CUSTOMERS C, ORDERS O
+  WHERE  C.CUSTOMERNUMBER = O.CUSTOMERNUMBER AND
+  			 ORDERDATE = (SELECT MAX(ORDERDATE)
+                      FROM   ORDERS O2
+                      WHERE  O2.CUSTOMERNUMBER = O.CUSTOMERNUMBER AND
+                     				 MONTHS_BETWEEN(SYSDATE, ORDERDATE) > 6)
+  ORDER BY O.CUSTOMERNUMBER;
+
+-- SECOND CURSOR -- SHOW LAST ORDER VALUE -- ORDERDETAILS TABLE
+-- GET THE FILTERED VALUE FROM FIRST CURSOR
+CURSOR ORDERDETAIL_CURSOR(V_ORDERNO IN NUMBER) IS
+	SELECT QUANTITYORDERED, PRICEEACH, QUANTITYORDERED * PRICEEACH AS SUBTOTAL
+  FROM   ORDERDETAILS
+  WHERE  ORDERNUMBER = V_ORDERNO;
+
+-- FORM AN ARRAY STRUCTURE AND COPY THE STRUCTURE FROM LAST_ORDER CURSOR
+LASTORDERREC		LAST_ORDER%ROWTYPE;
+ORDERDETAILREC	ORDERDETAIL_CURSOR%ROWTYPE;
+
+-- EXECUTION SECTION
+BEGIN
+	-- USE CURSOR FOR LOOP TO EXTRACT ALL THE VALUES
+  FOR LASTORDERREC IN LAST_ORDER LOOP
+  	DBMS_OUTPUT.PUT_LINE(CHR(10));
+  	DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
+    DBMS_OUTPUT.PUT_LINE(RPAD('CUST NO', 12, ' ')    || ' ' ||
+                         RPAD('CUST NAME', 30, ' ')  || ' ' ||
+                         RPAD('ORDER NO', 12, ' ')   || ' ' ||
+                         RPAD('ORDER DATE', 15, ' '));    
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
+  
+		-- DISPLAY THE CUSTOMER ORDER INFORMATION
+  	DBMS_OUTPUT.PUT_LINE(RPAD(LASTORDERREC.CUSTOMERNUMBER, 12, ' ')  || ' ' ||
+                         RPAD(LASTORDERREC.CUSTOMERNAME, 30, ' ')    || ' ' ||
+                         RPAD(LASTORDERREC.ORDERNUMBER, 12, ' ')     || ' ' ||
+                         RPAD(TO_CHAR(LASTORDERREC.ORDERDATE, 'DD-MON-YYYY'), 15, ' '));  
+
+		DBMS_OUTPUT.PUT_LINE(RPAD('*', 100, '*'));
+    
+    -- DISPLAY THE ORDER DETAILS VALUE
+		V_ORDERTOTAL := 0.0;
+    
+    DBMS_OUTPUT.PUT_LINE(RPAD('QUANTITY', 12)  || ' ' ||
+                         RPAD('PRICE', 15) 		 || ' ' ||
+                         RPAD('SUB TOTAL', 15));
+		DBMS_OUTPUT.PUT_LINE(RPAD('.', 100, '.'));
+
+		-- USE ANOTHER FOR LOOP TO DISPLAY ORDER DETAILS VALUE
+    FOR ORDERDETAILREC IN ORDERDETAIL_CURSOR(LASTORDERREC.ORDERNUMBER) LOOP
+    	DBMS_OUTPUT.PUT_LINE(RPAD(ORDERDETAILREC.QUANTITYORDERED, 12)  || ' ' ||
+                           RPAD(TO_CHAR(ORDERDETAILREC.PRICEEACH, '$999,999.99'), 15) 		 || ' ' ||
+                        	 RPAD(TO_CHAR(ORDERDETAILREC.SUBTOTAL, '%999,999,999.99'), 15));
+      
+      V_ORDERTOTAL := V_ORDERTOTAL + ORDERDETAILREC.SUBTOTAL;
+		END LOOP;
+    
+    DBMS_OUTPUT.PUT_LINE(CHR(10));
+    DBMS_OUTPUT.PUT_LINE('ORDER TOTAL OF THE LAST ORDER IS ' || TO_CHAR(V_ORDERTOTAL, '$999,999,999.99'));
+		
+    DBMS_OUTPUT.PUT_LINE(RPAD('.', 100, '.'));
+  END LOOP;
+END;
+/
+
+--------- PRACTICAL 4 ---------
+-- EXERCISE 4
+-- SAMPLE CODE
+DECLARE
+
+-- VARIABLE DECLARATION SECTION
+
+
+-- CURSOR DECLARATION SECTION
+
+-- PRODUCTS TABLE DON'T HAVE COST AND SALES
+-- USE NESTED SELECT TO DISPLAY COST AND SALES
+-- EXTRACT DATA FROM ANOTHER SELECT STATEMENT 
+CURSOR PRODUCT_CURSOR IS
+	SELECT PRODUCTCODE, PRODUCTNAME, COST, SALES, 
+         ((SALES-COST) / SALES * 100) AS PROFITMARGIN
+	FROM   (SELECT P.PRODUCTCODE, PRODUCTNAME, 
+                 SUM(BUYPRICE * QUANTITYORDERED) AS COST,
+          			 SUM(PRICEEACH * QUANTITYORDERED) AS SALES
+          FROM	 PRODUCTS P, ORDERDETAILS OD
+          WHERE  P.PRODUCTCODE = OD.PRODUCTCODE
+          GROUP BY P.PRODUCTCODE, PRODUCTNAME
+         	)
+  ORDER BY PROFITMARGIN DESC;
+
+PRODUCT_SALES_REC PRODUCT_CURSOR%ROWTYPE;
+
+-- EXECUTION SECTION
+BEGIN
+
+-- USE FOR LOOP TO LOAD ALL THE VALUE FROM THE CURSOR 
+FOR PRODUCT_SALES_REC IN PRODUCT_CURSOR LOOP
+	DBMS_OUTPUT.PUT_LINE(RPAD(PRODUCT_SALES_REC.PRODUCTNAME, 12, ' ') || ' ' ||
+                       RPAD(PRODUCT_SALES_REC.PRODUCTCODE, 12, ' ') || ' ' ||
+                       LPAD(TO_CHAR(PRODUCT_SALES_REC.SALES, '$999,999,999.99'), 12, ' ') || ' ' ||
+                       LPAD(TO_CHAR(PRODUCT_SALES_REC.COST, '$999,999,999.99'), 12, ' ') || ' ' ||
+                       LPAD(TO_CHAR(PRODUCT_SALES_REC.PROFITMARGIN, '990.99'), 12, ' ')
+                      );
+	END LOOP;
+
+END;
+/
+
+
+-- SAMPLE 
+DECLARE
+v_totalCost NUMBER(14,2) := 0.0;
+v_totalSales NUMBER(14,2) := 0.0;
+v_averageProfitMargin NUMBER(14,2) := 0.0;
+CURSOR product_cursor IS
+SELECT productcode, productname, cost, sales, (sales-cost)/sales*100 AS ProfitMargin
+FROM
+(SELECT p.productcode, productname, SUM(buyprice*quantityordered) AS Cost, SUM(priceeach*quantityordered) AS Sales
+FROM products p, orderdetails d
+
+WHERE p.productcode = d.productcode
+GROUP BY p.productcode, productname
+)ORDER BY ProfitMargin DESC;
+product_sales_rec product_cursor%ROWTYPE;
+BEGIN
+DBMS_OUTPUT.PUT_LINE(CHR(10));
+DBMS_OUTPUT.PUT_LINE(RPAD('=',90,'='));
+DBMS_OUTPUT.PUT_LINE(RPAD('Prod Code',12) ||
+RPAD('Prod Name', 30) ||
+LPAD('Total Cost',15) ||
+LPAD('Total Sales',15) ||
+LPAD('Profit Margin', 15));
+DBMS_OUTPUT.PUT_LINE(RPAD('=',90,'='));
+FOR product_sales_rec IN product_cursor LOOP
+DBMS_OUTPUT.PUT_LINE(RPAD(product_sales_rec.productcode,12) ||
+RPAD(product_sales_rec.productname,30) ||
+LPAD(TO_CHAR(product_sales_rec.cost,'$999,999,999.99'),15) ||
+LPAD(TO_CHAR(product_sales_rec.sales,'$999,999,999.99'),15) ||
+LPAD(TO_CHAR(product_sales_rec.profitmargin,'990.99') || ' %',15));
+v_totalCost := v_totalCost + product_sales_rec.cost;
+v_totalSales := v_totalSales + product_sales_rec.sales;
+END LOOP;
+v_averageProfitMargin := (v_totalSales - v_totalCost)/v_totalSales*100;
+DBMS_OUTPUT.PUT_LINE('Average Profit Margin: ' || TO_CHAR(v_averageProfitMargin,'990.99') || ' %');
+DBMS_OUTPUT.PUT_LINE(RPAD('.',90,'.'));
+END;
+/
+
+
+-- EXERCISE 5
+-- SAMPLE CODE
+DECLARE
+	CURSOR C1 IS
+	SELECT P.PRODUCTCODE, PRODUCTNAME, 
+         SUM(QUANTITYORDERED) AS TOTALUNITSOLD, 
+         SUM(QUANTITYORDERED * PRICEEACH) AS TOTALSALES
+	FROM   PRODUCTS P, ORDERDETAILS OD
+  WHERE  P.PRODUCTCODE = OD.PRODUCTCODE
+  GROUP BY P.PRODUCTCODE, PRODUCTNAME
+  ORDER BY TOTALUNITSOLD;
+  
+  PRODUCT_SALES_REC C1%ROWTYPE;
+  
+BEGIN
+	FOR PRODUCT_SALES_REC IN C1 LOOP
+  	DBMS_OUTPUT.PUT_LINE(RPAD(PRODUCT_SALES_REC.PRODUCTNAME, 12, ' ') || ' ' ||
+                       RPAD(PRODUCT_SALES_REC.PRODUCTCODE, 12, ' ') || ' ' ||
+                       LPAD(TO_CHAR(PRODUCT_SALES_REC.TOTALUNITSOLD, '999,999'), 12, ' ') || ' ' ||
+                       LPAD(TO_CHAR(PRODUCT_SALES_REC.TOTALSALES, '$999,999.99'), 12, ' ')
+                      );
+	END LOOP;
+END;
+/
+
+
+
+-- PRACTICAL 5 -- TRIGGER
+CREATE OR REPLACE TRIGGER trigger_name
+	 -- TIMELINE OF A TRIGGER
+   [BEFORE / AFTER] 
+   
+   -- ACTION OF A TRIGGER
+   [DELETE / INSERT / UPDATE OF column_name]
+   ON table_name
+   
+   -- ROW-LEVEL TRIGGER
+   [FOR EACH ROW]
+   
+   -- CONDITION
+   [WHEN (condition)]
+   
+   -- DECLARATION
+   [DECLARE]
+   [variable_name   data type[:=initial_value]]
+   
+   -- EXECUTION
+   BEGIN
+   		-- EVENT 
+      PL/SQL instructions;
+   END;
+/
+
+
+-- ORDERS CHANGES
+-- STEP 1
+-- ALTER THE ORDER TABLE TO ADD IN NEW ATTRIBUTE
+alter table orders
+add (orderAmount   Number(7,2) Default 0.00,
+     discount      Number(2,2) Default 0.05,
+     totalDiscount Number(7,2) Default 0.00,
+     finalTotal    Number(7,2) Default 0.00);
+
+SQL> DESC ORDERS;
+SQL> Select orderNumber, orderAmount, discount, totalDiscount, finalTotal from Orders;
+
+-- STEP 2
+-- CREATE A NEW TABLE TO LOG CUSTOMER MONTHLY SPENDING
+DROP TABLE CUSTOMERS_MONTHLY;
+
+create table CUSTOMERS_MONTHLY
+(    customerNumber number(11) NOT NULL, 
+     yearNo         number(4) NOT NULL,
+     monthNo        number(2) NOT NULL,
+     monthly_Amount number(9,2),
+     primary key (customerNumber, yearNo,monthNo)
+);
+
+
+SQL> DESC CUSTOMERS_MONTHLY;
+
+
+-- STEP 3
+-- REMOVE ORDERDETAILS DATA -- FOR TESTING
+SQL> DELETE FROM ORDERDETAILS;
+SQL> SELECT * FROM ORDERDETAILS;
+
+
+-- STEP 4
+-- CREATE TRIGGER 1 -- TO MONITOR THE INSERTION ON ORDER DETAILS
+
+-- HEADING SECTION WITH DEFINING A TRIGGER
+CREATE OR REPLACE TRIGGER TRG_UPT_ORDERS_AMT
+
+-- TIMELINE -- AFTER 
+-- ACTION   -- INSERT ON ORDERDETAILS
+-- ROW-LEVEL TRIGGER
+AFTER INSERT ON orderDetails
+FOR EACH ROW
+
+-- DECLARATION SECTION
+DECLARE
+   v_OrderAmount   NUMBER := 0.00;
+   v_TotalDiscount NUMBER := 0.00;
+   v_FinalTotal    NUMBER := 0.00;
+   v_discount      number(2,2);
+
+-- EXECUTION -- EVENT RUNS OVER HERE
+BEGIN
+	 -- EXTRACT DISCOUNT VALUE TO CALCULATE DISCOUNT PER PRODUCT
+   select discount into v_discount
+   from Orders
+   where orderNumber = :new.orderNumber;
+
+	 -- CALCULATION ON ORDER INFORMATION
+   v_OrderAmount   := :new.priceEach * :new.quantityOrdered;
+   v_TotalDiscount := ROUND(v_OrderAmount* v_discount,2);
+   v_FinalTotal    := v_OrderAmount - v_TotalDiscount;
+
+   UPDATE ORDERS
+   SET OrderAmount   = OrderAmount + v_OrderAmount,
+       TotalDiscount = TotalDiscount + v_TotalDiscount,
+       FinalTotal    = FinalTotal + v_FinalTotal
+   WHERE orderNumber = :new.orderNumber;
+END;
+/
+
+
+Trigger created.
+
+-- STEP 5
+-- CREATE A TRIGGER TO MONITOR THE UPDATES ON EACH ORDER'S ORDERAMOUNT
+CREATE OR REPLACE TRIGGER TRG_UPT_CUST_MONTHLY
+AFTER UPDATE OF FinalTotal ON Orders
+FOR EACH ROW
+DECLARE
+   v_custNum CUSTOMERS.CUSTOMERNUMBER%TYPE;
+
+BEGIN
+   Select customerNumber into v_custNum
+   From CUSTOMERS_MONTHLY
+   Where customerNumber = :new.customerNumber AND 
+         YearNo  = EXTRACT(Year From(:new.OrderDate)) AND 
+         MonthNo = EXTRACT(Month From(:new.OrderDate));
+   
+   IF SQL%FOUND THEN
+      UPDATE CUSTOMERS_MONTHLY
+         SET Monthly_Amount = Monthly_Amount + :new.FinalTotal - :old.FinalTotal
+         WHERE customerNumber = :new.customerNumber        AND
+         YearNo  = EXTRACT(Year From(:new.OrderDate)) AND 
+         MonthNo = EXTRACT(Month From(:new.OrderDate));
+  END IF;
+
+EXCEPTION
+   WHEN NO_DATA_FOUND THEN
+      INSERT INTO CUSTOMERS_MONTHLY VALUES
+         (:new.customerNumber,EXTRACT(Year From(:new.OrderDate)), 
+                 EXTRACT(Month From(:new.OrderDate)),:new.FinalTotal);
+END;
+/
+
+
+-- STEP 6
+-- INSERT ONE RECORD FOR TESTING
+-- BEFORE INSERT -- CHECK EVERY DATA
+SQL> Select orderNumber, OrderAmount, TotalDiscount, FinalTotal from Orders where orderNumber = 10100;
+SQL> Select * from orderDetails;
+SQL> Select * from customers_monthly;
+-- AFTER ONE INSERTION -- MONITOR THE CHANGES
+SQL> insert into orderdetails values(10100,'S18_1749',30,136,3);
+SQL> Select orderNumber, OrderAmount, TotalDiscount, FinalTotal from Orders where orderNumber = 10100;
+SQL> Select * from orderDetails;
+SQL> Select * from customers_monthly;
+-- TESTING 2 -- INSERT 2 MORE DATA
+SQL> insert into orderdetails values(10100,'S18_2248',50,55.09,2);
+SQL> insert into orderdetails values(10100,'S18_4409',22,75.46,4);
+SQL> Select orderNumber, OrderAmount, TotalDiscount, FinalTotal from Orders where orderNumber = 10100;
+SQL> Select * from orderDetails;
+SQL> Select * from customers_monthly;
+-- FINAL STEP -- ROLLBACK AND CLEAR ALL THE DATA
+SQL> ROLLBACK;
+SQL> Select orderNumber, OrderAmount, TotalDiscount, FinalTotal from Orders where orderNumber = 10100;
+SQL> Select * from orderDetails;
+SQL> Select * from customers_monthly;
+
+
+-- ADD IN THE ORDER DETAILS INSERTION -- ADD IN ALL DATA
+-- THEN MONITOR THE CHANGES
+Select orderNumber, OrderAmount, TotalDiscount, FinalTotal 
+  from Orders;
+
+Select * from orderDetails;
+
+Select * from customers_monthly;
+
+
+-- PART 2
+-- PRICE INCREMENT PROCEDURE WITH TRIGGER 
+-- CREATE THE TRIGGER TO AUTOMATICALLY STORE THE AUDIT RECORD
+CREATE OR REPLACE TRIGGER TRG_INSERT_Price_Audit
+AFTER UPDATE OF MSRP ON Products
+FOR EACH ROW
+BEGIN
+   INSERT INTO Price_Audit VALUES
+   (:new.productCode, :new.productName,
+    :old.MSRP, :new.MSRP, USER, SYSDATE);
+END;
+/
+
+-- SAMPLE TESTING
+SQL> DELETE FROM PRICE_AUDIT;
+SQL> SELECT * FROM PRICE_AUDIT;
+
+
+-- CREATE THE NEW PRICE_INCREMENT PROCEDURE 
+CREATE OR REPLACE PROCEDURE PRC_PRICE_INCR(IN_Product_Code IN VARCHAR) IS 
+	v_productname varchar2(70);
+	v_oldprice number(7,2);
+	v_newprice number(7,2);
+BEGIN
+-- GET THE PRODUCT PRICE
+	SELECT ProductName, MSRP INTO v_productname, v_oldprice
+        FROM PRODUCTS
+        WHERE ProductCode = IN_Product_Code;
+
+	v_newprice := round(v_oldprice *1.1,2);
+
+-- UPDATE the record
+	UPDATE PRODUCTS
+	SET MSRP = v_newprice
+	WHERE ProductCode = IN_Product_Code;
+END;
+/
+
+-- AFTER UPDATES ON PRODUCT MSRP --> AUTOMATICALLY INSERT AUDIT RECORD INTO PRICE_AUDIT
+SQL> SELECT PRODUCTCODE, MSRP FROM PRODUCTS WHERE PRODUCTCODE = 'S72_3212';
+SQL> EXEC PRC_PRICE_INCR('S72_3212');
+SQL> SELECT PRODUCTCODE, MSRP FROM PRODUCTS WHERE PRODUCTCODE = 'S72_3212';
+SQL> SELECT * FROM PRICE_AUDIT;
+
+
+
+-- FIRE ONCE TRIGGER --> STATEMENT-LEVEL TRIGGER
+-- SAMPLE TESTING WITH FIRE ONCE TRIGGER
+
+-- STEP 1 -- CREATE AUDIT TABLE
+CREATE TABLE Employees_Audit
+(  TransDate          Date,
+   No_of_Insert      Number(3),
+   No_of_Update   Number(3),
+   No_of_Delete     Number(3)
+);
+
+-- STEP 2 -- CREATE THE FIRE ONCE TRIGGER
+CREATE OR REPLACE TRIGGER Track_Employees
+BEFORE INSERT OR
+       UPDATE OR
+       DELETE
+       ON employees
+DECLARE
+   v_date date; 
+
+BEGIN
+   select TransDate into v_date
+   from Employees_Audit
+   where to_char(TransDate,'DD-MON-YY') = to_char(SYSDATE,'DD-MON-YY');
+-- check if there is already a record for today ---
+   
+   if SQL%FOUND THEN
+      CASE
+         WHEN INSERTING THEN
+            UPDATE Employees_AUDIT
+               SET No_Of_Insert = No_Of_Insert + 1
+            where to_char(TransDate,'DD-MON-YY') = to_char(SYSDATE,'DD-MON-YY');
+         WHEN UPDATING THEN
+            UPDATE Employees_AUDIT
+               SET No_Of_Update = No_Of_Update + 1
+            where to_char(TransDate,'DD-MON-YY') = to_char(SYSDATE,'DD-MON-YY');
+         WHEN DELETING THEN
+            UPDATE Employees_AUDIT
+               SET No_Of_Delete = No_Of_Delete + 1
+            where to_char(TransDate,'DD-MON-YY') = to_char(SYSDATE,'DD-MON-YY');
+      END CASE;
+   end if;
+
+   exception
+      when no_data_found then
+      CASE
+         WHEN INSERTING THEN
+            INSERT INTO Employees_AUDIT VALUES(sysdate,1,0,0);
+         WHEN UPDATING THEN
+            INSERT INTO Employees_AUDIT VALUES(sysdate,0,1,0);
+         WHEN DELETING THEN
+            INSERT INTO Employees_AUDIT VALUES(sysdate,0,0,1);
+      END CASE;
+END;
+/
+
+--SAMPLE TESTING
+SQL> UPDATE EMPLOYEES SET OFFICECODE = 4 WHERE EMPLOYEENUMBER = 1002;
+SQL> SELECT * FROM EMPLOYEES_AUDIT;
+
+
+-- INSTEAD OF UPDATE TRIGGER
+
+SQL> update manager_view set jobTitle = 'Senior Sales Rep' where ManagerID = 1621;
+
+
+CREATE OR REPLACE TRIGGER update_mgr_view
+INSTEAD OF UPDATE ON manager_view
+FOR EACH ROW
+BEGIN
+-- allow the following updates to the underlying employees table
+   UPDATE employees
+      SET JobTitle = :NEW.jobTitle
+   WHERE employeeNumber = :OLD.ManagerId;
+END;
+/
+
+
+
+
+-- PRACTICAL 5 --
+-- EXERCISE 1
+SQL> DESC CUSTOMERS;
+SQL> ALTER TABLE CUSTOMERS ADD TOTALPURCHASE NUMBER(9,2);
+SQL> DESC CUSTOMERS;
+
+
+-- CREATE THE TRIGGER TO AUTOMATICALLY UPDATE THE TOTALPURCHASE
+CREATE OR REPLACE TRIGGER TRG_UPT_CUST_PURCHASE 
+
+-- TIMELINE IS AFTER 
+-- ACTION IS UPDATE OF FINALTOTAL
+AFTER UPDATE OF FINALTOTAL ON ORDERS
+
+-- ROW-LEVEL STATEMENT
+FOR EACH ROW
+
+-- EXECUTION SECTION
+BEGIN
+	-- EVENT
+	UPDATE CUSTOMERS
+  SET    TOTALPURCHASE = TOTALPURCHASE + :NEW.FINALTOTAL - :OLD.FINALTOTAL
+  WHERE  CUSTOMERNUMBER = :NEW.CUSTOMERNUMBER;
+
+END;
+/
+
+
+-- TRIGGER PREPARATION
+ALTER TABLE ORDERS DISABLE ALL TRIGGERS;
+ALTER TABLE ORDERDETAILS DISABLE ALL TRIGGERS;
+
+DELETE FROM ORDERDETAILS;
+DELETE FROM CUSTOMERS_MONTHLY;
+
+UPDATE ORDERS
+SET    ORDERAMOUNT = 0.00,
+			 TOTALDISCOUNT = 0.00,
+       FINALTOTAL = 0.00;
+
+UPDATE CUSTOMERS
+SET    TOTALPURCHASE = 0.00;
+
+ALTER TABLE ORDERS ENABLE ALL TRIGGERS;
+ALTER TABLE ORDERDETAILS ENABLE ALL TRIGGERS;
+
+SELECT * FROM ORDERDETAILS;
+SELECT * FROM CUSTOMERS_MONTHLY;
+SELECT ORDERNUMBER, ORDERAMOUNT, TOTALDISCOUNT, FINALTOTAL FROM ORDERS;
+SELECT CUSTOMERNUMBER, TOTALPURCHASE FROM CUSTOMERS;
+
+SELECT CUSTOMERNUMBER, MONTHLY_AMOUNT 
+FROM   CUSTOMERS_MONTHLY 
+WHERE  CUSTOMERNUMBER = 496;
+
+SELECT CUSTOMERNUMBER, TOTALPURCHASE 
+FROM   CUSTOMERS
+WHERE  CUSTOMERNUMBER = 496;
+
+-- EXERCISE 2
+ALTER TABLE PRODUCTS
+ADD   TOTAL_UNITS_SOLD NUMBER(9) DEFAULT 0;
+
+-- CREATE TRIGGER TO AUTOMATICALLY UPDATE THE TOTAL QUANTITY SOLD TO THE CUSTOMERS
+CREATE OR REPLACE TRIGGER TRG_UPT_UNITS_SOLD
+
+-- TIMELINE IS AFTER
+-- ACTION IS INSERT ON ORDERDETAILS
+AFTER INSERT ON ORDERDETAILS
+FOR EACH ROW
+
+BEGIN
+	UPDATE PRODUCTS
+  SET TOTAL_UNITS_SOLD = TOTAL_UNITS_SOLD + :NEW.QUANTITYORDERED
+  WHERE PRODUCTCODE = :NEW.PRODUCTCODE;
+END;
+/
+
+
+-- TRIGGER PREPARATION
+ALTER TABLE ORDERS DISABLE ALL TRIGGERS;
+ALTER TABLE ORDERDETAILS DISABLE ALL TRIGGERS;
+
+DELETE FROM ORDERDETAILS;
+DELETE FROM CUSTOMERS_MONTHLY;
+
+UPDATE ORDERS
+SET    ORDERAMOUNT = 0.00,
+			 TOTALDISCOUNT = 0.00,
+       FINALTOTAL = 0.00;
+
+UPDATE CUSTOMERS
+SET    TOTALPURCHASE = 0.00;
+
+UPDATE PRODUCTS
+SET    TOTAL_UNITS_SOLD = 0;
+
+ALTER TABLE ORDERS ENABLE ALL TRIGGERS;
+ALTER TABLE ORDERDETAILS ENABLE ALL TRIGGERS;
+
+SELECT * FROM ORDERDETAILS;
+SELECT * FROM CUSTOMERS_MONTHLY;
+SELECT ORDERNUMBER, ORDERAMOUNT, TOTALDISCOUNT, FINALTOTAL FROM ORDERS;
+SELECT CUSTOMERNUMBER, TOTALPURCHASE FROM CUSTOMERS;
+SELECT PRODUCTCODE, TOTAL_UNITS_SOLD FROM PRODUCTS;
+
+-- EXERCISE 3
+-- CREATE A NEW TRIGGER TO AUTOMATICALLY UPDATE THE QUANTITYINSTOCK
+CREATE OR REPLACE TRIGGER TRG_UPD_PRODQTY
+AFTER INSERT ON ORDERDETAILS
+FOR EACH ROW
+
+BEGIN
+	UPDATE PRODUCTS
+  SET    QUANTITYINSTOCK = QUANTITYINSTOCK - :NEW.QUANTITYORDERED
+  WHERE  PRODUCTCODE = :NEW.PRODUCTCODE;
+END;
+/
+
+
+-- TRIGGER PREPARATION
+ALTER TABLE ORDERS DISABLE ALL TRIGGERS;
+ALTER TABLE ORDERDETAILS DISABLE ALL TRIGGERS;
+
+DELETE FROM ORDERDETAILS;
+DELETE FROM CUSTOMERS_MONTHLY;
+
+UPDATE ORDERS
+SET    ORDERAMOUNT = 0.00,
+			 TOTALDISCOUNT = 0.00,
+       FINALTOTAL = 0.00;
+
+UPDATE CUSTOMERS
+SET    TOTALPURCHASE = 0.00;
+
+UPDATE PRODUCTS
+SET    TOTAL_UNITS_SOLD = 0;
+
+ALTER TABLE ORDERS ENABLE ALL TRIGGERS;
+ALTER TABLE ORDERDETAILS ENABLE ALL TRIGGERS;
+
+SELECT * FROM ORDERDETAILS;
+SELECT * FROM CUSTOMERS_MONTHLY;
+SELECT ORDERNUMBER, ORDERAMOUNT, TOTALDISCOUNT, FINALTOTAL FROM ORDERS;
+SELECT CUSTOMERNUMBER, TOTALPURCHASE FROM CUSTOMERS;
+SELECT PRODUCTCODE, QUANTITYINSTOCK, TOTAL_UNITS_SOLD FROM PRODUCTS;
+
+
+-- EXTRA MANUAL MODIFICATION
+UPDATE PRODUCTS
+SET    QUANTITYINSTOCK = QUANTITYINSTOCK + 5000
+WHERE  QUANTITYINSTOCK < 0;
+
+
+
+-- EXERCISE 5
+-- ADD IN NEW ATTRIBUTES
+ALTER TABLE EMPLOYEES
+ADD (HIREDATE DATE DEFAULT SYSDATE,
+     DATEOFBIRTH DATE);
+
+SQL> DESC EMPLOYEES;
+ 
+ -- CREATE A BEFORE TRIGGER TO VALIDATE THE EMPLOYEES INFORMATION
+CREATE OR REPLACE TRIGGER TRG_CHK_EMP
+BEFORE INSERT ON EMPLOYEES
+FOR EACH ROW 
+
+DECLARE 
+	V_DATEDIFF	NUMBER;
+  V_AGE NUMBER;
+
+BEGIN
+	-- PASS THE DATA OUT TO THE EXTERNAL ENVIRONMENT 
+	:NEW.HIREDATE := SYSDATE;
+  
+  -- DATE DIFFERENCE IS IN MONTH (MONTH VALUE CALCULATION)
+  -- COMPARE CURRENT DATE WITH DATEOFBIRTH FROM DATABASE
+  -- CALCULATE DATE DIFFERENCE IN MONTH VALUE
+  V_DATEDIFF := MONTHS_BETWEEN(SYSDATE, :NEW.DATEOFBIRTH);
+  
+  -- CALCULATE AGE WITH DATEDIFF DIVIDED BY 12 INTO YEAR VALUE
+  V_AGE			 := V_DATEDIFF / 12;
+  
+  DBMS_OUTPUT.PUT_LINE('NEW EMPLOYEE IS ' || ROUND(V_AGE, 2) || ' YEARS OLD.');
+	
+  -- USE IF ELSE STATEMENT TO COMPARE THE AGE 
+  IF V_AGE < 18 THEN
+  	RAISE_APPLICATION_ERROR(-20000, 'CANNOT INSERT EMPLOYEE BELOW 18 YEARS OLD!');
+  END IF;
+END;
+/
+
+-- SAMPLE DATA
+INSERT INTO EMPLOYEES(EMPLOYEENUMBER, LASTNAME, FIRSTNAME, EXTENSION,
+EMAIL, OFFICECODE, REPORTSTO, JOBTITLE, DATEOFBIRTH)
+VALUES(9000,'AMY','CARTER','X1010','AMYCARTER@CLASSICMODELCARS.COM',1,1002,'M
+ARKETING EXECUTIVE','01-JAN-2018')
+
+INSERT INTO EMPLOYEES(EMPLOYEENUMBER, LASTNAME, FIRSTNAME, EXTENSION,
+EMAIL, OFFICECODE, REPORTSTO, JOBTITLE, DATEOFBIRTH)
+VALUES(9004,'JOHN','DEPP','X1019','JOHNDEPP@CLASSICMODELCARS.COM',1,1002,'SOFTW
+ARE DEVELOPER','01-JAN-1990')
+
+
+-- EXERCISE 6
+-- CREATE SAL_GRADE TABLE TO STORE THE MINIMUM AND MAXIMUM SALARY RANGE
+CREATE TABLE SALARY_GRADE(
+	GRADE_CODE	NUMBER(2) NOT NULL UNIQUE,
+	MIN_SALARY	NUMBER(6,2) NOT NULL,
+  MAX_SALARY	NUMBER(8,2) NOT NULL
+);
+
+SQL> DESC SALARY_GRADE;
+ 
+-- INSERT SAMPLE DATA FOR SALARY_GRADE TABLE 
+INSERT INTO SALARY_GRADE VALUES(1,1000.00,2500.00);
+INSERT INTO SALARY_GRADE VALUES(2,2300.00,3500.00);
+INSERT INTO SALARY_GRADE VALUES(3,3000.00,5500.00);
+
+-- ALTER EMPLOYEES TABLE TO ADD IN FOREIGN KEY FROM SALARY_GRADE TABLE 
+ ALTER TABLE EMPLOYEES
+ ADD (SAL_CODE NUMBER(2) DEFAULT 1,
+      SALARY   NUMBER(8,2) DEFAULT 0.00);
+
+	ALTER TABLE EMPLOYEES
+  ADD CONSTRAINT SAL_GRADE_FK FOREIGN KEY (SAL_CODE) REFERENCES SALARY_GRADE(GRADE_CODE);
+
+
+SQL> DESC SALARY_GRADE;
+
+CREATE OR REPLACE TRIGGER TRG_CHK_SALARY
+BEFORE INSERT OR UPDATE OF SALARY ON EMPLOYEES
+
+FOR EACH ROW
+
+DECLARE
+	V_MIN	SALARY_GRADE.MIN_SALARY%TYPE;
+  V_MAX	SALARY_GRADE.MAX_SALARY%TYPE;
+
+BEGIN
+	-- EXTRACT MINIMUM AND MAXIMUM SALARY FROM SALARY_GRAGE TABLE
+  -- FOR RANGE COMPARISON WITH SELECT INTO STATEMENT 
+  SELECT MIN_SALARY, MAX_SALARY INTO V_MIN, V_MAX
+	FROM   SALARY_GRADE
+  WHERE  GRADE_CODE = :NEW.SAL_CODE;
+	-- SAL_CODE FROM EMPLOYEES TABLE WILL PASSED IN THE VALUE INTO
+  -- EXECUTION FOR COMPARISON IN EXTRACTING MIN AND MAX SALARY
+  -- FROM SALARY_GRADE TABLE
+  
+  -- USE IF NOT STATEMENT TO VALIDATE THE SALARY RANGE
+  -- SALARY FROM EMPLOYEES TABLE WILL COMPARE WITH SALARY RANGE FROM SALARY_GRADE TABLE
+  IF NOT (:NEW.SALARY BETWEEN V_MIN AND V_MAX) THEN
+		RAISE_APPLICATION_ERROR(-20000, 'SALARY NOT IN THE CORRECT RANGE');
+	END IF;
+END;
+/
+
+SQL> UPDATE EMPLOYEES SET SALARY = 2600 WHERE EMPLOYEENUMBER = 1702;
+
+-- EXERCISE 7
+
+CREATE OR REPLACE TRIGGER TRG_PREVENT_DEL
+BEFORE DELETE ON ORDERDETAILS
+FOR EACH ROW
+
+BEGIN
+	RAISE_APPLICATION_ERROR(-20000, 'DELETION FROM ORDER DETAILS TABLE IS NOT ALLOWED!');
+
+END;
+/
+
+
+-- SAMPLE TESTING
+SQL> DELETE FROM ORDERDETAILS;
+
+-- PRACTICAL 6
+ 
+-- CREATE SEQUENCE WITH A NAME -- FOR ORDERS TABLE USAGE
+CREATE SEQUENCE OrderNum_Seq
+MINVALUE 10426
+MAXVALUE 999999999999999999999999999
+START WITH 10426
+INCREMENT BY 1
+NOCACHE;
+
+INSERT INTO ORDERS VALUES
+(OrderNum_Seq.nextval, SYSDATE, SYSDATE, SYSDATE, 'In Process', NULL, 496, 0.00, 0.05, 0.00, 0.00);
