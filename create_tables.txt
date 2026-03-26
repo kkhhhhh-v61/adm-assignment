@@ -4,18 +4,18 @@ CREATE TABLE ADDRESS (
   City VARCHAR2(100) NOT NULL,
   State VARCHAR2(100) NOT NULL,
   Postcode CHAR(5) NOT NULL,
-  CONSTRAINT pk_addr_addressid PRIMARY KEY (AddressID),
-  CONSTRAINT chk_addr_addressid CHECK (REGEXP_LIKE(AddressID, '^A[0-9]{5}$')),
-  CONSTRAINT chk_addr_postcode CHECK (REGEXP_LIKE(Postcode, '^[0-9]{5}$'))
+  CONSTRAINT pk_a_addressid PRIMARY KEY (AddressID),
+  CONSTRAINT chk_a_addressid CHECK (REGEXP_LIKE(AddressID, '^A[0-9]{5}$')),
+  CONSTRAINT chk_a_postcode CHECK (REGEXP_LIKE(Postcode, '^[0-9]{5}$'))
 );
 
 CREATE TABLE CATEGORY (
   CategoryID CHAR(6) NOT NULL,
   CategoryName VARCHAR2(100) NOT NULL,
   Description VARCHAR2(255),
-  CONSTRAINT pk_cat_categoryid PRIMARY KEY (CategoryID),
-  CONSTRAINT chk_cat_categoryid CHECK (REGEXP_LIKE(CategoryID, '^C[0-9]{5}$')),
-  CONSTRAINT uq_cat_categoryname UNIQUE (CategoryName)
+  CONSTRAINT pk_c_categoryid PRIMARY KEY (CategoryID),
+  CONSTRAINT chk_c_categoryid CHECK (REGEXP_LIKE(CategoryID, '^C[0-9]{5}$')),
+  CONSTRAINT uq_c_categoryname UNIQUE (CategoryName)
 );
 
 CREATE TABLE VOUCHERTYPE (
@@ -42,18 +42,18 @@ CREATE TABLE "SET" (
   SetID CHAR(7) NOT NULL,
   SetName VARCHAR2(100) NOT NULL,
   Discount NUMBER(5,2) DEFAULT 0,
-  CONSTRAINT pk_st_setid PRIMARY KEY (SetID),
-  CONSTRAINT chk_st_setid CHECK (REGEXP_LIKE(SetID, '^ST[0-9]{5}$')),
-  CONSTRAINT chk_st_discount CHECK (Discount >= 0 AND Discount <= 100)
+  CONSTRAINT pk_se_setid PRIMARY KEY (SetID),
+  CONSTRAINT chk_se_setid CHECK (REGEXP_LIKE(SetID, '^ST[0-9]{5}$')),
+  CONSTRAINT chk_se_discount CHECK (Discount >= 0 AND Discount <= 100)
 );
 
 CREATE TABLE PACKAGE (
   PackageID CHAR(7) NOT NULL,
   PackageName VARCHAR2(100) NOT NULL,
   DiscountedPrice NUMBER(6,2) NOT NULL,
-  CONSTRAINT pk_pkg_packageid PRIMARY KEY (PackageID),
-  CONSTRAINT chk_pkg_packageid CHECK (REGEXP_LIKE(PackageID, '^PK[0-9]{5}$')),
-  CONSTRAINT chk_pkg_discountedprice CHECK (DiscountedPrice >= 0)
+  CONSTRAINT pk_pa_packageid PRIMARY KEY (PackageID),
+  CONSTRAINT chk_pa_packageid CHECK (REGEXP_LIKE(PackageID, '^PK[0-9]{5}$')),
+  CONSTRAINT chk_pa_discountedprice CHECK (DiscountedPrice >= 0)
 );
 
 CREATE TABLE PROMOTION (
@@ -66,14 +66,14 @@ CREATE TABLE PROMOTION (
   CurrentRedemptions NUMBER(6) DEFAULT 0 NOT NULL,
   StartDate DATE NOT NULL,
   EndDate DATE NOT NULL,
-  CONSTRAINT pk_promo_promotionid PRIMARY KEY (PromotionID),
-  CONSTRAINT chk_promo_promotionid CHECK (REGEXP_LIKE(PromotionID, '^P[0-9]{5}$')),
-  CONSTRAINT chk_promo_discountpercentage CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 100),
-  CONSTRAINT chk_promo_minspentamount CHECK (MinSpentAmount >= 0),
-  CONSTRAINT chk_promo_maxdiscountamount CHECK (MaxDiscountAmount >= 0),
-  CONSTRAINT chk_promo_maxredemptions CHECK (MaxRedemptions > 0),
-  CONSTRAINT chk_promo_currentredemptions CHECK (CurrentRedemptions >= 0),
-  CONSTRAINT chk_promo_enddate CHECK (EndDate >= StartDate)
+  CONSTRAINT pk_pr_promotionid PRIMARY KEY (PromotionID),
+  CONSTRAINT chk_pr_promotionid CHECK (REGEXP_LIKE(PromotionID, '^P[0-9]{5}$')),
+  CONSTRAINT chk_pr_discountpercentage CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 100),
+  CONSTRAINT chk_pr_minspentamount CHECK (MinSpentAmount >= 0),
+  CONSTRAINT chk_pr_maxdiscountamount CHECK (MaxDiscountAmount >= 0),
+  CONSTRAINT chk_pr_maxredemptions CHECK (MaxRedemptions > 0),
+  CONSTRAINT chk_pr_currentredemptions CHECK (CurrentRedemptions >= 0),
+  CONSTRAINT chk_pr_enddate CHECK (EndDate >= StartDate)
 );
 
 CREATE TABLE DELIVERYCOMPANY (
@@ -100,9 +100,9 @@ CREATE TABLE MEMBER (
   PhoneNo VARCHAR2(20) NOT NULL,
   Password VARCHAR2(255) NOT NULL,
   RegistrationDate DATE DEFAULT SYSDATE NOT NULL,
-  CONSTRAINT pk_mem_memberid PRIMARY KEY (MemberID),
-  CONSTRAINT chk_mem_memberid CHECK (REGEXP_LIKE(MemberID, '^M[0-9]{5}$')),
-  CONSTRAINT uq_mem_email UNIQUE (Email)
+  CONSTRAINT pk_m_memberid PRIMARY KEY (MemberID),
+  CONSTRAINT chk_m_memberid CHECK (REGEXP_LIKE(MemberID, '^M[0-9]{5}$')),
+  CONSTRAINT uq_m_email UNIQUE (Email)
 );
 
 CREATE TABLE RESTAURANT (
@@ -113,11 +113,11 @@ CREATE TABLE RESTAURANT (
   AverageRating NUMBER(3,2) DEFAULT 0.00,
   IsHalal CHAR(1) NOT NULL,
   OperationHours VARCHAR2(255),
-  CONSTRAINT pk_rest_restaurantid PRIMARY KEY (RestaurantID),
-  CONSTRAINT fk_rest_addressid FOREIGN KEY (AddressID) REFERENCES ADDRESS(AddressID),
-  CONSTRAINT chk_rest_restaurantid CHECK (REGEXP_LIKE(RestaurantID, '^R[0-9]{5}$')),
-  CONSTRAINT chk_rest_averagerating CHECK (AverageRating >= 1 AND AverageRating <= 5),
-  CONSTRAINT chk_rest_ishalal CHECK (IsHalal IN ('Y', 'N'))
+  CONSTRAINT pk_r_restaurantid PRIMARY KEY (RestaurantID),
+  CONSTRAINT fk_r_addressid FOREIGN KEY (AddressID) REFERENCES ADDRESS(AddressID),
+  CONSTRAINT chk_r_restaurantid CHECK (REGEXP_LIKE(RestaurantID, '^R[0-9]{5}$')),
+  CONSTRAINT chk_r_averagerating CHECK (AverageRating >= 1 AND AverageRating <= 5),
+  CONSTRAINT chk_r_ishalal CHECK (IsHalal IN ('Y', 'N'))
 );
 
 CREATE TABLE DELIVERYRIDER (
@@ -136,11 +136,11 @@ CREATE TABLE VOUCHER (
   VoucherCode VARCHAR2(50) NOT NULL,
   MinSpend NUMBER(6,2) DEFAULT 0 NOT NULL,
   ExpiryDate DATE NOT NULL,
-  CONSTRAINT pk_vcr_voucherid PRIMARY KEY (VoucherID),
-  CONSTRAINT fk_vcr_vouchertypeid FOREIGN KEY (VoucherTypeID) REFERENCES VOUCHERTYPE(VoucherTypeID),
-  CONSTRAINT chk_vcr_voucherid CHECK (REGEXP_LIKE(VoucherID, '^V[0-9]{5}$')),
-  CONSTRAINT uq_vcr_vouchercode UNIQUE (VoucherCode),
-  CONSTRAINT chk_vcr_minspend CHECK (MinSpend >= 0)
+  CONSTRAINT pk_v_voucherid PRIMARY KEY (VoucherID),
+  CONSTRAINT fk_v_vouchertypeid FOREIGN KEY (VoucherTypeID) REFERENCES VOUCHERTYPE(VoucherTypeID),
+  CONSTRAINT chk_v_voucherid CHECK (REGEXP_LIKE(VoucherID, '^V[0-9]{5}$')),
+  CONSTRAINT uq_v_vouchercode UNIQUE (VoucherCode),
+  CONSTRAINT chk_v_minspend CHECK (MinSpend >= 0)
 );
 
 CREATE TABLE MEMBERADDRESS (
@@ -159,12 +159,12 @@ CREATE TABLE ITEM (
   Description VARCHAR2(255),
   Price NUMBER(6,2) NOT NULL,
   IsAvailable CHAR(1) DEFAULT 'Y' NOT NULL,
-  CONSTRAINT pk_itm_itemid PRIMARY KEY (ItemID),
-  CONSTRAINT fk_itm_restaurantid FOREIGN KEY (RestaurantID) REFERENCES RESTAURANT(RestaurantID),
-  CONSTRAINT fk_itm_categoryid FOREIGN KEY (CategoryID) REFERENCES CATEGORY(CategoryID),
-  CONSTRAINT chk_itm_itemid CHECK (REGEXP_LIKE(ItemID, '^I[0-9]{5}$')),
-  CONSTRAINT chk_itm_price CHECK (Price >= 0),
-  CONSTRAINT chk_itm_isavailable CHECK (IsAvailable IN ('Y', 'N'))
+  CONSTRAINT pk_i_itemid PRIMARY KEY (ItemID),
+  CONSTRAINT fk_i_restaurantid FOREIGN KEY (RestaurantID) REFERENCES RESTAURANT(RestaurantID),
+  CONSTRAINT fk_i_categoryid FOREIGN KEY (CategoryID) REFERENCES CATEGORY(CategoryID),
+  CONSTRAINT chk_i_itemid CHECK (REGEXP_LIKE(ItemID, '^I[0-9]{5}$')),
+  CONSTRAINT chk_i_price CHECK (Price >= 0),
+  CONSTRAINT chk_i_isavailable CHECK (IsAvailable IN ('Y', 'N'))
 );
 
 CREATE TABLE SUBSCRIPTION (
@@ -174,12 +174,12 @@ CREATE TABLE SUBSCRIPTION (
   StartDate DATE NOT NULL,
   EndDate DATE NOT NULL,
   Status VARCHAR2(20) DEFAULT 'Active' NOT NULL,
-  CONSTRAINT pk_sub_subscriptionid PRIMARY KEY (SubscriptionID),
-  CONSTRAINT fk_sub_memberid FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID),
-  CONSTRAINT fk_sub_subscriptionplanid FOREIGN KEY (SubscriptionPlanID) REFERENCES SUBSCRIPTIONPLAN(SubscriptionPlanID),
-  CONSTRAINT chk_sub_subscriptionid CHECK (REGEXP_LIKE(SubscriptionID, '^S[0-9]{5}$')),
-  CONSTRAINT chk_sub_enddate CHECK (EndDate > StartDate),
-  CONSTRAINT chk_sub_status CHECK (Status IN ('Active', 'Expired', 'Cancelled'))
+  CONSTRAINT pk_su_subscriptionid PRIMARY KEY (SubscriptionID),
+  CONSTRAINT fk_su_memberid FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID),
+  CONSTRAINT fk_su_subscriptionplanid FOREIGN KEY (SubscriptionPlanID) REFERENCES SUBSCRIPTIONPLAN(SubscriptionPlanID),
+  CONSTRAINT chk_su_subscriptionid CHECK (REGEXP_LIKE(SubscriptionID, '^S[0-9]{5}$')),
+  CONSTRAINT chk_su_enddate CHECK (EndDate > StartDate),
+  CONSTRAINT chk_su_status CHECK (Status IN ('Active', 'Expired', 'Cancelled'))
 );
 
 CREATE TABLE DELIVERY (
@@ -191,13 +191,13 @@ CREATE TABLE DELIVERY (
   DeliveryDate DATE NOT NULL,
   DeliveryTime VARCHAR2(20) NOT NULL,
   DeliveryPrice NUMBER(6,2) DEFAULT 0.00 NOT NULL,
-  CONSTRAINT pk_del_deliveryid PRIMARY KEY (DeliveryID),
-  CONSTRAINT fk_del_deliverytypeid FOREIGN KEY (DeliveryTypeID) REFERENCES DELIVERYTYPE(DeliveryTypeID),
-  CONSTRAINT fk_del_deliveryriderid FOREIGN KEY (DeliveryRiderID) REFERENCES DELIVERYRIDER(DeliveryRiderID),
-  CONSTRAINT fk_del_addressid FOREIGN KEY (AddressID) REFERENCES ADDRESS(AddressID),
-  CONSTRAINT chk_del_deliveryid CHECK (REGEXP_LIKE(DeliveryID, '^D[0-9]{5}$')),
-  CONSTRAINT chk_del_distance CHECK (Distance > 0),
-  CONSTRAINT chk_del_deliveryprice CHECK (DeliveryPrice >= 0)
+  CONSTRAINT pk_d_deliveryid PRIMARY KEY (DeliveryID),
+  CONSTRAINT fk_d_deliverytypeid FOREIGN KEY (DeliveryTypeID) REFERENCES DELIVERYTYPE(DeliveryTypeID),
+  CONSTRAINT fk_d_deliveryriderid FOREIGN KEY (DeliveryRiderID) REFERENCES DELIVERYRIDER(DeliveryRiderID),
+  CONSTRAINT fk_d_addressid FOREIGN KEY (AddressID) REFERENCES ADDRESS(AddressID),
+  CONSTRAINT chk_d_deliveryid CHECK (REGEXP_LIKE(DeliveryID, '^D[0-9]{5}$')),
+  CONSTRAINT chk_d_distance CHECK (Distance > 0),
+  CONSTRAINT chk_d_deliveryprice CHECK (DeliveryPrice >= 0)
 );
 
 CREATE TABLE MEMBERVOUCHER (
@@ -241,14 +241,14 @@ CREATE TABLE "ORDER" (
   OrderTime VARCHAR2(20) NOT NULL,
   TotalAmount NUMBER(8,2) DEFAULT 0.00 NOT NULL,
   OrderStatus VARCHAR2(50) DEFAULT 'Pending' NOT NULL,
-  CONSTRAINT pk_ord_orderid PRIMARY KEY (OrderID),
-  CONSTRAINT fk_ord_memberid FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID),
-  CONSTRAINT fk_ord_deliveryid FOREIGN KEY (DeliveryID) REFERENCES DELIVERY(DeliveryID),
-  CONSTRAINT fk_ord_membervoucherid FOREIGN KEY (MemberVoucherID) REFERENCES MEMBERVOUCHER(MemberVoucherID),
-  CONSTRAINT chk_ord_orderid CHECK (REGEXP_LIKE(OrderID, '^O[0-9]{5}$')),
-  CONSTRAINT chk_ord_pickuptype CHECK (PickupType IN ('Delivery', 'Pickup')),
-  CONSTRAINT chk_ord_totalamount CHECK (TotalAmount >= 0),
-  CONSTRAINT chk_ord_orderstatus CHECK (OrderStatus IN ('Pending', 'Preparing', 'Delivering', 'Completed', 'Cancelled'))
+  CONSTRAINT pk_o_orderid PRIMARY KEY (OrderID),
+  CONSTRAINT fk_o_memberid FOREIGN KEY (MemberID) REFERENCES MEMBER(MemberID),
+  CONSTRAINT fk_o_deliveryid FOREIGN KEY (DeliveryID) REFERENCES DELIVERY(DeliveryID),
+  CONSTRAINT fk_o_membervoucherid FOREIGN KEY (MemberVoucherID) REFERENCES MEMBERVOUCHER(MemberVoucherID),
+  CONSTRAINT chk_o_orderid CHECK (REGEXP_LIKE(OrderID, '^O[0-9]{5}$')),
+  CONSTRAINT chk_o_pickuptype CHECK (PickupType IN ('Delivery', 'Pickup')),
+  CONSTRAINT chk_o_totalamount CHECK (TotalAmount >= 0),
+  CONSTRAINT chk_o_orderstatus CHECK (OrderStatus IN ('Pending', 'Preparing', 'Delivering', 'Completed', 'Cancelled'))
 );
 
 CREATE TABLE DELIVERYFEEDBACK (
@@ -257,10 +257,10 @@ CREATE TABLE DELIVERYFEEDBACK (
   Rating NUMBER(1) NOT NULL,
   "Comment" VARCHAR2(255),
   FeedbackDate DATE DEFAULT SYSDATE NOT NULL,
-  CONSTRAINT pk_dfb_deliveryfeedbackid PRIMARY KEY (DeliveryFeedbackID),
-  CONSTRAINT fk_dfb_deliveryid FOREIGN KEY (DeliveryID) REFERENCES DELIVERY(DeliveryID),
-  CONSTRAINT chk_dfb_deliveryfeedbackid CHECK (REGEXP_LIKE(DeliveryFeedbackID, '^DF[0-9]{5}$')),
-  CONSTRAINT chk_dfb_rating CHECK (Rating >= 1 AND Rating <= 5)
+  CONSTRAINT pk_df_deliveryfeedbackid PRIMARY KEY (DeliveryFeedbackID),
+  CONSTRAINT fk_df_deliveryid FOREIGN KEY (DeliveryID) REFERENCES DELIVERY(DeliveryID),
+  CONSTRAINT chk_df_deliveryfeedbackid CHECK (REGEXP_LIKE(DeliveryFeedbackID, '^DF[0-9]{5}$')),
+  CONSTRAINT chk_df_rating CHECK (Rating >= 1 AND Rating <= 5)
 );
 
 CREATE TABLE PAYMENT (
@@ -269,12 +269,12 @@ CREATE TABLE PAYMENT (
   SubscriptionID CHAR(6),
   PaymentMethod VARCHAR2(50) NOT NULL,
   PaymentStatus VARCHAR2(50) DEFAULT 'Pending' NOT NULL,
-  CONSTRAINT pk_pay_paymentid PRIMARY KEY (PaymentID),
-  CONSTRAINT fk_pay_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
-  CONSTRAINT fk_pay_subscriptionid FOREIGN KEY (SubscriptionID) REFERENCES SUBSCRIPTION(SubscriptionID),
-  CONSTRAINT chk_pay_paymentid CHECK (REGEXP_LIKE(PaymentID, '^PM[0-9]{5}$')),
-  CONSTRAINT chk_pay_paymentmethod CHECK (PaymentMethod IN ('Credit Card', 'Debit Card', 'E-Wallet', 'Cash')),
-  CONSTRAINT chk_pay_paymentstatus CHECK (PaymentStatus IN ('Pending', 'Completed', 'Failed'))
+  CONSTRAINT pk_pm_paymentid PRIMARY KEY (PaymentID),
+  CONSTRAINT fk_pm_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
+  CONSTRAINT fk_pm_subscriptionid FOREIGN KEY (SubscriptionID) REFERENCES SUBSCRIPTION(SubscriptionID),
+  CONSTRAINT chk_pm_paymentid CHECK (REGEXP_LIKE(PaymentID, '^PM[0-9]{5}$')),
+  CONSTRAINT chk_pm_paymentmethod CHECK (PaymentMethod IN ('Credit Card', 'Debit Card', 'E-Wallet', 'Cash')),
+  CONSTRAINT chk_pm_paymentstatus CHECK (PaymentStatus IN ('Pending', 'Completed', 'Failed'))
 );
 
 CREATE TABLE ORDERITEM (
@@ -309,8 +309,8 @@ CREATE TABLE ORDERFEEDBACK (
   Rating NUMBER(1) NOT NULL,
   "Comment" VARCHAR2(255),
   FeedbackDate DATE DEFAULT SYSDATE NOT NULL,
-  CONSTRAINT pk_ofb_orderfeedbackid PRIMARY KEY (OrderFeedbackID),
-  CONSTRAINT fk_ofb_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
-  CONSTRAINT chk_ofb_orderfeedbackid CHECK (REGEXP_LIKE(OrderFeedbackID, '^OF[0-9]{5}$')),
-  CONSTRAINT chk_ofb_rating CHECK (Rating >= 1 AND Rating <= 5)
+  CONSTRAINT pk_of_orderfeedbackid PRIMARY KEY (OrderFeedbackID),
+  CONSTRAINT fk_of_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
+  CONSTRAINT chk_of_orderfeedbackid CHECK (REGEXP_LIKE(OrderFeedbackID, '^OF[0-9]{5}$')),
+  CONSTRAINT chk_of_rating CHECK (Rating >= 1 AND Rating <= 5)
 );
