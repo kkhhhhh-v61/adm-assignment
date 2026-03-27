@@ -1,0 +1,60 @@
+-- VT00001: Percentage Discount
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00001', 'VT00001', 'OFF10PCT', 15.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00002', 'VT00001', 'OFF15PCT', 25.00, TO_DATE('2026-06-30', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00003', 'VT00001', 'HALFPRICE50', 50.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00004', 'VT00001', 'LUCKY20', 30.00, TO_DATE('2025-12-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00005', 'VT00001', 'MEGA25', 100.00, TO_DATE('2026-08-31', 'YYYY-MM-DD'));
+-- VT00002: Fixed Amount Discount
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00006', 'VT00002', 'MINUS5RM', 20.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00007', 'VT00002', 'SAVE10NOW', 40.00, TO_DATE('2026-10-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00008', 'VT00002', 'DISC15CASH', 60.00, TO_DATE('2026-11-30', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00009', 'VT00002', '20OFFCART', 80.00, TO_DATE('2025-11-30', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00010', 'VT00002', 'SUPER30', 120.00, TO_DATE('2026-09-30', 'YYYY-MM-DD'));
+-- VT00003: Free Delivery
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00011', 'VT00003', 'FREEDEL25', 25.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00012', 'VT00003', 'ZERODELIVERY', 35.00, TO_DATE('2026-07-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00013', 'VT00003', 'SHIPFREE', 15.00, TO_DATE('2026-05-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00014', 'VT00003', 'NODELIVERYFEE', 0.00, TO_DATE('2025-10-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00015', 'VT00003', 'DELIVERFREE50', 50.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+-- VT00004: Buy 1 Free 1
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00016', 'VT00004', 'BOGOFOOD', 20.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00017', 'VT00004', 'B1F1DRINKS', 15.00, TO_DATE('2026-08-15', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00018', 'VT00004', 'DOUBLETREAT', 30.00, TO_DATE('2026-09-30', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00019', 'VT00004', 'TWINMEAL', 40.00, TO_DATE('2026-01-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00020', 'VT00004', 'BOGOSPECIAL', 25.00, TO_DATE('2026-11-15', 'YYYY-MM-DD'));
+-- VT00005: First Time User
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00021', 'VT00005', 'NEWBIE15', 15.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00022', 'VT00005', 'WELCOME20', 20.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00023', 'VT00005', 'FIRSTORDER10', 0.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00024', 'VT00005', 'HELLOFRESH', 25.00, TO_DATE('2025-09-30', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00025', 'VT00005', 'START30', 30.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+-- VT00006: Seasonal Promo
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00026', 'VT00006', 'CNY2026', 38.00, TO_DATE('2026-02-28', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00027', 'VT00006', 'RAYA2026', 40.00, TO_DATE('2026-04-30', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00028', 'VT00006', 'DEEPAVALI26', 35.00, TO_DATE('2026-11-15', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00029', 'VT00006', 'XMAS2025', 50.00, TO_DATE('2025-12-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00030', 'VT00006', 'MERDEKA69', 31.00, TO_DATE('2026-09-01', 'YYYY-MM-DD'));
+-- VT00007: Minimum Spend Reward
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00031', 'VT00007', 'SPEND50GET5', 50.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00032', 'VT00007', 'SPEND80GET10', 80.00, TO_DATE('2026-10-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00033', 'VT00007', 'SPEND100GET15', 100.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00034', 'VT00007', 'BIGEATER20', 150.00, TO_DATE('2025-08-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00035', 'VT00007', 'PARTY50', 300.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+-- VT00008: VIP Exclusive
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00036', 'VT00008', 'VIPONLY15', 20.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00037', 'VT00008', 'PREMIUMDEL', 0.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00038', 'VT00008', 'ELITE25', 40.00, TO_DATE('2026-08-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00039', 'VT00008', 'VIPXMAS25', 50.00, TO_DATE('2025-12-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00040', 'VT00008', 'ROYAL50', 100.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+-- VT00009: Birthday Gift
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00041', 'VT00009', 'BDAYCAKE10', 15.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00042', 'VT00009', 'HAPPYBDAY20', 30.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00043', 'VT00009', 'MYMONTH15', 20.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00044', 'VT00009', 'BDAYTREAT25', 0.00, TO_DATE('2025-12-31', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00045', 'VT00009', 'PARTYBDAY30', 50.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+-- VT00010: Flash Sale
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00046', 'VT00010', 'FLASH50OFF', 10.00, TO_DATE('2026-04-01', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00047', 'VT00010', 'QUICK20', 15.00, TO_DATE('2026-05-01', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00048', 'VT00010', 'RUSHHOUR30', 25.00, TO_DATE('2026-06-15', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00049', 'VT00010', 'LUNCHFLASH', 15.00, TO_DATE('2025-11-20', 'YYYY-MM-DD')); 
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00050', 'VT00010', 'MIDNIGHTCRAZY', 20.00, TO_DATE('2026-07-01', 'YYYY-MM-DD'));

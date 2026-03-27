@@ -1,0 +1,10 @@
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00001', 'Percentage Discount', 'Offers a percentage off the total order amount.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00002', 'Fixed Amount Discount', 'Offers a fixed flat rate reduction on the order total.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00003', 'Free Delivery', 'Waives the delivery fee for the order completely.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00004', 'Buy 1 Free 1', 'Buy one selected item and get another identical item for free.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00005', 'First Time User', 'Exclusive one-time discount for newly registered members.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00006', 'Seasonal Promo', 'Special discounts available only during holidays and festive seasons.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00007', 'Minimum Spend Reward', 'Cash discount applied automatically when a minimum spend is reached.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00008', 'VIP Exclusive', 'Special high-value vouchers claimable only by active VIP members.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00009', 'Birthday Gift', 'Special treat voucher given during the member''s birthday month.');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00010', 'Flash Sale', 'Highly time-limited discount designed for quick redemptions during peak hours.');
