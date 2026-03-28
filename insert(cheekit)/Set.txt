@@ -1,0 +1,32 @@
+-- 3. "Set" (30 Rows) - The 'Discount' is the amount saved by buying the set
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00001', 'Nasi Lemak Basic Set', 4.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00002', 'Nasi Lemak Ayam Goreng Set', 6.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00003', 'Chicken Rice Roasted Set', 5.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00004', 'Chicken Rice Steamed Set', 5.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00005', 'Burger Beef Combo', 8.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00006', 'Burger Chicken Combo', 8.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00007', 'Spaghetti Bolognese Set', 7.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00008', 'Spaghetti Carbonara Set', 7.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00009', 'Sushi Platter Set A', 12.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00010', 'Sushi Platter Set B', 15.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00011', 'Mee Goreng Mamak Set', 4.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00012', 'Maggi Goreng Double Set', 5.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00013', 'Roti Canai Breakfast Set', 3.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00014', 'Dim Sum Trio Set', 9.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00015', 'Curry Laksa Special Set', 6.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00016', 'Asam Laksa Penang Set', 6.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00017', 'Korean Fried Chicken Set', 10.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00018', 'Bibimbap Healthy Set', 8.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00019', 'Pizza Margherita Personal Set', 9.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00020', 'Pizza Pepperoni Personal Set', 10.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00021', 'Grilled Salmon Bento', 14.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00022', 'Chicken Teriyaki Bento', 12.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00023', 'Vegetarian Mixed Rice Set', 5.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00024', 'Ayam Penyet Supreme Set', 7.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00025', 'Satay Chicken (10pcs) Set', 8.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00026', 'Satay Beef (10pcs) Set', 9.50);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00027', 'Fish and Chips Classic Set', 11.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00028', 'Mixed Grill Western Set', 16.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00029', 'Tom Yum Goong Seafood Set', 14.00);
+INSERT INTO "Set" (SetID, SetName, Discount) VALUES ('ST00030', 'Pad Thai Street Set', 8.00);
+
