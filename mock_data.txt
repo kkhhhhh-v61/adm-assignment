@@ -1,0 +1,106 @@
+-- 1. ADDRESS
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00001', '12 Jalan Bintang', 'Kuala Lumpur', 'Kuala Lumpur', '55100');
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00002', '34 Jalan Bulan', 'Petaling Jaya', 'Selangor', '46000');
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00003', '56 Jalan Matahari', 'George Town', 'Penang', '10000');
+
+-- 2. CATEGORY
+INSERT INTO CATEGORY (CategoryID, CategoryName, Description) VALUES ('C00001', 'Beverages', 'Hot and cold drinks');
+INSERT INTO CATEGORY (CategoryID, CategoryName, Description) VALUES ('C00002', 'Mains', 'Main courses and heavy meals');
+INSERT INTO CATEGORY (CategoryID, CategoryName, Description) VALUES ('C00003', 'Desserts', 'Sweets and pastries');
+
+-- 3. VOUCHERTYPE
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00001', 'Percentage Discount', 'Percentage off total bill');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT00002', 'Free Delivery', 'Waives delivery fee');
+
+-- 4. SUBSCRIPTIONPLAN
+INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) VALUES ('SP00001', 'Normal Member', 30, 0.00);
+INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) VALUES ('SP00002', 'VIP Member', 30, 6.00);
+
+-- 5. "SET"
+INSERT INTO "SET" (SetID, SetName, Discount) VALUES ('ST00001', 'Lunch Combo', 10.00);
+INSERT INTO "SET" (SetID, SetName, Discount) VALUES ('ST00002', 'Dinner Feast', 15.00);
+
+-- 6. PACKAGE
+INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00001', 'Family Burger Pack', 45.00);
+INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00002', 'Party Sushi Pack', 85.00);
+
+-- 7. PROMOTION
+INSERT INTO PROMOTION (PromotionID, PromoName, DiscountPercentage, MinSpentAmount, MaxDiscountAmount, MaxRedemptions, CurrentRedemptions, StartDate, EndDate) 
+VALUES ('P00001', 'Raya Special', 20.00, 30.00, 15.00, 100, 5, TO_DATE('2026-03-01', 'YYYY-MM-DD'), TO_DATE('2026-04-30', 'YYYY-MM-DD'));
+
+-- 8. DELIVERYCOMPANY
+INSERT INTO DELIVERYCOMPANY (DeliveryCompanyID, CompanyName) VALUES ('DC00001', 'GrabFood');
+INSERT INTO DELIVERYCOMPANY (DeliveryCompanyID, CompanyName) VALUES ('DC00002', 'FoodPanda');
+
+-- 9. DELIVERYTYPE
+INSERT INTO DELIVERYTYPE (DeliveryTypeID, DeliveryName, DeliveryFee) VALUES ('DT00001', 'Standard Delivery', 5.00);
+INSERT INTO DELIVERYTYPE (DeliveryTypeID, DeliveryName, DeliveryFee) VALUES ('DT00002', 'Express Delivery', 10.00);
+
+-- 10. MEMBER
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M00001', 'Alice Tan', 'alice@email.com', '012-1111111', 'pass123', SYSDATE);
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M00002', 'Bob Lee', 'bob@email.com', '013-2222222', 'pass123', SYSDATE);
+
+-- 11. RESTAURANT
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, AverageRating, IsHalal, OperationHours) VALUES ('R00001', 'A00001', 'Burger Master', '03-12345678', 4.5, 'Y', '10AM - 10PM');
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, AverageRating, IsHalal, OperationHours) VALUES ('R00002', 'A00002', 'Sushi Express', '03-87654321', 4.8, 'N', '11AM - 9PM');
+
+-- 12. DELIVERYRIDER
+INSERT INTO DELIVERYRIDER (DeliveryRiderID, DeliveryCompanyID, RiderName, ContactNo) VALUES ('DR00001', 'DC00001', 'Rider Ali', '014-1234123');
+INSERT INTO DELIVERYRIDER (DeliveryRiderID, DeliveryCompanyID, RiderName, ContactNo) VALUES ('DR00002', 'DC00002', 'Rider Muthu', '015-9876987');
+
+-- 13. VOUCHER
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00001', 'VT00001', 'SAVE20', 20.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherCode, MinSpend, ExpiryDate) VALUES ('V00002', 'VT00002', 'FREEDEL', 15.00, TO_DATE('2026-12-31', 'YYYY-MM-DD'));
+
+-- 14. MEMBERADDRESS
+INSERT INTO MEMBERADDRESS (MemberID, AddressID) VALUES ('M00001', 'A00001');
+INSERT INTO MEMBERADDRESS (MemberID, AddressID) VALUES ('M00002', 'A00002');
+
+-- 15. ITEM
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I00001', 'R00001', 'C00002', 'Classic Cheeseburger', 'Beef patty with cheese', 15.50, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I00002', 'R00002', 'C00002', 'Salmon Maki', '6 pieces salmon roll', 18.00, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I00003', 'R00001', 'C00001', 'Iced Lemon Tea', 'Refreshing drink', 4.50, 'Y');
+
+-- 16. SUBSCRIPTION
+INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status) VALUES ('S00001', 'M00001', 'SP00002', TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2026-01-31', 'YYYY-MM-DD'), 'Expired');
+INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status) VALUES ('S00002', 'M00002', 'SP00002', TO_DATE('2026-03-01', 'YYYY-MM-DD'), TO_DATE('2026-03-31', 'YYYY-MM-DD'), 'Active');
+
+-- 17. DELIVERY
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, Distance, DeliveryDate, DeliveryTime, DeliveryPrice) 
+VALUES ('D00001', 'DT00001', 'DR00001', 'A00001', 5.5, TO_DATE('2026-03-30', 'YYYY-MM-DD'), '12:30 PM', 5.00);
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, Distance, DeliveryDate, DeliveryTime, DeliveryPrice) 
+VALUES ('D00002', 'DT00002', 'DR00002', 'A00002', 2.0, TO_DATE('2026-03-30', 'YYYY-MM-DD'), '01:00 PM', 10.00);
+
+-- 18. MEMBERVOUCHER
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV00001', 'M00001', 'V00001', SYSDATE, 'Y');
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV00002', 'M00002', 'V00002', SYSDATE, 'N');
+
+-- 19. PACKAGEITEM
+INSERT INTO PACKAGEITEM (PackageID, ItemID, Quantity) VALUES ('PK00001', 'I00001', 2);
+INSERT INTO PACKAGEITEM (PackageID, ItemID, Quantity) VALUES ('PK00001', 'I00003', 2);
+
+-- 20. ITEMPROMOTION
+INSERT INTO ITEMPROMOTION (ItemID, PromotionID) VALUES ('I00001', 'P00001');
+
+-- 21. "ORDER"
+INSERT INTO "ORDER" (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O00001', 'M00001', 'D00001', 'MV00001', 'Delivery', TO_DATE('2026-03-30', 'YYYY-MM-DD'), '12:00 PM', 31.00, 'Completed');
+INSERT INTO "ORDER" (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O00002', 'M00002', NULL, NULL, 'Pickup', TO_DATE('2026-03-30', 'YYYY-MM-DD'), '06:00 PM', 18.00, 'Pending');
+
+-- 22. DELIVERYFEEDBACK
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, "Comment", FeedbackDate) VALUES ('DF00001', 'D00001', 5, 'Fast and polite', SYSDATE);
+
+-- 23. PAYMENT
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) VALUES ('PM00001', 'O00001', NULL, 'Credit Card', 'Completed');
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) VALUES ('PM00002', NULL, 'S00002', 'E-Wallet', 'Completed');
+
+-- 24. ORDERITEM
+INSERT INTO ORDERITEM (OrderID, ItemID, SetID, Quantity, PriceEach) VALUES ('O00001', 'I00001', NULL, 2, 15.50);
+INSERT INTO ORDERITEM (OrderID, ItemID, SetID, Quantity, PriceEach) VALUES ('O00002', 'I00002', NULL, 1, 18.00);
+
+-- 25. ORDERPACKAGE
+INSERT INTO ORDERPACKAGE (OrderID, PackageID, Quantity, Subtotal) VALUES ('O00001', 'PK00001', 1, 45.00);
+
+-- 26. ORDERFEEDBACK
+INSERT INTO ORDERFEEDBACK (OrderFeedbackID, OrderID, Rating, "Comment", FeedbackDate) VALUES ('OF00001', 'O00001', 4, 'Burger was good but a bit cold', SYSDATE);
