@@ -1,0 +1,99 @@
+CL SCR
+
+-- basic sql*plus formatting
+SET LINESIZE 100
+SET PAGESIZE 100
+SET FEEDBACK OFF
+SET SQLBLANKLINES ON
+SET SERVEROUTPUT ON
+
+-- format columns to align properly
+COLUMN PLANID            FORMAT A15          HEADING 'PLAN ID'           JUSTIFY LEFT
+COLUMN PLANNAME          FORMAT A28          HEADING 'SUBSCRIPTION PLAN' JUSTIFY LEFT
+COLUMN TOTAL_SUBSCRIBERS FORMAT 99,999,990   HEADING 'SUBSCRIBERS'       JUSTIFY RIGHT
+COLUMN PERCENTAGE        FORMAT 990.00       HEADING 'SHARE (%)'         JUSTIFY RIGHT
+COLUMN TOTAL_REVENUE     FORMAT $999,990.99  HEADING 'REVENUE (RM)'      JUSTIFY RIGHT
+
+-- report header
+TTITLE LEFT '===============================================================================' SKIP 1 -
+       LEFT '                 CURRENT VIP REVENUE BY SUBSCRIPTION PLAN TYPE' SKIP 1 -
+       LEFT '===============================================================================' SKIP 2
+
+-- calculate grand total at the bottom
+BREAK ON REPORT
+COMPUTE SUM LABEL 'GRAND TOTAL :' OF TOTAL_SUBSCRIBERS PERCENTAGE TOTAL_REVENUE ON REPORT
+
+-- main query: get total subscribers, percentage, and revenue for each plan
+SELECT 
+    PLANID,
+    PLANNAME, 
+    TOTAL_SUBSCRIBERS, 
+    ROUND(RATIO_TO_REPORT(TOTAL_SUBSCRIBERS) OVER () * 100, 2) AS PERCENTAGE,
+    TOTAL_REVENUE
+FROM (
+    -- get data for paid plans
+    SELECT 
+        SP.SubscriptionPlanID AS PLANID,
+        SP.PlanName AS PLANNAME, 
+        COUNT(S.SubscriptionID) AS TOTAL_SUBSCRIBERS, 
+        SUM(SP.Price) AS TOTAL_REVENUE
+    FROM SUBSCRIPTIONPLAN SP
+    JOIN SUBSCRIPTION S ON SP.SubscriptionPlanID = S.SubscriptionPlanID
+    GROUP BY SP.SubscriptionPlanID, SP.PlanName
+    
+    UNION ALL
+    
+    -- get data for free members
+    SELECT 
+        '-' AS PLANID,
+        'Normal Member (Free)' AS PLANNAME, 
+        COUNT(M.MemberID) AS TOTAL_SUBSCRIBERS, 
+        0 AS TOTAL_REVENUE
+    FROM MEMBER M
+    WHERE M.MemberID NOT IN (SELECT MemberID FROM SUBSCRIPTION)
+)
+ORDER BY TOTAL_SUBSCRIBERS DESC;
+
+-- disable headers before printing summary
+TTITLE OFF
+CLEAR BREAKS
+CLEAR COMPUTES
+SET HEADING OFF
+
+-- pl/sql block to print the summary box without extra blank lines
+DECLARE
+    v_pop_plan VARCHAR2(50);
+    v_pop_users NUMBER;
+    v_prof_plan VARCHAR2(50);
+    v_prof_rev NUMBER;
+BEGIN
+    -- find the most popular plan
+    SELECT PLANNAME, TOTAL_SUBSCRIBERS INTO v_pop_plan, v_pop_users
+    FROM (
+        SELECT SP.PlanName AS PLANNAME, COUNT(S.SubscriptionID) AS TOTAL_SUBSCRIBERS
+        FROM SUBSCRIPTIONPLAN SP JOIN SUBSCRIPTION S ON SP.SubscriptionPlanID = S.SubscriptionPlanID
+        GROUP BY SP.PlanName ORDER BY TOTAL_SUBSCRIBERS DESC
+    ) WHERE ROWNUM = 1;
+
+    -- find the most profitable plan
+    SELECT PLANNAME, TOTAL_REVENUE INTO v_prof_plan, v_prof_rev
+    FROM (
+        SELECT SP.PlanName AS PLANNAME, SUM(SP.Price) AS TOTAL_REVENUE
+        FROM SUBSCRIPTIONPLAN SP JOIN SUBSCRIPTION S ON SP.SubscriptionPlanID = S.SubscriptionPlanID
+        GROUP BY SP.PlanName ORDER BY TOTAL_REVENUE DESC
+    ) WHERE ROWNUM = 1;
+
+    -- print output
+    DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(' [ EXECUTIVE SUMMARY ]');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> MOST POPULAR PLAN    : ' || v_pop_plan || ' (' || v_pop_users || ' Users)');
+    DBMS_OUTPUT.PUT_LINE(' >> MOST PROFITABLE PLAN : ' || v_prof_plan || ' (RM ' || v_prof_rev || ')');
+    DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------');
+END;
+/
+
+-- reset settings
+SET HEADING ON
+SET FEEDBACK ON
+CLEAR COLUMNS
