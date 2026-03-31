@@ -1,0 +1,52 @@
+-- Clear the terminal screen for a clean output
+CLEAR SCREEN;
+
+-- Formatting Commands
+SET LINESIZE 120;
+SET PAGESIZE 100;
+
+-- Add the Report Title
+TTITLE CENTER '===========================================================' SKIP 1 -
+       CENTER 'MENU ITEM DEAD STOCK AND UNDERPERFORMANCE SUMMARY' SKIP 1 -
+       CENTER '===========================================================' SKIP 2
+
+-- Adjust column widths and headers to reduce awkward spacing
+COLUMN "Item ID" FORMAT A10;
+COLUMN "Item Name" FORMAT A28;
+COLUMN "Price(RM)" FORMAT 999.90;
+COLUMN "Total Qty Sold" FORMAT 999,999;
+COLUMN "Total Revenue(RM)" FORMAT 99,999.90;
+COLUMN "Performance Status" FORMAT A32;
+
+-- Advanced Analytical Query for Dead Stock
+SELECT 
+    i.ItemID AS "Item ID",
+    i.ItemName AS "Item Name",
+    i.Price AS "Price(RM)",
+    NVL(SUM(oi.Quantity), 0) AS "Total Qty Sold",
+    NVL(SUM(oi.Quantity * i.Price), 0) AS "Total Revenue(RM)",
+    CASE 
+        WHEN NVL(SUM(oi.Quantity), 0) = 0 THEN '🚨 DEAD STOCK (Never Ordered)'
+        ELSE '⚠️ CRITICAL LOW (Under RM 50)'
+    END AS "Performance Status"
+FROM 
+    ITEM i
+LEFT JOIN 
+    ORDERITEM oi ON i.ItemID = oi.ItemID
+LEFT JOIN 
+    "ORDER" o ON oi.OrderID = o.OrderID AND o.OrderStatus != 'Cancelled'
+WHERE 
+    i.IsAvailable = 'Y' 
+GROUP BY 
+    i.ItemID,
+    i.ItemName,
+    i.Price
+HAVING 
+    NVL(SUM(oi.Quantity), 0) = 0 
+    OR NVL(SUM(oi.Quantity * i.Price), 0) < 50.00
+ORDER BY 
+    "Total Revenue(RM)" ASC, 
+    "Total Qty Sold" ASC;
+
+-- Turn off the title for future queries
+TTITLE OFF;
