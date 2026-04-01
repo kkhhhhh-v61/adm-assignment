@@ -38,7 +38,7 @@ CREATE TABLE SUBSCRIPTIONPLAN (
   CONSTRAINT chk_sp_price CHECK (Price >= 0)
 );
 
-CREATE TABLE "SET" (
+CREATE TABLE "SETS" (
   SetID CHAR(7) NOT NULL,
   SetName VARCHAR2(100) NOT NULL,
   Discount NUMBER(5,2) DEFAULT 0,
@@ -270,7 +270,7 @@ CREATE TABLE PAYMENT (
   PaymentMethod VARCHAR2(50) NOT NULL,
   PaymentStatus VARCHAR2(50) DEFAULT 'Pending' NOT NULL,
   CONSTRAINT pk_pm_paymentid PRIMARY KEY (PaymentID),
-  CONSTRAINT fk_pm_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
+  CONSTRAINT fk_pm_orderid FOREIGN KEY (OrderID) REFERENCES "ORDERS"(OrderID),
   CONSTRAINT fk_pm_subscriptionid FOREIGN KEY (SubscriptionID) REFERENCES SUBSCRIPTION(SubscriptionID),
   CONSTRAINT chk_pm_paymentid CHECK (REGEXP_LIKE(PaymentID, '^PM[0-9]{5}$')),
   CONSTRAINT chk_pm_paymentmethod CHECK (PaymentMethod IN ('Credit Card', 'Debit Card', 'E-Wallet', 'Cash')),
@@ -284,9 +284,9 @@ CREATE TABLE ORDERITEM (
   Quantity NUMBER(4) NOT NULL,
   PriceEach NUMBER(6,2) NOT NULL,
   CONSTRAINT pk_oi_orderid_itemid PRIMARY KEY (OrderID, ItemID),
-  CONSTRAINT fk_oi_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
+  CONSTRAINT fk_oi_orderid FOREIGN KEY (OrderID) REFERENCES "ORDERS"(OrderID),
   CONSTRAINT fk_oi_itemid FOREIGN KEY (ItemID) REFERENCES ITEM(ItemID),
-  CONSTRAINT fk_oi_setid FOREIGN KEY (SetID) REFERENCES "SET"(SetID),
+  CONSTRAINT fk_oi_setid FOREIGN KEY (SetID) REFERENCES "SETS"(SetID),
   CONSTRAINT chk_oi_quantity CHECK (Quantity > 0),
   CONSTRAINT chk_oi_priceeach CHECK (PriceEach >= 0)
 );
@@ -297,7 +297,7 @@ CREATE TABLE ORDERPACKAGE (
   Quantity NUMBER(4) NOT NULL,
   Subtotal NUMBER(8,2) NOT NULL,
   CONSTRAINT pk_op_orderid_packageid PRIMARY KEY (OrderID, PackageID),
-  CONSTRAINT fk_op_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
+  CONSTRAINT fk_op_orderid FOREIGN KEY (OrderID) REFERENCES "ORDERS"(OrderID),
   CONSTRAINT fk_op_packageid FOREIGN KEY (PackageID) REFERENCES PACKAGE(PackageID),
   CONSTRAINT chk_op_quantity CHECK (Quantity > 0),
   CONSTRAINT chk_op_subtotal CHECK (Subtotal >= 0)
@@ -310,7 +310,7 @@ CREATE TABLE ORDERFEEDBACK (
   "Comment" VARCHAR2(255),
   FeedbackDate DATE DEFAULT SYSDATE NOT NULL,
   CONSTRAINT pk_of_orderfeedbackid PRIMARY KEY (OrderFeedbackID),
-  CONSTRAINT fk_of_orderid FOREIGN KEY (OrderID) REFERENCES "ORDER"(OrderID),
+  CONSTRAINT fk_of_orderid FOREIGN KEY (OrderID) REFERENCES "ORDERS"(OrderID),
   CONSTRAINT chk_of_orderfeedbackid CHECK (REGEXP_LIKE(OrderFeedbackID, '^OF[0-9]{5}$')),
   CONSTRAINT chk_of_rating CHECK (Rating >= 1 AND Rating <= 5)
 );
