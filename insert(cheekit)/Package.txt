@@ -92,7 +92,7 @@ INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00090',
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00091', 'Dim Sum Office Box', 140.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00092', 'Peking Duck Feast', 195.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00093', 'Fried Rice Party Tray', 75.00);
-INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00094', 'Sweet & Sour Bundle', 85.00);
+INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00094', 'Sweet and Sour Bundle', 85.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00095', 'Claypot Chicken Special', 95.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00096', 'Dim Sum Basket Combo', 110.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00097', 'Wok Hei Noodle Pack', 80.00);
@@ -125,9 +125,9 @@ INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00123',
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00124', 'Seafood Boil Combo', 250.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00125', 'BBQ Ribs Family Pack', 195.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00126', 'Roast Chicken Special', 110.00);
-INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00127', 'Garlic Bread & Soup Pack', 45.00);
-INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00128', 'Fish & Chips Party Box', 140.00);
-INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00129', 'Mac & Cheese Tray', 85.00);
+INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00127', 'Garlic Bread and Soup Pack', 45.00);
+INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00128', 'Fish and Chips Party Box', 140.00);
+INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00129', 'Mac and Cheese Tray', 85.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00130', 'Gourmet Salad Bundle', 75.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00131', 'Power Bowl Office Pack', 120.00);
 INSERT INTO PACKAGE (PackageID, PackageName, DiscountedPrice) VALUES ('PK00132', 'Keto Friendly Bundle', 145.00);
