@@ -1,11 +1,11 @@
--- 2. DeliveryCompany (10 Rows)
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00001', 'GrabFood Delivery');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00002', 'FoodPanda Logistics');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00003', 'ShopeeFood Express');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00004', 'Lalamove Eats');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00005', 'Bungkusit Go');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00006', 'Beep Delivery');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00007', 'DeliverEat Movers');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00008', 'AirAsia Ride & Food');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00009', 'PopMeals Courier');
-INSERT INTO DeliveryCompany (DeliveryCompanyID, CompanyName) VALUES ('DC00010', 'ZeptoExpress Logistics');
+-- 2. DELIVERYCOMPANY (10 Rows)
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00001', 'GrabFood Delivery');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00002', 'FoodPanda Logistics');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00003', 'ShopeeFood Express');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00004', 'Lalamove Eats');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00005', 'Bungkusit Go');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00006', 'Beep Delivery');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00007', 'DeliverEat Movers');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00008', 'AirAsia Ride and Food');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00009', 'PopMeals Courier');
+INSERT INTO DELIVERYCOMPANY (DELIVERYCOMPANYID, CompanyName) VALUES ('DC00010', 'ZeptoExpress Logistics');
