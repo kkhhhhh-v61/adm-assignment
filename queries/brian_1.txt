@@ -1,0 +1,83 @@
+CL SCR
+
+CREATE OR REPLACE VIEW VIEW_MARKET_SHARE AS
+SELECT 
+    DECODE(R.IsHalal, 'Y', 'Halal Restaurants', 'N', 'Non-Halal Restaurants') AS CATEGORY,
+    COUNT(DISTINCT O.OrderID) AS TOTAL_ORDERS,
+    SUM(OI.Quantity * OI.PriceEach) AS TOTAL_REVENUE
+FROM "ORDER" O
+JOIN ORDERITEM OI ON O.OrderID = OI.OrderID
+JOIN ITEM I ON OI.ItemID = I.ItemID
+JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+WHERE O.OrderStatus = 'Completed'
+GROUP BY R.IsHalal;
+
+SET LINESIZE 100
+SET PAGESIZE 100
+SET FEEDBACK OFF
+SET SQLBLANKLINES ON
+SET SERVEROUTPUT ON
+
+-- 3. format columns to align properly
+COLUMN CATEGORY          FORMAT A25          HEADING 'RESTAURANT CATEGORY' JUSTIFY LEFT
+COLUMN TOTAL_ORDERS      FORMAT 999,990      HEADING 'TOTAL ORDERS'        JUSTIFY RIGHT
+COLUMN ORDER_SHARE_PCT   FORMAT 990.00       HEADING 'ORDER SHARE (%)'     JUSTIFY RIGHT
+COLUMN TOTAL_REVENUE     FORMAT $999,990.99  HEADING 'REVENUE (RM)'        JUSTIFY RIGHT
+COLUMN REVENUE_SHARE_PCT FORMAT 990.00       HEADING 'REVENUE SHARE (%)'   JUSTIFY RIGHT
+
+-- 4. report header
+TTITLE LEFT '=====================================================================================' SKIP 1 -
+       LEFT '                 RESTAURANT MARKET SHARE (HALAL VS NON-HALAL) REPORT                 ' SKIP 1 -
+       LEFT '=====================================================================================' SKIP 2
+
+-- 5. calculate grand totals for both orders and revenue
+BREAK ON REPORT
+COMPUTE SUM LABEL 'GRAND TOTAL :' OF TOTAL_ORDERS ORDER_SHARE_PCT TOTAL_REVENUE REVENUE_SHARE_PCT ON REPORT
+
+-- 6. main query: retrieve data from the view
+SELECT 
+    CATEGORY, 
+    TOTAL_ORDERS, 
+    ROUND(RATIO_TO_REPORT(TOTAL_ORDERS) OVER () * 100, 2) AS ORDER_SHARE_PCT,
+    TOTAL_REVENUE,
+    ROUND(RATIO_TO_REPORT(TOTAL_REVENUE) OVER () * 100, 2) AS REVENUE_SHARE_PCT
+FROM VIEW_MARKET_SHARE
+ORDER BY TOTAL_REVENUE DESC;
+
+-- 7. disable headers before printing summary
+TTITLE OFF
+CLEAR BREAKS
+CLEAR COMPUTES
+SET HEADING OFF
+
+-- 8. pl/sql block to print the executive summary using view
+DECLARE
+    v_top_cat VARCHAR2(50);
+    v_top_rev NUMBER;
+    v_top_pct NUMBER;
+BEGIN
+    -- find the dominant market category based on revenue
+    SELECT CATEGORY, TOTAL_REVENUE, REVENUE_SHARE_PCT INTO v_top_cat, v_top_rev, v_top_pct
+    FROM (
+        SELECT 
+            CATEGORY,
+            TOTAL_REVENUE,
+            ROUND(RATIO_TO_REPORT(TOTAL_REVENUE) OVER () * 100, 2) AS REVENUE_SHARE_PCT
+        FROM VIEW_MARKET_SHARE
+        ORDER BY TOTAL_REVENUE DESC
+    ) WHERE ROWNUM = 1;
+
+    -- print output
+    DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(' [ MARKET SHARE SUMMARY ]');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> DOMINANT CATEGORY : ' || v_top_cat);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL GENERATED   : RM ' || v_top_rev || ' (' || v_top_pct || '% of Total Market)');
+    DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------');
+END;
+/
+
+-- 9. reset settings
+SET HEADING ON
+SET FEEDBACK ON
+CLEAR COLUMNS

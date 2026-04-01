@@ -1,0 +1,28 @@
+CL SCR
+
+SET LINESIZE 100
+COLUMN ORDERID FORMAT A10 HEADING 'ORDER ID'
+COLUMN DELIVERYID FORMAT A12 HEADING 'DELIVERY ID'
+COLUMN DISTANCE FORMAT 990.99 HEADING 'DISTANCE(KM)'
+COLUMN DELIVERYPRICE FORMAT $990.99 HEADING 'DB PRICE(RM)'
+
+
+PROMPT >>> [ BEFORE EXECUTION ] Checking current DeliveryPrice in Database...
+
+SELECT O.OrderID, D.DeliveryID, D.Distance, D.DeliveryPrice 
+FROM "ORDER" O 
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID 
+WHERE O.OrderID = 'O00003';
+
+
+PROMPT >>> [ EXECUTING PROCEDURE ] Calculating Dynamic Fee...
+
+EXEC calculate_dynamic_delivery_fee('O00003');
+
+
+PROMPT >>> [ AFTER EXECUTION ] Verifying the new DeliveryPrice in Database...
+
+SELECT O.OrderID, D.DeliveryID, D.Distance, D.DeliveryPrice 
+FROM "ORDER" O 
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID 
+WHERE O.OrderID = 'O00003';

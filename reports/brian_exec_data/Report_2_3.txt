@@ -1,0 +1,3 @@
+CL SCR
+
+EXEC generate_delivery_perf_report(TO_DATE('2026-01-01', 'YYYY-MM-DD'), TO_DATE('2026-12-31', 'YYYY-MM-DD'));

@@ -1,0 +1,148 @@
+CL SCR
+
+SET DEFINE OFF;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE generate_geo_revenue_report (
+    p_start_date IN DATE,
+    p_end_date IN DATE
+) AS
+    -- outer cursor: find distinct states that have completed orders
+    CURSOR c_state IS
+        SELECT DISTINCT A.State
+        FROM "ORDER" O
+        JOIN (
+            SELECT OrderID, ItemID FROM ORDERITEM
+            UNION
+            SELECT OP.OrderID, PI.ItemID FROM ORDERPACKAGE OP JOIN PACKAGEITEM PI ON OP.PackageID = PI.PackageID
+        ) AllItems ON O.OrderID = AllItems.OrderID
+        JOIN ITEM I ON AllItems.ItemID = I.ItemID
+        JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+        JOIN ADDRESS A ON R.AddressID = A.AddressID
+        WHERE O.OrderStatus = 'Completed'
+          AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        ORDER BY A.State;
+
+    -- inner cursor: find city-level order volume and revenue for a specific state
+    CURSOR c_city (v_state VARCHAR2) IS
+        SELECT Loc.City,
+               COUNT(Loc.OrderID) AS OrderVolume,
+               SUM(Loc.TotalAmount) AS TotalRevenue
+        FROM (
+            SELECT DISTINCT O.OrderID, O.TotalAmount, A.City
+            FROM "ORDER" O
+            JOIN (
+                SELECT OrderID, ItemID FROM ORDERITEM
+                UNION
+                SELECT OP.OrderID, PI.ItemID FROM ORDERPACKAGE OP JOIN PACKAGEITEM PI ON OP.PackageID = PI.PackageID
+            ) AllItems ON O.OrderID = AllItems.OrderID
+            JOIN ITEM I ON AllItems.ItemID = I.ItemID
+            JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+            JOIN ADDRESS A ON R.AddressID = A.AddressID
+            WHERE O.OrderStatus = 'Completed'
+              AND A.State = v_state
+              AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        ) Loc
+        GROUP BY Loc.City
+        ORDER BY TotalRevenue DESC;
+
+    -- declare variables for accumulation
+    v_state_orders  NUMBER := 0;
+    v_state_revenue NUMBER(10,2) := 0;
+    v_grand_orders  NUMBER := 0;
+    v_grand_revenue NUMBER(10,2) := 0;
+
+    -- variables for EXECUTIVE SUMMARY tracking
+    v_top_rev_state VARCHAR2(100) := 'N/A';
+    v_top_rev_val   NUMBER(10,2)  := -1;
+    v_top_ord_state VARCHAR2(100) := 'N/A';
+    v_top_ord_val   NUMBER        := -1;
+
+    -- declare custom exceptions
+    e_invalid_date  EXCEPTION;
+    e_no_data       EXCEPTION;
+    v_data_exists   BOOLEAN := FALSE;
+
+BEGIN
+    IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
+        RAISE e_invalid_date;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('               GEOGRAPHICAL REVENUE AND ORDER VOLUME TREND REPORT               ');
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date, 'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE('Generated : ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'));
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('STATE / CITY', 35) || LPAD('ORDER VOLUME', 20) || LPAD('REVENUE (RM)', 25));
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+
+    -- loop through each state
+    FOR r_state IN c_state LOOP
+        v_data_exists := TRUE;
+        v_state_orders := 0;
+        v_state_revenue := 0;
+        
+        DBMS_OUTPUT.PUT_LINE('[ ' || UPPER(r_state.State) || ' ]');
+        
+        -- loop through cities in the state
+        FOR r_city IN c_city(r_state.State) LOOP
+            DBMS_OUTPUT.PUT_LINE(RPAD('- ' || r_city.City, 35) || 
+                                 LPAD(TO_CHAR(r_city.OrderVolume), 20) || 
+                                 LPAD(TO_CHAR(r_city.TotalRevenue, '999,990.99'), 25));
+                                 
+            v_state_orders := v_state_orders + r_city.OrderVolume;
+            v_state_revenue := v_state_revenue + r_city.TotalRevenue;
+        END LOOP;
+        
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 80, '-'));
+        DBMS_OUTPUT.PUT_LINE(RPAD('* Subtotal for ' || r_state.State || ':', 35) || 
+                             LPAD(TO_CHAR(v_state_orders), 20) || 
+                             LPAD(TO_CHAR(v_state_revenue, '999,990.99'), 25));
+        DBMS_OUTPUT.PUT_LINE(' '); 
+        
+        -- TRACKING FOR EXECUTIVE SUMMARY
+        IF v_state_revenue > v_top_rev_val THEN
+            v_top_rev_val := v_state_revenue;
+            v_top_rev_state := r_state.State;
+        END IF;
+
+        IF v_state_orders > v_top_ord_val THEN
+            v_top_ord_val := v_state_orders;
+            v_top_ord_state := r_state.State;
+        END IF;
+        
+        v_grand_orders := v_grand_orders + v_state_orders;
+        v_grand_revenue := v_grand_revenue + v_state_revenue;
+    END LOOP;
+
+    IF NOT v_data_exists THEN
+        RAISE e_no_data;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('GRAND TOTAL :', 35) || 
+                         LPAD(TO_CHAR(v_grand_orders), 20) || 
+                         LPAD(TO_CHAR(v_grand_revenue, '999,990.99'), 25));
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    
+    -- PRINT EXECUTIVE SUMMARY
+    DBMS_OUTPUT.PUT_LINE(' '); 
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('                             [ EXECUTIVE SUMMARY ]                              ');
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('>> TOP STATE BY REVENUE : ' || UPPER(v_top_rev_state) || ' (RM ' || TRIM(TO_CHAR(v_top_rev_val, '999,990.99')) || ')');
+    DBMS_OUTPUT.PUT_LINE('>> TOP STATE BY ORDERS  : ' || UPPER(v_top_ord_state) || ' (' || v_top_ord_val || ' Orders)');
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('End of Report.');
+
+EXCEPTION
+    WHEN e_invalid_date THEN
+        RAISE_APPLICATION_ERROR(-20001, 'INVALID DATE RANGE: Start Date cannot be later than End Date.');
+    WHEN e_no_data THEN
+        DBMS_OUTPUT.PUT_LINE('>>> NO COMPLETED ORDERS FOUND FOR THIS DATE RANGE <<<');
+        DBMS_OUTPUT.PUT_LINE('================================================================================');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+END;
+/
