@@ -1,3 +1,3 @@
-INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) VALUES ('SP00001', '1-Month Standard Plan', 30, 9.90);
-INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) VALUES ('SP00002', 'Half-Year Premium Plan', 180, 50.00);
-INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) VALUES ('SP00003', 'Full-Year Ultimate Plan', 365, 90.00);
+INSERT INTO SUBSCRIPTIONPLAN VALUES ('SP00001', '1-Month Standard Plan', 30, 9.90);
+INSERT INTO SUBSCRIPTIONPLAN VALUES ('SP00002', 'Half-Year Premium Plan', 180, 50.00);
+INSERT INTO SUBSCRIPTIONPLAN VALUES ('SP00003', 'Full-Year Ultimate Plan', 365, 90.00);

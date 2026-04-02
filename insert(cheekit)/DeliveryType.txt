@@ -1,4 +1,4 @@
 -- 1. DeliveryType (3 Rows)
-INSERT INTO DeliveryType (DeliveryTypeID, DeliveryName, DeliveryFee) VALUES ('DT00001', 'Economy', 0.00);
-INSERT INTO DeliveryType (DeliveryTypeID, DeliveryName, DeliveryFee) VALUES ('DT00002', 'Standard', 3.00);
-INSERT INTO DeliveryType (DeliveryTypeID, DeliveryName, DeliveryFee) VALUES ('DT00003', 'Fast', 5.00);
+INSERT INTO DeliveryType VALUES ('DT00001', 'Economy', 0.00);
+INSERT INTO DeliveryType VALUES ('DT00002', 'Standard', 3.00);
+INSERT INTO DeliveryType VALUES ('DT00003', 'Fast', 5.00);
