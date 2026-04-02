@@ -119,3 +119,533 @@ INSERT INTO ITEM VALUES ('I00097', 'R00016', 'C00022', 'Chocolate Fudge Cake', '
 INSERT INTO ITEM VALUES ('I00098', 'R00020', 'C00005', 'Vegetable Soup', 'Clear healthy broth.', 8.00, 'Y');
 INSERT INTO ITEM VALUES ('I00099', 'R00005', 'C00028', 'Hokkien Mee', 'Thick noodles in dark soy.', 14.00, 'Y');
 INSERT INTO ITEM VALUES ('I00100', 'R00012', 'C00011', 'Lobster Thermidor', 'Premium luxury seafood.', 150.00, 'Y');
+
+-- Batch 2: Records I00101 - I00200
+-- R00005: Golden Wok (Rice and Curry Focus)
+INSERT INTO ITEM VALUES ('I00101', 'R00005', 'C00029', 'Ginger Scallion Chicken Rice', 'Tender chicken with aromatic ginger soy.', 13.50, 'Y');
+INSERT INTO ITEM VALUES ('I00102', 'R00005', 'C00029', 'Kam Heong Prawn Rice', 'Spicy, fragrant stir-fried prawns.', 17.50, 'Y');
+INSERT INTO ITEM VALUES ('I00103', 'R00005', 'C00028', 'Dry Fried Beef Hor Fun', 'Wok-hei infused flat rice noodles.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00104', 'R00005', 'C00026', 'Deep Fried Wontons', 'Crispy pockets with chicken filling.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00105', 'R00005', 'C00016', 'Iced Kopi O', 'Strong local black coffee.', 3.50, 'Y');
+
+-- R00010: Sushi Samurai (Premium Japanese)
+INSERT INTO ITEM VALUES ('I00106', 'R00010', 'C00010', 'Spider Maki', 'Crispy soft shell crab roll.', 26.00, 'Y');
+INSERT INTO ITEM VALUES ('I00107', 'R00010', 'C00010', 'Hokkaido Scallop Nigiri', 'Sweet, fresh premium scallops.', 35.00, 'Y');
+INSERT INTO ITEM VALUES ('I00108', 'R00010', 'C00023', 'Chicken Gyoza', 'Pan-fried Japanese dumplings.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00109', 'R00010', 'C00010', 'Spicy Maguro Handroll', 'Tuna with spicy mayo and cucumber.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00110', 'R00010', 'C00016', 'Iced Matcha Latte', 'Creamy green tea with milk.', 9.50, 'Y');
+
+-- R00014: Chili Chompers (Burgers and Street Food)
+INSERT INTO ITEM VALUES ('I00111', 'R00014', 'C00009', 'Triple Cheese Burger', 'Beef patty with cheddar, swiss, and mozzarella.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00112', 'R00014', 'C00026', 'Sweet Potato Fries', 'Crispy and naturally sweet.', 11.00, 'Y');
+INSERT INTO ITEM VALUES ('I00113', 'R00014', 'C00025', 'Spicy Coney Dog', 'Chicken sausage with minced meat sauce.', 13.00, 'Y');
+INSERT INTO ITEM VALUES ('I00114', 'R00014', 'C00009', 'Fish Fillet Burger', 'Crispy white fish with tartar sauce.', 17.50, 'Y');
+INSERT INTO ITEM VALUES ('I00115', 'R00014', 'C00016', 'Iced Root Beer Float', 'Classic sarsaparilla with vanilla scoop.', 8.00, 'Y');
+
+-- R00002: Sizzling Salsa (Mexican Fusion)
+INSERT INTO ITEM VALUES ('I00116', 'R00002', 'C00027', 'Lamb Rendang Quesadilla', 'Cheesy tortilla with spiced lamb.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00117', 'R00002', 'C00027', 'Shrimp Ceviche Tacos', 'Fresh shrimp marinated in lime.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00118', 'R00002', 'C00020', 'Chipotle Chicken Wrap', 'Smoky chicken with black beans.', 14.50, 'Y');
+INSERT INTO ITEM VALUES ('I00119', 'R00002', 'C00026', 'Nacho Supreme Platter', 'Topped with guacamole and sour cream.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00120', 'R00002', 'C00018', 'Fresh Watermelon Juice', '100% natural fruit juice.', 5.50, 'Y');
+
+-- R00006: Mama Mia Pizzeria (Pizza and Pasta)
+INSERT INTO ITEM VALUES ('I00121', 'R00006', 'C00007', 'Quattro Formaggi Pizza', 'Four cheese blend.', 36.00, 'N');
+INSERT INTO ITEM VALUES ('I00122', 'R00006', 'C00006', 'Seafood Marinara Pasta', 'Mixed seafood in tomato sauce.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00123', 'R00006', 'C00001', 'Bruschetta Pomodoro', 'Toasted bread with tomatoes and basil.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00124', 'R00006', 'C00007', 'Veggie Supreme Pizza', 'Bell peppers, olives, and mushrooms.', 30.00, 'Y');
+INSERT INTO ITEM VALUES ('I00125', 'R00006', 'C00016', 'Iced Lemonade', 'Zesty and chilled.', 6.00, 'Y');
+
+-- R00016: The Sweet Spot (Desserts)
+INSERT INTO ITEM VALUES ('I00126', 'R00016', 'C00015', 'Red Bean ABC', 'Traditional ice with palm sugar.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00127', 'R00016', 'C00022', 'Tiramisu Slice', 'Coffee-soaked sponge with mascarpone.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00128', 'R00016', 'C00019', 'Chicken Curry Puff', 'Flaky pastry with spicy potato.', 3.00, 'Y');
+INSERT INTO ITEM VALUES ('I00129', 'R00016', 'C00021', 'Durian Gelato', 'Rich and pungent creaminess.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00130', 'R00016', 'C00016', 'Cham Ais', 'Mix of coffee and tea.', 4.50, 'Y');
+
+-- R00012: The Golden Spoon (Fine Dining Seafood)
+INSERT INTO ITEM VALUES ('I00131', 'R00012', 'C00011', 'Steamed Sea Bass', 'With premium soy and ginger.', 65.00, 'Y');
+INSERT INTO ITEM VALUES ('I00132', 'R00012', 'C00024', 'Black Pepper Crab', 'Large mud crab in spicy sauce.', 88.00, 'Y');
+INSERT INTO ITEM VALUES ('I00133', 'R00012', 'C00011', 'Garlic Butter Scallops', 'Pan-seared premium scallops.', 48.00, 'Y');
+INSERT INTO ITEM VALUES ('I00134', 'R00012', 'C00005', 'Shark Fin Soup (Imitation)', 'Traditional herbal broth.', 40.00, 'Y');
+INSERT INTO ITEM VALUES ('I00135', 'R00012', 'C00001', 'Lobster Spring Rolls', 'Gourmet appetizer.', 30.00, 'Y');
+
+-- R00013: Smokehouse BBQ (Meats)
+INSERT INTO ITEM VALUES ('I00136', 'R00013', 'C00012', 'Grilled Chicken Chop', 'Served with black pepper sauce.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00137', 'R00013', 'C00012', 'BBQ Beef Ribs', 'Slow-roasted with house sauce.', 45.00, 'Y');
+INSERT INTO ITEM VALUES ('I00138', 'R00013', 'C00026', 'Fried Onion Rings', 'Crispy beer-battered rings.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00139', 'R00013', 'C00029', 'Nasi Lemak Ayam Bakar', 'Grilled chicken coconut rice.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00140', 'R00013', 'C00016', 'Iced Milo', 'Everyone favorite chocolate malt.', 5.00, 'Y');
+
+-- R00020: Spice Harbor (Vegetarian)
+INSERT INTO ITEM VALUES ('I00141', 'R00020', 'C00014', 'Vegan Gado-Gado', 'Indonesian salad with peanut sauce.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00142', 'R00020', 'C00013', 'Paneer Butter Masala', 'Cheese cubes in rich gravy.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00143', 'R00020', 'C00014', 'Fried Tempeh Sticks', 'Crispy fermented soybean.', 8.50, 'Y');
+INSERT INTO ITEM VALUES ('I00144', 'R00020', 'C00013', 'Vegetable Biryani', 'Fragrant rice with mixed veggies.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00145', 'R00020', 'C00016', 'Masala Tea', 'Spiced milk tea.', 6.00, 'Y');
+
+-- R00003: Bella Italia (Breakfast)
+INSERT INTO ITEM VALUES ('I00146', 'R00003', 'C00017', 'Roti Sardin', 'Flatbread stuffed with sardine.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00147', 'R00003', 'C00017', 'Nasi Lemak Paru', 'Rice with spicy fried lung.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00148', 'R00003', 'C00008', 'Egg Mayo Sandwich', 'Classic breakfast sandwich.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00149', 'R00003', 'C00017', 'Tosai Plain', 'Crispy fermented rice crepe.', 3.50, 'Y');
+INSERT INTO ITEM VALUES ('I00150', 'R00003', 'C00016', 'Teh O Ais Limau', 'Iced tea with lime.', 3.00, 'Y');
+
+-- R00001: The Hungry Panda
+INSERT INTO ITEM VALUES ('I00151', 'R00001', 'C00023', 'Szechuan Dumplings', 'In spicy chili oil.', 14.00, 'N');
+INSERT INTO ITEM VALUES ('I00152', 'R00001', 'C00028', 'Stir-fried Broccoli', 'With garlic and oyster sauce.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00153', 'R00001', 'C00029', 'Sweet and Sour Chicken', 'Classic Chinese favorite.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00154', 'R00001', 'C00005', 'Corn and Crab Soup', 'Thick and creamy.', 11.00, 'Y');
+INSERT INTO ITEM VALUES ('I00155', 'R00001', 'C00016', 'Honey Lemon Hot', 'Soothing and sweet.', 5.00, 'Y');
+
+-- R00004: Tasty Tacos
+INSERT INTO ITEM VALUES ('I00156', 'R00004', 'C00027', 'Fish Tacos (2pcs)', 'Battered fish with slaw.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00157', 'R00004', 'C00027', 'Beef Barbacoa Taco', 'Slow-cooked shredded beef.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00158', 'R00004', 'C00020', 'Veggie Burrito Bowl', 'Beans, rice, and salsa.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00159', 'R00004', 'C00026', 'Corn Elote', 'Grilled corn with cheese.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00160', 'R00004', 'C00016', 'Jarritos Soda', 'Mexican fruit soda.', 12.00, 'Y');
+
+-- R00007: The Spice Route
+INSERT INTO ITEM VALUES ('I00161', 'R00007', 'C00029', 'Lamb Rogan Josh', 'Aromatic Kashmiri lamb curry.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00162', 'R00007', 'C00029', 'Butter Chicken', 'Creamy tomato-based chicken.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00163', 'R00007', 'C00012', 'Garlic Naan', 'Tandoor-baked flatbread.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00164', 'R00007', 'C00003', 'Palak Paneer', 'Spinach with cottage cheese.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00165', 'R00007', 'C00016', 'Mango Lassi', 'Sweet yogurt drink.', 8.00, 'Y');
+
+-- R00008: Cafe Parisienne
+INSERT INTO ITEM VALUES ('I00166', 'R00008', 'C00022', 'Butter Croissant', 'Flaky and buttery.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00167', 'R00008', 'C00008', 'Croque Monsieur', 'Grilled ham and cheese.', 25.00, 'N');
+INSERT INTO ITEM VALUES ('I00168', 'R00008', 'C00005', 'French Onion Soup', 'With melted gruyere.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00169', 'R00008', 'C00022', 'Chocolate Eclair', 'Filled with pastry cream.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00170', 'R00008', 'C00016', 'Cafe au Lait', 'French style coffee.', 11.00, 'Y');
+
+-- R00009: Flaming Grill
+INSERT INTO ITEM VALUES ('I00171', 'R00009', 'C00012', 'Sirloin Steak (200g)', 'Grilled to preference.', 55.00, 'Y');
+INSERT INTO ITEM VALUES ('I00172', 'R00009', 'C00012', 'BBQ Pulled Beef', 'Served in a soft bun.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00173', 'R00009', 'C00026', 'Fried Calamari', 'With garlic aioli.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00174', 'R00009', 'C00003', 'Coleslaw Side', 'Fresh and creamy.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00175', 'R00009', 'C00016', 'Iced Americano', 'Refreshing black coffee.', 9.00, 'Y');
+
+-- R00011: Tasty Tandoor
+INSERT INTO ITEM VALUES ('I00176', 'R00011', 'C00029', 'Chicken Tikka Masala', 'Spicy grilled chicken in sauce.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00177', 'R00011', 'C00012', 'Seekh Kebab', 'Minced meat skewers.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00178', 'R00011', 'C00003', 'Aloo Gobi', 'Potato and cauliflower.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00179', 'R00011', 'C00029', 'Jeera Rice', 'Cumin flavored basmati.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00180', 'R00011', 'C00016', 'Sweet Lassi', 'Traditional yogurt drink.', 7.00, 'Y');
+
+-- R00015: Bistro Bliss
+INSERT INTO ITEM VALUES ('I00181', 'R00015', 'C00030', 'Truffle Mac and Cheese', 'Rich and earthy fusion.', 26.00, 'Y');
+INSERT INTO ITEM VALUES ('I00182', 'R00015', 'C00004', 'Caesar Salad', 'With crispy croutons.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00183', 'R00015', 'C00030', 'Beef Rendang Pasta', 'Fusion spaghetti.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00184', 'R00015', 'C00005', 'Mushroom Cream Soup', 'Wild mushroom blend.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00185', 'R00015', 'C00016', 'Sparkling Peach Tea', 'Bubbly and fruity.', 10.00, 'Y');
+
+-- R00017: Ocean Breeze Bistro
+INSERT INTO ITEM VALUES ('I00186', 'R00017', 'C00011', 'Fish and Chips', 'Battered dory with fries.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00187', 'R00017', 'C00011', 'Grilled Tiger Prawns', 'With garlic butter.', 38.00, 'Y');
+INSERT INTO ITEM VALUES ('I00188', 'R00017', 'C00005', 'Seafood Chowder', 'Creamy broth with fish.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00189', 'R00017', 'C00011', 'Crispy Fried Squid', 'Salt and pepper style.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00190', 'R00017', 'C00016', 'Fresh Orange Juice', 'Squeezed fresh.', 8.00, 'Y');
+
+-- R00018: Urban Feast
+INSERT INTO ITEM VALUES ('I00191', 'R00018', 'C00002', 'Nasi Dagang', 'Traditional Terengganu rice.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00192', 'R00018', 'C00002', 'Laksam', 'Rolled rice noodles in white gravy.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00193', 'R00018', 'C00026', 'Keropok Lekor', 'Fried fish crackers.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00194', 'R00018', 'C00015', 'Pulut Mangga', 'Sticky rice with mango.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00195', 'R00018', 'C00016', 'Sirap Selasih', 'Rose syrup with basil seeds.', 4.00, 'Y');
+
+-- R00019: The Rustic Fork
+INSERT INTO ITEM VALUES ('I00196', 'R00019', 'C00002', 'Nasi Hujan Panas', 'Colorful festive rice.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00197', 'R00019', 'C00002', 'Ayam Masak Merah', 'Chicken in spicy tomato gravy.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00198', 'R00019', 'C00003', 'Sayur Lodeh', 'Vegetables in coconut milk.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00199', 'R00019', 'C00015', 'Bubur Sumsum', 'Rice flour porridge with palm sugar.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00200', 'R00019', 'C00016', 'Kopi Tarik', 'Pulled local coffee.', 4.50, 'Y');
+-- Batch 3: Records I00201 - I00300
+-- R00021: The Green Leaf (Healthy and Halal)
+INSERT INTO ITEM VALUES ('I00201', 'R00021', 'C00004', 'Quinoa Garden Salad', 'Nutritious quinoa with fresh greens.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00202', 'R00021', 'C00018', 'Avocado Soy Smoothie', 'Creamy blend of avocado and soy milk.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00203', 'R00021', 'C00013', 'Grilled Tempeh Wrap', 'Fermented soybean with vegan mayo.', 15.50, 'Y');
+INSERT INTO ITEM VALUES ('I00204', 'R00021', 'C00005', 'Clear Pumpkin Soup', 'Smooth and naturally sweet broth.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00205', 'R00021', 'C00016', 'Detox Honey Lemon', 'Warm water with lemon and honey.', 6.00, 'Y');
+
+-- R00022: Dragon Palace (Chinese Non-Halal)
+INSERT INTO ITEM VALUES ('I00206', 'R00022', 'C00028', 'Char Siew Konlo Mee', 'Dry noodles with BBQ meat.', 15.00, 'N');
+INSERT INTO ITEM VALUES ('I00207', 'R00022', 'C00023', 'Steamed Pork Ribs', 'With fermented black bean sauce.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00208', 'R00022', 'C00028', 'Roasted Duck Rice', 'Crispy skin duck with fragrant rice.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00209', 'R00022', 'C00026', 'Fried Meat Rolls', 'Crispy beancurd skin rolls.', 11.00, 'N');
+INSERT INTO ITEM VALUES ('I00210', 'R00022', 'C00016', 'Chinese Tea Pot', 'Hot jasmine tea for sharing.', 5.00, 'Y');
+
+-- R00023: Blue Lagoon Seafood
+INSERT INTO ITEM VALUES ('I00211', 'R00023', 'C00011', 'Cheesy Baked Prawns', 'Large prawns with melted cheese.', 45.00, 'Y');
+INSERT INTO ITEM VALUES ('I00212', 'R00023', 'C00011', 'Kam Heong Clams', 'Stir-fried clams with curry leaves.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00213', 'R00023', 'C00011', 'Steam Squid with Lime', 'Thai style spicy steamed squid.', 32.00, 'Y');
+INSERT INTO ITEM VALUES ('I00214', 'R00023', 'C00011', 'Deep Fried Siakap', 'Crispy sea bass with soy sauce.', 55.00, 'Y');
+INSERT INTO ITEM VALUES ('I00215', 'R00023', 'C00016', 'Fresh Coconut Water', 'Served in the coconut shell.', 9.00, 'Y');
+
+-- R00024: Vintage Vine
+INSERT INTO ITEM VALUES ('I00216', 'R00024', 'C00030', 'Pan Seared Duck Breast', 'With balsamic glaze and mash.', 42.00, 'N');
+INSERT INTO ITEM VALUES ('I00217', 'R00024', 'C00001', 'Cheese Platter', 'Assorted cheeses and crackers.', 35.00, 'N');
+INSERT INTO ITEM VALUES ('I00218', 'R00024', 'C00006', 'Mushroom Risotto', 'Creamy rice with wild mushrooms.', 30.00, 'Y');
+INSERT INTO ITEM VALUES ('I00219', 'R00024', 'C00022', 'Chocolate Lava Cake', 'Warm cake with melting center.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00220', 'R00024', 'C00016', 'Sparkling Grape Juice', 'Non-alcoholic bubbly drink.', 12.00, 'Y');
+
+-- R00025: Burger Barn
+INSERT INTO ITEM VALUES ('I00221', 'R00025', 'C00009', 'Barn Special Beef Burger', 'Classic double patty with egg.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00222', 'R00025', 'C00009', 'Mushroom Swiss Burger', 'With sautéed mushrooms and cheese.', 19.00, 'Y');
+INSERT INTO ITEM VALUES ('I00223', 'R00025', 'C00026', 'Jumbo Chicken Wings', 'Crispy and spiced wings.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00224', 'R00025', 'C00026', 'Cheesy Potato Wedges', 'Thick cut with nacho cheese.', 11.00, 'Y');
+INSERT INTO ITEM VALUES ('I00225', 'R00025', 'C00016', 'Iced Chocolate', 'Rich and creamy cocoa.', 8.00, 'Y');
+
+-- R00026: Mediterranean Mist
+INSERT INTO ITEM VALUES ('I00226', 'R00026', 'C00029', 'Lamb Kofta with Rice', 'Grilled spiced lamb skewers.', 26.00, 'Y');
+INSERT INTO ITEM VALUES ('I00227', 'R00026', 'C00013', 'Hummus with Pita', 'Chickpea dip with warm bread.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00228', 'R00026', 'C00004', 'Greek Salad', 'Feta cheese with olives and veg.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00229', 'R00026', 'C00012', 'Chicken Shish Taouk', 'Marinated grilled chicken.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00230', 'R00026', 'C00016', 'Mint Lemonade', 'Traditional middle eastern drink.', 8.00, 'Y');
+
+-- R00027: Seoul Kitchen
+INSERT INTO ITEM VALUES ('I00231', 'R00027', 'C00002', 'Beef Bibimbap', 'Rice bowl with veg and egg.', 24.00, 'N');
+INSERT INTO ITEM VALUES ('I00232', 'R00027', 'C00028', 'Spicy Japchae', 'Glass noodles with vegetables.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00233', 'R00027', 'C00012', 'Korean Fried Chicken', 'Soy garlic glazed wings.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00234', 'R00027', 'C00005', 'Kimchi Jjigae', 'Spicy kimchi and tofu soup.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00235', 'R00027', 'C00016', 'Barley Tea', 'Roasted hot barley water.', 4.00, 'Y');
+
+-- R00028: Noodle Nirvana
+INSERT INTO ITEM VALUES ('I00236', 'R00028', 'C00028', 'Dry Chili Pan Mee', 'Noodles with minced chicken.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00237', 'R00028', 'C00028', 'Curry Laksa Mee', 'Creamy coconut curry broth.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00238', 'R00028', 'C00028', 'Prawn Mee Soup', 'Rich prawn shell broth.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00239', 'R00028', 'C00026', 'Fried Dumplings', 'Handmade chicken dumplings.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00240', 'R00028', 'C00016', 'Iced Wheatgrass', 'Healthy and sweet green drink.', 5.50, 'Y');
+
+-- R00029: Pasta Perfecto
+INSERT INTO ITEM VALUES ('I00241', 'R00029', 'C00006', 'Fettuccine Alfredo', 'White cream and cheese sauce.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00242', 'R00029', 'C00006', 'Prawn Aglio Olio', 'Garlic and olive oil pasta.', 26.00, 'Y');
+INSERT INTO ITEM VALUES ('I00243', 'R00029', 'C00006', 'Beef Lasagna Slice', 'Layered pasta with meat sauce.', 25.00, 'N');
+INSERT INTO ITEM VALUES ('I00244', 'R00029', 'C00001', 'Mozzarella Sticks', 'Fried cheese with dip.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00245', 'R00029', 'C00016', 'Iced Peach Tea', 'Sweet and refreshing tea.', 7.00, 'Y');
+
+-- R00030: Curry Corner
+INSERT INTO ITEM VALUES ('I00246', 'R00030', 'C00029', 'Fish Head Curry', 'Spicy curry with vegetables.', 45.00, 'Y');
+INSERT INTO ITEM VALUES ('I00247', 'R00030', 'C00012', 'Chicken Tandoori Half', 'Oven roasted spiced chicken.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00248', 'R00030', 'C00003', 'Bhindi Masala', 'Stir-fried okra with spices.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00249', 'R00030', 'C00029', 'Plain Biryani Rice', 'Basmati rice with aromatics.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00250', 'R00030', 'C00016', 'Masala Coffee', 'Spiced local hot coffee.', 6.00, 'Y');
+
+-- R00031: Zen Garden Sushi
+INSERT INTO ITEM VALUES ('I00251', 'R00031', 'C00010', 'Salmon Sashimi (5pcs)', 'Fresh sliced raw salmon.', 28.00, 'N');
+INSERT INTO ITEM VALUES ('I00252', 'R00031', 'C00010', 'California Roll', 'Crabstick and avocado roll.', 16.00, 'N');
+INSERT INTO ITEM VALUES ('I00253', 'R00031', 'C00010', 'Unagi Don', 'Grilled eel on rice.', 38.00, 'N');
+INSERT INTO ITEM VALUES ('I00254', 'R00031', 'C00023', 'Age Tofu', 'Fried bean curd with sauce.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00255', 'R00031', 'C00016', 'Hot Ocha Pot', 'Free refill green tea.', 3.00, 'Y');
+
+-- R00032: The Breakfast Club
+INSERT INTO ITEM VALUES ('I00256', 'R00032', 'C00017', 'Big Breakfast Platter', 'Eggs, toast, and sausages.', 25.00, 'Y');
+INSERT INTO ITEM VALUES ('I00257', 'R00032', 'C00008', 'Avocado Toast', 'Smashed avocado on sourdough.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00258', 'R00032', 'C00022', 'Fluffy Pancakes', 'With maple syrup and butter.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00259', 'R00032', 'C00017', 'French Toast', 'Cinnamon bread with berries.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00260', 'R00032', 'C00016', 'Cappuccino', 'Steamed milk with espresso.', 11.00, 'Y');
+
+-- R00033: Saffron Skies
+INSERT INTO ITEM VALUES ('I00261', 'R00033', 'C00029', 'Persian Lamb Rice', 'Rice with nuts and raisins.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00262', 'R00033', 'C00029', 'Chicken Mandy', 'Traditional Yemeni style chicken.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00263', 'R00033', 'C00013', 'Falafel Wrap', 'Chickpea balls with sauce.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00264', 'R00033', 'C00003', 'Tabbouleh', 'Parsley and grain salad.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00265', 'R00033', 'C00016', 'Arabic Coffee', 'Strong spiced coffee.', 7.00, 'Y');
+
+-- R00034: Waffle World
+INSERT INTO ITEM VALUES ('I00266', 'R00034', 'C00021', 'Classic Waffle Bowl', 'Waffle with vanilla ice cream.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00267', 'R00034', 'C00021', 'Belgian Chocolate Waffle', 'Drizzled with dark chocolate.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00268', 'R00034', 'C00021', 'Strawberry Waffle', 'With fresh fruit and cream.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00269', 'R00034', 'C00021', 'Caramel Nut Waffle', 'Crunchy nuts and caramel.', 17.00, 'Y');
+INSERT INTO ITEM VALUES ('I00270', 'R00034', 'C00016', 'Hot Mocha', 'Coffee and chocolate blend.', 12.00, 'Y');
+
+-- R00035: Doughnut Delight
+INSERT INTO ITEM VALUES ('I00271', 'R00035', 'C00022', 'Glazed Doughnut', 'Simple sugar coating.', 4.00, 'Y');
+INSERT INTO ITEM VALUES ('I00272', 'R00035', 'C00022', 'Custard Filled Doughnut', 'Creamy vanilla center.', 5.50, 'Y');
+INSERT INTO ITEM VALUES ('I00273', 'R00035', 'C00022', 'Peanut Butter Doughnut', 'Topped with crushed nuts.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00274', 'R00035', 'C00022', 'Pandan Doughnut', 'Local flavor green glaze.', 5.00, 'Y');
+INSERT INTO ITEM VALUES ('I00275', 'R00035', 'C00016', 'Flat White', 'Smooth espresso with milk.', 10.00, 'Y');
+
+-- R00036: Steakhouse 77
+INSERT INTO ITEM VALUES ('I00276', 'R00036', 'C00012', 'Ribeye Steak (250g)', 'Premium grain fed beef.', 85.00, 'N');
+INSERT INTO ITEM VALUES ('I00277', 'R00036', 'C00012', 'Lamb Chops (3pcs)', 'Grilled with rosemary.', 55.00, 'N');
+INSERT INTO ITEM VALUES ('I00278', 'R00036', 'C00003', 'Creamy Spinach', 'Side dish with garlic.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00279', 'R00036', 'C00003', 'Mashed Potato', 'Buttery smooth potatoes.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00280', 'R00036', 'C00016', 'Iced Black Coffee', 'Pure chilled coffee.', 9.00, 'Y');
+
+-- R00037: Dim Sum Dream
+INSERT INTO ITEM VALUES ('I00281', 'R00037', 'C00023', 'Chicken Siew Mai', 'Steamed meat dumplings.', 10.00, 'N');
+INSERT INTO ITEM VALUES ('I00282', 'R00037', 'C00023', 'Har Gao', 'Crystal prawn dumplings.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00283', 'R00037', 'C00023', 'BBQ Chicken Bun', 'Soft steamed buns.', 9.00, 'N');
+INSERT INTO ITEM VALUES ('I00284', 'R00037', 'C00023', 'Egg Tart (3pcs)', 'Crispy flaky crust.', 11.00, 'N');
+INSERT INTO ITEM VALUES ('I00285', 'R00037', 'C00016', 'Chrysanthemum Tea', 'Pot of flower tea.', 6.00, 'Y');
+
+-- R00038: Taco Temple
+INSERT INTO ITEM VALUES ('I00286', 'R00038', 'C00027', 'Chicken Quesadilla', 'Folded tortilla with cheese.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00287', 'R00038', 'C00027', 'Beef Enchiladas', 'Baked meat in corn wrap.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00288', 'R00038', 'C00027', 'Hard Shell Tacos', 'Crispy tacos with meat.', 15.00, 'N');
+INSERT INTO ITEM VALUES ('I00289', 'R00038', 'C00026', 'Chili Cheese Fries', 'Topped with spicy meat.', 14.00, 'N');
+INSERT INTO ITEM VALUES ('I00290', 'R00038', 'C00016', 'Mango Margarita Juice', 'Fruit blend without alcohol.', 10.00, 'Y');
+
+-- R00039: Kebab King
+INSERT INTO ITEM VALUES ('I00291', 'R00039', 'C00012', 'Beef Kebab Roll', 'Meat wrap with salad.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00292', 'R00039', 'C00012', 'Chicken Kebab Plate', 'Served with rice and salad.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00293', 'R00039', 'C00012', 'Lamb Shawarma', 'Spiced meat in pita.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00294', 'R00039', 'C00026', 'Stuffed Grape Leaves', 'Rice filled appetizer.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00295', 'R00039', 'C00016', 'Ayran Drink', 'Salty yogurt beverage.', 6.00, 'Y');
+
+-- R00040: Thai Terrace
+INSERT INTO ITEM VALUES ('I00296', 'R00040', 'C00028', 'Pad Thai Prawn', 'Stir-fried rice noodles.', 20.00, 'N');
+INSERT INTO ITEM VALUES ('I00297', 'R00040', 'C00005', 'Tom Yam Seafood', 'Sour and spicy soup.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00298', 'R00040', 'C00029', 'Green Curry Chicken', 'Rich coconut curry.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00299', 'R00040', 'C00004', 'Som Tum Salad', 'Spicy green papaya salad.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00300', 'R00040', 'C00016', 'Thai Iced Tea', 'Sweet milk tea with spices.', 8.00, 'Y');
+-- Batch 4: Records I00301 - I00400
+-- R00041: Pizza Point
+INSERT INTO ITEM VALUES ('I00301', 'R00041', 'C00007', 'Personal Cheese Pizza', 'Simple mozzarella and tomato base.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00302', 'R00041', 'C00007', 'Chicken Pepperoni Pizza', 'Sliced chicken pepperoni and cheese.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00303', 'R00041', 'C00001', 'Cheesy Garlic Bread', 'Toasted bread with garlic butter.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00304', 'R00041', 'C00007', 'BBQ Chicken Pizza', 'Grilled chicken with smoky sauce.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00305', 'R00041', 'C00016', 'Iced Coca Cola', 'Chilled carbonated soft drink.', 4.00, 'Y');
+
+-- R00042: Miso Merry
+INSERT INTO ITEM VALUES ('I00306', 'R00042', 'C00005', 'Miso Ramen', 'Noodles in fermented soybean broth.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00307', 'R00042', 'C00028', 'Chicken Teriyaki Don', 'Grilled chicken with sweet soy.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00308', 'R00042', 'C00028', 'Beef Yakiniku Rice', 'Stir fried beef with onions.', 24.00, 'N');
+INSERT INTO ITEM VALUES ('I00309', 'R00042', 'C00023', 'Steamed Edamame', 'Green soybeans with sea salt.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00310', 'R00042', 'C00016', 'Cold Green Tea', 'Refreshing unsweetened ocha.', 3.00, 'Y');
+
+-- R00043: Vegan Venture
+INSERT INTO ITEM VALUES ('I00311', 'R00043', 'C00014', 'Vegan Buddha Bowl', 'Mixed grains with roasted veg.', 19.00, 'Y');
+INSERT INTO ITEM VALUES ('I00312', 'R00043', 'C00014', 'Mushroom Walnut Burger', 'Plant based patty with greens.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00313', 'R00043', 'C00014', 'Tofu Summer Rolls', 'Fresh rice paper with peanut dip.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00314', 'R00043', 'C00014', 'Zucchini Noodles', 'Pesto sauce with cherry tomatoes.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00315', 'R00043', 'C00018', 'Green Apple Celery Juice', 'Freshly pressed detox drink.', 11.00, 'Y');
+
+-- R00044: Roast and Rice
+INSERT INTO ITEM VALUES ('I00316', 'R00044', 'C00029', 'Roasted Chicken Rice', 'Fragrant rice with crispy chicken.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00317', 'R00044', 'C00029', 'Poached Chicken Rice', 'Silky smooth steamed chicken.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00318', 'R00044', 'C00029', 'BBQ Honey Meat Rice', 'Sweet glazed meat with rice.', 15.00, 'N');
+INSERT INTO ITEM VALUES ('I00319', 'R00044', 'C00003', 'Bean Sprouts with Soy', 'Crunchy sprouts with garlic oil.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00320', 'R00044', 'C00016', 'Iced Barley Water', 'Traditional homemade cooling drink.', 3.50, 'Y');
+
+-- R00045: Chopstick Charms
+INSERT INTO ITEM VALUES ('I00321', 'R00045', 'C00028', 'Beef Ginger Onion', 'Stir fried beef slices with veg.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00322', 'R00045', 'C00028', 'Sweet and Sour Fish', 'Crispy fish fillet in tangy sauce.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00323', 'R00045', 'C00028', 'Kung Pao Chicken', 'Spicy chicken with dried chilies.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00324', 'R00045', 'C00003', 'Eggplant with Minced Meat', 'Braised claypot style vegetables.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00325', 'R00045', 'C00016', 'Hot Jasmine Tea', 'Traditional brewed loose leaf tea.', 4.00, 'Y');
+
+-- R00046: The Daily Grind
+INSERT INTO ITEM VALUES ('I00326', 'R00046', 'C00008', 'Club Sandwich', 'Triple layer with egg and meat.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00327', 'R00046', 'C00008', 'Tuna Melt Panini', 'Grilled bread with tuna and cheese.', 15.00, 'N');
+INSERT INTO ITEM VALUES ('I00328', 'R00046', 'C00022', 'Blueberry Muffin', 'Baked fresh with real berries.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00329', 'R00046', 'C00022', 'Banana Walnut Bread', 'Toasted slice with butter.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00330', 'R00046', 'C00016', 'Double Espresso', 'Strong and concentrated coffee.', 9.00, 'Y');
+
+-- R00047: Flame and Fork
+INSERT INTO ITEM VALUES ('I00331', 'R00047', 'C00012', 'Grilled Sirloin Steak', 'Served with seasonal vegetables.', 55.00, 'N');
+INSERT INTO ITEM VALUES ('I00332', 'R00047', 'C00012', 'Honey Mustard Chicken', 'Grilled breast with tangy glaze.', 24.00, 'N');
+INSERT INTO ITEM VALUES ('I00333', 'R00047', 'C00003', 'Loaded Baked Potato', 'With sour cream and chives.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00334', 'R00047', 'C00005', 'Beef Goulash', 'Hearty meat and vegetable stew.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00335', 'R00047', 'C00016', 'Iced Peach Lemonade', 'Sweet and zesty fruit blend.', 9.00, 'Y');
+
+-- R00048: Burrito Brothers
+INSERT INTO ITEM VALUES ('I00336', 'R00048', 'C00020', 'Spicy Chicken Burrito', 'Wrapped with rice and beans.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00337', 'R00048', 'C00020', 'Beef Barbacoa Bowl', 'Shredded beef without the wrap.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00338', 'R00048', 'C00026', 'Corn Tortilla Chips', 'Served with fresh tomato salsa.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00339', 'R00048', 'C00020', 'Grilled Veggie Wrap', 'Assorted veg with lime crema.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00340', 'R00048', 'C00016', 'Horchata Drink', 'Sweet rice milk with cinnamon.', 8.00, 'Y');
+
+-- R00049: Lobster Lane
+INSERT INTO ITEM VALUES ('I00341', 'R00049', 'C00011', 'Whole Steamed Lobster', 'Fresh lobster with garlic butter.', 120.00, 'N');
+INSERT INTO ITEM VALUES ('I00342', 'R00049', 'C00011', 'Lobster Roll', 'Chunks of lobster in brioche.', 45.00, 'N');
+INSERT INTO ITEM VALUES ('I00343', 'R00049', 'C00005', 'Creamy Lobster Bisque', 'Rich and smooth seafood soup.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00344', 'R00049', 'C00011', 'Grilled Garlic Prawns', 'Large tiger prawns on skewers.', 38.00, 'N');
+INSERT INTO ITEM VALUES ('I00345', 'R00049', 'C00016', 'Iced Lemon Tea', 'Refreshing citrus brewed tea.', 6.00, 'Y');
+
+-- R00050: Golden Grain Bakery
+INSERT INTO ITEM VALUES ('I00346', 'R00050', 'C00022', 'Wholemeal Loaf', 'Freshly baked healthy bread.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00347', 'R00050', 'C00022', 'Cinnamon Roll', 'Sweet pastry with spice glaze.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00348', 'R00050', 'C00019', 'Apple Lattice Pie', 'Flaky crust with fruit filling.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00349', 'R00050', 'C00022', 'Almond Croissant', 'Buttery pastry with nut cream.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00350', 'R00050', 'C00016', 'Hot Chocolate', 'Warm cocoa with frothed milk.', 11.00, 'Y');
+
+-- Random distribution to fill out to 400
+INSERT INTO ITEM VALUES ('I00351', 'R00005', 'C00029', 'Sambal Belacan Fried Rice', 'Spicy rice with prawn paste.', 14.50, 'Y');
+INSERT INTO ITEM VALUES ('I00352', 'R00010', 'C00010', 'Tamago Nigiri', 'Sweet omelette over rice.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00353', 'R00014', 'C00009', 'Chili Cheese Burger', 'Meat patty with spicy topping.', 21.00, 'Y');
+INSERT INTO ITEM VALUES ('I00354', 'R00006', 'C00007', 'Tandoori Pizza', 'Indian style spiced chicken topping.', 35.00, 'Y');
+INSERT INTO ITEM VALUES ('I00355', 'R00012', 'C00011', 'Oyster Mornay', 'Baked oysters with cheese sauce.', 50.00, 'Y');
+INSERT INTO ITEM VALUES ('I00356', 'R00020', 'C00013', 'Lentil Dhal', 'Thick spiced lentil stew.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00357', 'R00003', 'C00017', 'Roti Tissue', 'Extra thin and crispy flatbread.', 5.00, 'Y');
+INSERT INTO ITEM VALUES ('I00358', 'R00016', 'C00015', 'Mango Sago', 'Cold dessert with fruit pearls.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00359', 'R00025', 'C00009', 'Veggie Bean Burger', 'Healthy patty with salad.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00360', 'R00037', 'C00023', 'Radish Cake', 'Pan fried savory cake blocks.', 9.00, 'N');
+INSERT INTO ITEM VALUES ('I00361', 'R00005', 'C00028', 'Mee Rebus', 'Yellow noodles in potato gravy.', 11.00, 'Y');
+INSERT INTO ITEM VALUES ('I00362', 'R00010', 'C00023', 'Vegetable Gyoza', 'Pan fried dumpling with cabbage.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00363', 'R00014', 'C00026', 'Fried Calamari Rings', 'Crispy squid with lemon.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00364', 'R00006', 'C00006', 'Penne Arrabbiata', 'Spicy tomato sauce pasta.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00365', 'R00012', 'C00024', 'Chili Mussels', 'Fresh mussels in spicy broth.', 40.00, 'Y');
+INSERT INTO ITEM VALUES ('I00366', 'R00020', 'C00013', 'Paneer Tikka', 'Grilled spiced cheese cubes.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00367', 'R00003', 'C00017', 'Murtabak Chicken', 'Stuffed flatbread with meat.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00368', 'R00016', 'C00015', 'Green Bean Soup', 'Warm traditional dessert.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00369', 'R00025', 'C00026', 'Chicken Nuggets', 'Bite sized fried chicken.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00370', 'R00037', 'C00023', 'Fried Yam Puff', 'Crispy pastry with savory filling.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00371', 'R00005', 'C00029', 'Pineapple Fried Rice', 'Thai style with raisins.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00372', 'R00010', 'C00010', 'Tuna Mayo Maki', 'Simple cooked tuna roll.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00373', 'R00014', 'C00025', 'Cheese Hot Dog', 'Jumbo sausage with sauce.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00374', 'R00006', 'C00007', 'Margarita Pizza', 'Fresh basil and tomatoes.', 25.00, 'Y');
+INSERT INTO ITEM VALUES ('I00375', 'R00012', 'C00011', 'Grilled Scallops', 'Half shell with herb butter.', 45.00, 'Y');
+INSERT INTO ITEM VALUES ('I00376', 'R00020', 'C00005', 'Mushroom Soup', 'Wild forest mushroom blend.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00377', 'R00003', 'C00008', 'Kaya Butter Toast', 'Traditional local snack.', 4.50, 'Y');
+INSERT INTO ITEM VALUES ('I00378', 'R00016', 'C00021', 'Vanilla Bean Scoop', 'Premium frozen dairy treat.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00379', 'R00025', 'C00016', 'Root Beer Float', 'Soda with vanilla ice cream.', 8.50, 'Y');
+INSERT INTO ITEM VALUES ('I00380', 'R00037', 'C00023', 'Sticky Rice Chicken', 'Wrapped in lotus leaf.', 14.00, 'N');
+INSERT INTO ITEM VALUES ('I00381', 'R00005', 'C00028', 'Singapore Fried Bee Hoon', 'Thin vermicelli with seafood.', 13.00, 'Y');
+INSERT INTO ITEM VALUES ('I00382', 'R00010', 'C00010', 'Kani Nigiri', 'Crabstick over vinegar rice.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00383', 'R00014', 'C00026', 'Loaded Nachos', 'Cheese and salsa topping.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00384', 'R00006', 'C00006', 'Spaghetti Carbonara', 'Creamy sauce with beef bits.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00385', 'R00012', 'C00005', 'Seafood Tom Yam', 'Spicy and sour seafood soup.', 30.00, 'Y');
+INSERT INTO ITEM VALUES ('I00386', 'R00020', 'C00013', 'Vegetable Korma', 'Mild creamy vegetable curry.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00387', 'R00003', 'C00017', 'Soft Boiled Eggs', 'Set of two eggs.', 4.00, 'Y');
+INSERT INTO ITEM VALUES ('I00388', 'R00016', 'C00015', 'Taro Balls', 'Chewy dessert in syrup.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00389', 'R00025', 'C00009', 'Crispy Chicken Burger', 'Fried fillet with mayo.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00390', 'R00037', 'C00023', 'Fried Prawn Dumpling', 'With mayonnaise dip.', 13.00, 'N');
+INSERT INTO ITEM VALUES ('I00391', 'R00005', 'C00029', 'Salted Fish Fried Rice', 'Fragrant rice with fish bits.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00392', 'R00010', 'C00023', 'Fried Soft Shell Crab', 'Crispy whole crab appetizer.', 25.00, 'Y');
+INSERT INTO ITEM VALUES ('I00393', 'R00014', 'C00016', 'Iced Milo Dinosaur', 'Chocolate drink with extra powder.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00394', 'R00006', 'C00007', 'Seafood Delight Pizza', 'Mixed seafood and cheese.', 38.00, 'Y');
+INSERT INTO ITEM VALUES ('I00395', 'R00012', 'C00011', 'Buttered Lobster', 'Rich and creamy seafood dish.', 95.00, 'Y');
+INSERT INTO ITEM VALUES ('I00396', 'R00020', 'C00013', 'Gobi Manchurian', 'Spicy fried cauliflower.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00397', 'R00003', 'C00016', 'Iced Teh Tarik', 'Pulled milk tea with ice.', 4.50, 'Y');
+INSERT INTO ITEM VALUES ('I00398', 'R00016', 'C00021', 'Coconut Sorbet', 'Dairy free tropical treat.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00399', 'R00025', 'C00009', 'Double Cheeseburger', 'Two patties with extra cheese.', 25.00, 'Y');
+INSERT INTO ITEM VALUES ('I00400', 'R00037', 'C00016', 'Pu Er Tea', 'Aged hot dark tea.', 7.00, 'Y');
+
+-- Batch 5: Records I00401 - I00500
+-- R00005: Golden Wok
+INSERT INTO ITEM VALUES ('I00401', 'R00005', 'C00029', 'Beef Ginger Fried Rice', 'Fragrant rice with tender beef.', 15.50, 'Y');
+INSERT INTO ITEM VALUES ('I00402', 'R00005', 'C00028', 'Wat Tan Hor', 'Flat noodles in silky egg gravy.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00403', 'R00005', 'C00026', 'Crispy Spring Rolls', 'Vegetable filling with plum sauce.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00404', 'R00005', 'C00016', 'Iced Lemon Tea', 'Homemade brew with fresh lemon.', 4.50, 'Y');
+
+-- R00010: Sushi Samurai
+INSERT INTO ITEM VALUES ('I00405', 'R00010', 'C00010', 'Inari Sushi', 'Sweet beancurd skin with rice.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00406', 'R00010', 'C00023', 'Chawanmushi', 'Steamed savory egg custard.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00407', 'R00010', 'C00010', 'Ebi Tempura Roll', 'Fried prawn with cucumber.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00408', 'R00010', 'C00016', 'Hot Genmaicha', 'Roasted rice green tea.', 4.00, 'Y');
+
+-- R00014: Chili Chompers
+INSERT INTO ITEM VALUES ('I00409', 'R00014', 'C00009', 'Hawaiian Burger', 'Beef patty with grilled pineapple.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00410', 'R00014', 'C00026', 'Curly Fries', 'Seasoned and twisted potatoes.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00411', 'R00014', 'C00025', 'Classic Chili Dog', 'Chicken frank with minced meat.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00412', 'R00014', 'C00016', 'Strawberry Milkshake', 'Creamy blend with real fruit.', 15.00, 'Y');
+
+-- R00002: Sizzling Salsa
+INSERT INTO ITEM VALUES ('I00413', 'R00002', 'C00027', 'Chicken Fajitas', 'Sizzling strips with bell peppers.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00414', 'R00002', 'C00027', 'Beef Tostadas', 'Crispy tortillas with toppings.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00415', 'R00002', 'C00026', 'Guacamole and Chips', 'Fresh avocado dip with corn chips.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00416', 'R00002', 'C00018', 'Lime Marguerita Juice', 'Zesty citrus non alcoholic blend.', 10.00, 'Y');
+
+-- R00006: Mama Mia Pizzeria
+INSERT INTO ITEM VALUES ('I00417', 'R00006', 'C00007', 'Hawaiian Pizza', 'Chicken ham and pineapple topping.', 32.00, 'Y');
+INSERT INTO ITEM VALUES ('I00418', 'R00006', 'C00006', 'Beef Bolognese', 'Pasta with slow cooked meat sauce.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00419', 'R00006', 'C00001', 'Minestrone Soup', 'Traditional Italian vegetable soup.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00420', 'R00006', 'C00016', 'Iced Sparkling Water', 'Chilled with a slice of lemon.', 7.00, 'Y');
+
+-- R00016: The Sweet Spot
+INSERT INTO ITEM VALUES ('I00421', 'R00016', 'C00015', 'Cendol Classic', 'Shaved ice with palm sugar syrup.', 8.50, 'Y');
+INSERT INTO ITEM VALUES ('I00422', 'R00016', 'C00022', 'Pandan Layer Cake', 'Traditional sponge with coconut.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00423', 'R00016', 'C00021', 'Mango Sorbet', 'Refreshing dairy free fruit ice.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00424', 'R00016', 'C00016', 'Hot Milo', 'Warm chocolate malt beverage.', 5.00, 'Y');
+
+-- R00012: The Golden Spoon
+INSERT INTO ITEM VALUES ('I00425', 'R00012', 'C00011', 'Grilled Salmon Fillet', 'With lemon butter and asparagus.', 55.00, 'Y');
+INSERT INTO ITEM VALUES ('I00426', 'R00012', 'C00024', 'Salted Egg Squid', 'Crispy squid in rich egg yolk.', 35.00, 'Y');
+INSERT INTO ITEM VALUES ('I00427', 'R00012', 'C00005', 'Crab Meat Soup', 'Clear broth with premium crab.', 25.00, 'Y');
+INSERT INTO ITEM VALUES ('I00428', 'R00012', 'C00016', 'Premium White Wine Apple', 'Apple juice blend in wine glass.', 18.00, 'Y');
+
+-- R00013: Smokehouse BBQ
+INSERT INTO ITEM VALUES ('I00429', 'R00013', 'C00012', 'Grilled Lamb Shoulder', 'Served with mint sauce and fries.', 48.00, 'Y');
+INSERT INTO ITEM VALUES ('I00430', 'R00013', 'C00026', 'Coleslaw Bowl', 'Fresh cabbage in creamy dressing.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00431', 'R00013', 'C00012', 'BBQ Chicken Quarter', 'Roasted with signature basting.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00432', 'R00013', 'C00016', 'Iced Sarsi', 'Local sarsaparilla soda.', 4.00, 'Y');
+
+-- R00020: Spice Harbor
+INSERT INTO ITEM VALUES ('I00433', 'R00020', 'C00013', 'Mushroom Masala', 'Spiced gravy with button mushrooms.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00434', 'R00020', 'C00014', 'Vegetable Pakora', 'Crispy fried spiced fritters.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00435', 'R00020', 'C00013', 'Garlic Roti', 'Flatbread with roasted garlic.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00436', 'R00020', 'C00016', 'Hot Ginger Tea', 'Aromatic and warming brew.', 5.00, 'Y');
+
+-- R00003: Bella Italia (Breakfast focus)
+INSERT INTO ITEM VALUES ('I00437', 'R00003', 'C00017', 'Roti Canai Special', 'Served with dhal and curry.', 5.00, 'Y');
+INSERT INTO ITEM VALUES ('I00438', 'R00003', 'C00017', 'Nasi Lemak Biasa', 'Coconut rice with sambal and egg.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00439', 'R00003', 'C00008', 'Cheese Omelette', 'Two eggs with melted cheddar.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00440', 'R00003', 'C00016', 'Kopi C Ais', 'Iced coffee with evaporated milk.', 4.00, 'Y');
+
+-- R00027: Seoul Kitchen
+INSERT INTO ITEM VALUES ('I00441', 'R00027', 'C00002', 'Chicken Bulgogi Rice', 'Marinated meat with stir fried veg.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00442', 'R00027', 'C00012', 'Korean Fried Wings', 'Spicy gochujang glazed chicken.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00443', 'R00027', 'C00005', 'Tofu Stew', 'Soft tofu in spicy broth.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00444', 'R00027', 'C00026', 'Kimchi Pancake', 'Savory pancake with sour cabbage.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00445', 'R00027', 'C00016', 'Rice Nectar Drink', 'Traditional sweet Korean beverage.', 8.00, 'Y');
+
+-- R00040: Thai Terrace
+INSERT INTO ITEM VALUES ('I00446', 'R00040', 'C00028', 'Pad See Ew', 'Stir fried flat noodles with kale.', 18.00, 'N');
+INSERT INTO ITEM VALUES ('I00447', 'R00040', 'C00029', 'Pineapple Rice Seafood', 'Served in a pineapple shell.', 25.00, 'N');
+INSERT INTO ITEM VALUES ('I00448', 'R00040', 'C00005', 'Chicken Tom Kha', 'Coconut milk soup with galangal.', 20.00, 'N');
+INSERT INTO ITEM VALUES ('I00449', 'R00040', 'C00026', 'Thai Fish Cakes', 'Spiced patties with cucumber dip.', 14.00, 'N');
+INSERT INTO ITEM VALUES ('I00450', 'R00040', 'C00016', 'Iced Lemongrass', 'Refreshing herbal tea.', 7.00, 'Y');
+
+-- Random Mix to complete the count
+INSERT INTO ITEM VALUES ('I00451', 'R00022', 'C00028', 'Pork Ball Noodles', 'Clear broth with minced meat.', 13.00, 'N');
+INSERT INTO ITEM VALUES ('I00452', 'R00022', 'C00028', 'Dry Wanton Mee', 'Noodles with char siew and soup.', 14.00, 'N');
+INSERT INTO ITEM VALUES ('I00453', 'R00031', 'C00010', 'Dragon Roll', 'Eel and avocado premium roll.', 35.00, 'N');
+INSERT INTO ITEM VALUES ('I00454', 'R00031', 'C00010', 'Tuna Sashimi', 'Fresh raw tuna slices.', 30.00, 'N');
+INSERT INTO ITEM VALUES ('I00455', 'R00036', 'C00012', 'T Bone Steak', 'Charbroiled premium beef cut.', 95.00, 'N');
+INSERT INTO ITEM VALUES ('I00456', 'R00036', 'C00026', 'Garlic Mash', 'Creamy potatoes with roasted garlic.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00457', 'R00041', 'C00007', 'Meat Lovers Pizza', 'Beef, chicken and pepperoni topping.', 38.00, 'Y');
+INSERT INTO ITEM VALUES ('I00458', 'R00041', 'C00001', 'Potato Wedges', 'Crispy with sour cream dip.', 11.00, 'Y');
+INSERT INTO ITEM VALUES ('I00459', 'R00049', 'C00011', 'Lobster Thermidor', 'Creamy baked lobster shell.', 130.00, 'N');
+INSERT INTO ITEM VALUES ('I00460', 'R00049', 'C00011', 'Fried Calamari', 'Battered squid with tartare.', 22.00, 'N');
+INSERT INTO ITEM VALUES ('I00461', 'R00005', 'C00029', 'Claypot Chicken Rice', 'Slow cooked with salted fish.', 16.00, 'Y');
+INSERT INTO ITEM VALUES ('I00462', 'R00005', 'C00028', 'Curry Laksa', 'Spicy coconut noodle soup.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00463', 'R00010', 'C00010', 'Soft Shell Crab Maki', 'Crispy crab with mayo roll.', 26.00, 'Y');
+INSERT INTO ITEM VALUES ('I00464', 'R00010', 'C00023', 'Chicken Karaage', 'Japanese style fried chicken.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00465', 'R00014', 'C00009', 'Double Fish Burger', 'Two fillets with tartar sauce.', 22.00, 'Y');
+INSERT INTO ITEM VALUES ('I00466', 'R00014', 'C00026', 'Onion Ring Stack', 'Crispy battered giant rings.', 14.00, 'Y');
+INSERT INTO ITEM VALUES ('I00467', 'R00006', 'C00007', 'Veggie Pizza', 'Mixed peppers and olives.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00468', 'R00006', 'C00006', 'Prawn Linguine', 'Garlic and chili oil pasta.', 30.00, 'Y');
+INSERT INTO ITEM VALUES ('I00469', 'R00012', 'C00011', 'Garlic Butter Crab', 'Fresh mud crab with herbs.', 85.00, 'Y');
+INSERT INTO ITEM VALUES ('I00470', 'R00012', 'C00011', 'Oysters On Ice', 'Half dozen fresh oysters.', 60.00, 'Y');
+INSERT INTO ITEM VALUES ('I00471', 'R00020', 'C00013', 'Aloo Gobi Masala', 'Potato and cauliflower curry.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00472', 'R00020', 'C00013', 'Cheese Naan', 'Leavened bread with cheddar.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00473', 'R00003', 'C00017', 'Roti Telur Onion', 'Flatbread with egg and onions.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00474', 'R00003', 'C00017', 'Indomie Goreng', 'Stir fried instant noodles.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I00475', 'R00016', 'C00015', 'Red Bean Soup', 'Warm sweet bean dessert.', 6.00, 'Y');
+INSERT INTO ITEM VALUES ('I00476', 'R00016', 'C00022', 'Brownie with Nuts', 'Chocolate fudge cake slice.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00477', 'R00025', 'C00009', 'BBQ Beef Burger', 'With smoky sauce and rings.', 24.00, 'Y');
+INSERT INTO ITEM VALUES ('I00478', 'R00025', 'C00026', 'French Fries Large', 'Classic salted potato strips.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00479', 'R00037', 'C00023', 'Steamed Meat Bun', 'Fluffy white chicken bun.', 8.00, 'N');
+INSERT INTO ITEM VALUES ('I00480', 'R00037', 'C00023', 'Golden Custard Bun', 'Sweet flowing egg yolk center.', 12.00, 'N');
+INSERT INTO ITEM VALUES ('I00481', 'R00005', 'C00029', 'Egg Fried Rice', 'Simple and fragrant rice.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00482', 'R00005', 'C00028', 'Fried Kuey Teow', 'Flat noodles with bean sprouts.', 13.00, 'Y');
+INSERT INTO ITEM VALUES ('I00483', 'R00010', 'C00010', 'Kappa Maki', 'Simple cucumber sushi roll.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I00484', 'R00010', 'C00023', 'Prawn Tempura', 'Deep fried battered prawns.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00485', 'R00014', 'C00009', 'Mushroom Burger', 'Beef patty with swiss cheese.', 21.00, 'Y');
+INSERT INTO ITEM VALUES ('I00486', 'R00014', 'C00026', 'Cheese Fries', 'Topped with warm nacho sauce.', 12.00, 'Y');
+INSERT INTO ITEM VALUES ('I00487', 'R00006', 'C00007', 'Pepperoni Pizza', 'Beef pepperoni and mozzarella.', 35.00, 'Y');
+INSERT INTO ITEM VALUES ('I00488', 'R00006', 'C00006', 'Lasagna Beef', 'Baked layers of pasta and meat.', 28.00, 'Y');
+INSERT INTO ITEM VALUES ('I00489', 'R00012', 'C00011', 'Tiger Prawn Platter', 'Grilled with mixed herbs.', 75.00, 'Y');
+INSERT INTO ITEM VALUES ('I00490', 'R00012', 'C00011', 'Fish Cutlet', 'Breaded fish with tartar sauce.', 20.00, 'Y');
+INSERT INTO ITEM VALUES ('I00491', 'R00020', 'C00013', 'Paneer Makhani', 'Cheese cubes in butter gravy.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00492', 'R00020', 'C00013', 'Butter Naan', 'Traditional baked flatbread.', 7.00, 'Y');
+INSERT INTO ITEM VALUES ('I00493', 'R00003', 'C00017', 'Tosai Masala', 'Crepe with potato filling.', 6.50, 'Y');
+INSERT INTO ITEM VALUES ('I00494', 'R00003', 'C00017', 'Mee Goreng Mamak', 'Spicy stir fried noodles.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00495', 'R00016', 'C00015', 'Ice Kacang', 'Shaved ice with mixed toppings.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00496', 'R00016', 'C00022', 'Cheese Cake Slice', 'New York style creamy cake.', 15.00, 'Y');
+INSERT INTO ITEM VALUES ('I00497', 'R00025', 'C00009', 'Chicken Burger', 'Grilled breast with lettuce.', 18.00, 'Y');
+INSERT INTO ITEM VALUES ('I00498', 'R00025', 'C00026', 'Potato Salad', 'Cold side with mayo dressing.', 9.00, 'Y');
+INSERT INTO ITEM VALUES ('I00499', 'R00037', 'C00023', 'Chicken Feet', 'Braised in black bean sauce.', 10.00, 'N');
+INSERT INTO ITEM VALUES ('I00500', 'R00037', 'C00016', 'Tie Guan Yin', 'Premium oolong tea pot.', 8.00, 'Y');
