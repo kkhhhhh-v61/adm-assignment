@@ -66,6 +66,7 @@ CREATE TABLE PROMOTION (
   CurrentRedemptions NUMBER(6) DEFAULT 0 NOT NULL,
   StartDate DATE NOT NULL,
   EndDate DATE NOT NULL,
+  IsActive CHAR(1) DEFAULT 'Y' NOT NULL,
   CONSTRAINT pk_pr_promotionid PRIMARY KEY (PromotionID),
   CONSTRAINT chk_pr_promotionid CHECK (REGEXP_LIKE(PromotionID, '^P[0-9]{5}$')),
   CONSTRAINT chk_pr_discountpercentage CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 100),
@@ -73,7 +74,8 @@ CREATE TABLE PROMOTION (
   CONSTRAINT chk_pr_maxdiscountamount CHECK (MaxDiscountAmount >= 0),
   CONSTRAINT chk_pr_maxredemptions CHECK (MaxRedemptions > 0),
   CONSTRAINT chk_pr_currentredemptions CHECK (CurrentRedemptions >= 0),
-  CONSTRAINT chk_pr_enddate CHECK (EndDate >= StartDate)
+  CONSTRAINT chk_pr_enddate CHECK (EndDate >= StartDate),
+  CONSTRAINT chk_i_isactive CHECK (IsActive IN ('Y', 'N'))
 );
 
 CREATE TABLE DELIVERYCOMPANY (
