@@ -775,7 +775,7 @@ INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00772', 'Lot G-15, Elements Mall', 'Melaka City', 'Melaka', '75000');
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00773', 'Ground Floor, 4, Jalan KSB 1, Taman Kota Syahbandar', 'Melaka City', 'Melaka', '75200');
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00774', 'No. 19, Jalan Melaka Raya 8', 'Melaka City', 'Melaka', '75000');
-INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00775', 'Lot G-05, Freeport A\'Famosa Outlet', 'Alor Gajah', 'Melaka', '78000');
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00775', 'Lot G-05, Freeport A''Famosa Outlet', 'Alor Gajah', 'Melaka', '78000');
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00776', 'Ground Floor, 33, Jalan Dataran Sentral 1', 'Seremban', 'Negeri Sembilan', '70200');
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00777', 'No. 11, Jalan S2 B16, Seremban 2', 'Seremban', 'Negeri Sembilan', '70300');
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A00778', 'Lot G-22, Terminal 1 Shopping Centre', 'Seremban', 'Negeri Sembilan', '70200');
