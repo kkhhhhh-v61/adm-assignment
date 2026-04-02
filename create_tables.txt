@@ -38,7 +38,7 @@ CREATE TABLE SUBSCRIPTIONPLAN (
   CONSTRAINT chk_sp_price CHECK (Price >= 0)
 );
 
-CREATE TABLE "SETS" (
+CREATE TABLE SETS (
   SetID CHAR(7) NOT NULL,
   SetName VARCHAR2(100) NOT NULL,
   Discount NUMBER(5,2) DEFAULT 0,
@@ -91,6 +91,15 @@ CREATE TABLE DELIVERYTYPE (
   CONSTRAINT pk_dt_deliverytypeid PRIMARY KEY (DeliveryTypeID),
   CONSTRAINT chk_dt_deliverytypeid CHECK (REGEXP_LIKE(DeliveryTypeID, '^DT[0-9]{5}$')),
   CONSTRAINT chk_dt_deliveryfee CHECK (DeliveryFee >= 0)
+);
+
+CREATE TABLE RIDERCOMMISSION (
+  RiderCommissionID CHAR(7) NOT NULL,
+  Description VARCHAR2(255) NOT NULL,
+  CommissionRate NUMBER(3,2) NOT NULL,
+  CONSTRAINT pk_rc_ridercommissionid PRIMARY KEY (RiderCommissionID),
+  CONSTRAINT chk_rc_ridercommissionid CHECK (REGEXP_LIKE(RiderCommissionID, '^RC[0-9]{5}$')),
+  CONSTRAINT chk_rc_commissionrate CHECK (CommissionRate >= 0 AND CommissionRate <= 1)
 );
 
 CREATE TABLE MEMBER (
@@ -231,7 +240,7 @@ CREATE TABLE ITEMPROMOTION (
   CONSTRAINT fk_ip_promotionid FOREIGN KEY (PromotionID) REFERENCES PROMOTION(PromotionID)
 );
 
-CREATE TABLE "ORDERS" (
+CREATE TABLE ORDERS (
   OrderID CHAR(6) NOT NULL,
   MemberID CHAR(6) NOT NULL,
   DeliveryID CHAR(6),
