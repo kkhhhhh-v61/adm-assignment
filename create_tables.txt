@@ -164,7 +164,7 @@ CREATE TABLE VOUCHER (
   CONSTRAINT fk_v_vouchertypeid FOREIGN KEY (VoucherTypeID) REFERENCES VOUCHERTYPE(VoucherTypeID),
   CONSTRAINT chk_v_voucherid CHECK (REGEXP_LIKE(VoucherID, '^V[0-9]{5}$')),
   CONSTRAINT uq_v_vouchercode UNIQUE (VoucherCode),
-  CONSTRAINT chk_v_discount CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 1),
+  CONSTRAINT chk_v_discountpercentage CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 1),
   CONSTRAINT chk_v_discountamount CHECK (DiscountAmount >= 0),
   CONSTRAINT chk_v_discount_logic CHECK ((DiscountPercentage > 0 AND DiscountAmount = 0) OR (DiscountPercentage = 0 AND DiscountAmount > 0)),
   CONSTRAINT chk_v_minspend CHECK (MinSpend >= 0)
