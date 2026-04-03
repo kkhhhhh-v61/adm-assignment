@@ -268,7 +268,7 @@ CREATE TABLE ORDERS (
   CONSTRAINT chk_o_orderid CHECK (REGEXP_LIKE(OrderID, '^O[0-9]{5}$')),
   CONSTRAINT chk_o_pickuptype CHECK (PickupType IN ('Delivery', 'Pickup')),
   CONSTRAINT chk_o_totalamount CHECK (TotalAmount >= 0),
-  CONSTRAINT chk_o_orderstatus CHECK (OrderStatus IN ('Pending', 'Preparing', 'Delivering', 'Completed', 'Cancelled'))
+  CONSTRAINT chk_o_orderstatus CHECK (OrderStatus IN ('Pending', 'Delivering', 'Completed', 'Cancelled'))
 );
 
 CREATE TABLE DELIVERYFEEDBACK (
