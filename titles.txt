@@ -68,7 +68,7 @@ Update → Update Restaurant.AverageRating)
 - Lost Revenue from Incomplete Orders based on Restaurant (Summary of the total potential revenue lost from orders that are not "Delivered" status)
 
 2）Procedures
-- Assign Delivery Rider to Order (Calculate rider commission based on average rating and update OrderStatus)
+- Assign Delivery Rider to Order (Calculate rider bonus based on average rating and update OrderStatus)
 - Create New Package for Restaurant (Insert new package details and link multiple items to the package with a discounted price)
 
 3）Triggers
