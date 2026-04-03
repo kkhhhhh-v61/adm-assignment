@@ -62,10 +62,8 @@ BEGIN
     SELECT 'MV' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(MemberVoucherID, 3))), 0) + 1, 5, '0')
     INTO v_new_mv_id FROM MEMBERVOUCHER;
 
-    -- =========================================================================
     -- 5. STRICT ONE-TIME WELCOME VOUCHER LOGIC (Targeting VT00015)
-    -- =========================================================================
-    
+
     -- Step 5a: Check if user has EVER received a Welcome Voucher (VT00015) in the past
     SELECT COUNT(*)
     INTO v_has_received_welcome
@@ -91,9 +89,7 @@ BEGIN
         END;
     END IF;
 
-    -- =========================================================================
     -- 6. PERFORM MULTI-TABLE DATA MANIPULATION (DML)
-    -- =========================================================================
     
     -- A. Create Subscription Record
     INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status)
@@ -112,9 +108,7 @@ BEGIN
 
     COMMIT;
 
-    -- =========================================================================
     -- 7. PRINT VIP WELCOME RECEIPT
-    -- =========================================================================
     DBMS_OUTPUT.PUT_LINE('===================================================');
     DBMS_OUTPUT.PUT_LINE('        VIP SUBSCRIPTION ACTIVATED SUCCESSFULLY    ');
     DBMS_OUTPUT.PUT_LINE('===================================================');
