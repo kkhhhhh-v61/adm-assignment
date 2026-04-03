@@ -1,0 +1,94 @@
+CL SCR
+
+CREATE OR REPLACE VIEW VIEW_PROMOTION_EFFECTIVENESS AS
+SELECT 
+    P.PromotionID,
+    P.PromoName,
+    R.RestaurantName,
+    P.MaxRedemptions,
+    P.CurrentRedemptions,
+    COUNT(DISTINCT O.OrderID) AS TOTAL_PROMO_ORDERS,
+    SUM(DISTINCT OI.Quantity * OI.PriceEach) AS TOTAL_PROMO_REVENUE
+FROM PROMOTION P
+JOIN ITEMPROMOTION IP ON P.PromotionID = IP.PromotionID
+JOIN ITEM I ON IP.ItemID = I.ItemID
+JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+JOIN ORDERITEM OI ON I.ItemID = OI.ItemID
+JOIN ORDERS O ON OI.OrderID = O.OrderID
+WHERE O.OrderStatus = 'Completed'
+AND O.OrderDate BETWEEN P.StartDate AND P.EndDate
+GROUP BY 
+P.PromotionID,
+P.PromoName,
+R.RestaurantName,
+P.MaxRedemptions,
+P.CurrentRedemptions;
+
+SET LINESIZE 250
+SET PAGESIZE 250
+SET FEEDBACK OFF
+SET SQLBLANKLINES ON
+SET SERVEROUTPUT ON
+
+COLUMN PROMOTIONID FORMAT A10 HEADING 'PROMO ID'
+COLUMN PROMONAME FORMAT A25 HEADING 'PROMOTION'
+COLUMN RESTAURANTNAME FORMAT A25 HEADING 'RESTAURANT'
+COLUMN TOTAL_PROMO_ORDERS FORMAT 999,990 HEADING 'PROMO ORDERS'
+COLUMN TOTAL_PROMO_REVENUE FORMAT $999,990.99 HEADING 'PROMO REVENUE (RM)'
+COLUMN REDEMPTION_RATE FORMAT 990.00 HEADING 'REDEMPTION (%)'
+COLUMN ORDER_SHARE FORMAT 990.00 HEADING 'ORDER SHARE (%)'
+COLUMN REVENUE_SHARE FORMAT 990.00 HEADING 'REVENUE SHARE (%)'
+
+TTITLE LEFT '===============================================================================================================================================' SKIP 1 -
+       LEFT '                                               RESTAURANT PROMOTION EFFECTIVENESS ANALYSIS QUERY                  ' SKIP 1 -
+       LEFT '===============================================================================================================================================' SKIP 2
+
+BREAK ON REPORT
+COMPUTE SUM LABEL 'TOTAL :' OF TOTAL_PROMO_ORDERS TOTAL_PROMO_REVENUE ON REPORT
+
+SELECT
+    PromotionID,
+    PromoName,
+    RestaurantName,
+    TOTAL_PROMO_ORDERS,
+    ROUND(RATIO_TO_REPORT(TOTAL_PROMO_ORDERS) OVER () * 100,2) AS ORDER_SHARE,
+    TOTAL_PROMO_REVENUE,
+    ROUND(RATIO_TO_REPORT(TOTAL_PROMO_REVENUE) OVER () * 100,2) AS REVENUE_SHARE,
+    ROUND((CurrentRedemptions / MaxRedemptions) * 100,2) AS Redemption_Rate
+FROM VIEW_PROMOTION_EFFECTIVENESS
+ORDER BY TOTAL_PROMO_REVENUE DESC;
+
+TTITLE OFF
+CLEAR BREAKS
+CLEAR COMPUTES
+SET HEADING OFF
+
+DECLARE
+    v_top_promo VARCHAR2(100);
+    v_top_restaurant VARCHAR2(100);
+    v_top_rev NUMBER;
+BEGIN
+
+    SELECT PromoName, RestaurantName, TOTAL_PROMO_REVENUE
+    INTO v_top_promo, v_top_restaurant, v_top_rev
+    FROM (
+        SELECT PromoName, RestaurantName, TOTAL_PROMO_REVENUE
+        FROM VIEW_PROMOTION_EFFECTIVENESS
+        ORDER BY TOTAL_PROMO_REVENUE DESC
+    )
+    WHERE ROWNUM = 1;
+
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(' [ PROMOTION EFFECTIVENESS SUMMARY ]');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP PERFORMING PROMOTION : ' || v_top_promo);
+    DBMS_OUTPUT.PUT_LINE(' >> RESTAURANT BENEFITING MOST : ' || v_top_restaurant);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE GENERATED : RM ' || TO_CHAR(v_top_rev, '99,999.99'));
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------------------------------------------------');
+
+END;
+/
+
+SET HEADING ON
+SET FEEDBACK ON
+CLEAR COLUMNS
