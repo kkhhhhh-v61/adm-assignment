@@ -14,10 +14,10 @@ CREATE OR REPLACE PROCEDURE calculate_dynamic_delivery_fee (
     v_distance        DELIVERY.DistanceInKm%TYPE;
     v_base_fee        DELIVERYTYPE.DeliveryFee%TYPE;
     v_delivery_name   DELIVERYTYPE.DeliveryName%TYPE;
-
+    
     -- variables for fee calculation
     v_vip_count       NUMBER := 0;
-    v_subtotal        NUMBER(6,2) := 0;  
+    v_subtotal        NUMBER(6,2) := 0;
     v_final_fee       NUMBER(6,2) := 0;  
     v_dist_surcharge  NUMBER(6,2) := 0;
     v_vip_discount    NUMBER(6,2) := 0;
@@ -25,11 +25,11 @@ CREATE OR REPLACE PROCEDURE calculate_dynamic_delivery_fee (
     -- variables for voucher processing
     v_voucher_type    VOUCHER.VoucherTypeID%TYPE;
     v_voucher_is_used MEMBERVOUCHER.IsUsed%TYPE;
+    v_flat_discount   VOUCHER.DiscountAmount%TYPE := 0;
     v_voucher_waived  NUMBER(6,2) := 0;
     v_voucher_msg     VARCHAR2(100) := 'No Voucher Attached';
-
-    e_no_delivery     EXCEPTION;
     
+    e_no_delivery     EXCEPTION;
 BEGIN
     -- 1. fetch data
     SELECT O.MemberID, O.DeliveryID, O.MemberVoucherID, D.DistanceInKm, DT.DeliveryFee, DT.DeliveryName
@@ -68,7 +68,8 @@ BEGIN
     -- STAGE 2: VOUCHER CHECK & RECALCULATION
     -- ==========================================
     IF v_mem_voucher_id IS NOT NULL THEN
-        SELECT V.VoucherTypeID, MV.IsUsed INTO v_voucher_type, v_voucher_is_used
+        SELECT V.VoucherTypeID, MV.IsUsed, NVL(V.DiscountAmount, 0)
+        INTO v_voucher_type, v_voucher_is_used, v_flat_discount
         FROM MEMBERVOUCHER MV
         JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
         WHERE MV.MemberVoucherID = v_mem_voucher_id;
@@ -78,8 +79,13 @@ BEGIN
         IF p_use_voucher = 'Y' THEN
             IF v_voucher_is_used = 'N' THEN
                 IF v_voucher_type = 'VT00003' THEN
-                    v_voucher_waived := v_final_fee;
-                    v_final_fee := 0; 
+                    
+                    v_voucher_waived := v_flat_discount;
+                    IF v_voucher_waived > v_final_fee THEN
+                        v_voucher_waived := v_final_fee;
+                    END IF;
+                    
+                    v_final_fee := v_final_fee - v_voucher_waived; 
                     v_voucher_msg := v_voucher_msg || ' -> USER APPLIED! (-RM ' || LTRIM(TO_CHAR(v_voucher_waived, '990.99')) || ')';
                     
                     UPDATE MEMBERVOUCHER SET IsUsed = 'Y' WHERE MemberVoucherID = v_mem_voucher_id;

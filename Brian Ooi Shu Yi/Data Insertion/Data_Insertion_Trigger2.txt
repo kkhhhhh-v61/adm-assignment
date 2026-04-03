@@ -36,4 +36,3 @@ INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAm
 VALUES ('O03004', 'M03001', 'Pickup', SYSDATE, '19:45', 0.00, 'Pending');
 
 COMMIT;
-PROMPT >> 3000-series test data is ready.
