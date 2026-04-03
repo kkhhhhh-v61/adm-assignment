@@ -72,7 +72,7 @@ Update → Update Restaurant.AverageRating)
 - Create New Package for Restaurant (Insert new package details and link multiple items to the package with a discounted price)
 
 3）Triggers
-- Enfore Rider Active Workload Limit (Prevent riders from accepting too much deliveries at once)
+- Enforce Rider Active Workload Limit (Prevent riders from accepting too much deliveries at once)
 - Auto-Cascade Order Cancellation on Payment Failure (Change OrderStatus to 'CANCELLED' if PaymentStatus is 'FAILED' and automatically refunds the voucher used on that order (if applicable))
 
 4）Reports

@@ -316,12 +316,10 @@ CREATE TABLE ORDERPACKAGE (
   OrderID CHAR(6) NOT NULL,
   PackageID CHAR(7) NOT NULL,
   Quantity NUMBER(4) NOT NULL,
-  Subtotal NUMBER(8,2) NOT NULL,
   CONSTRAINT pk_op_orderid_packageid PRIMARY KEY (OrderID, PackageID),
   CONSTRAINT fk_op_orderid FOREIGN KEY (OrderID) REFERENCES ORDERS(OrderID),
   CONSTRAINT fk_op_packageid FOREIGN KEY (PackageID) REFERENCES PACKAGE(PackageID),
-  CONSTRAINT chk_op_quantity CHECK (Quantity > 0),
-  CONSTRAINT chk_op_subtotal CHECK (Subtotal >= 0)
+  CONSTRAINT chk_op_quantity CHECK (Quantity > 0)
 );
 
 CREATE TABLE ORDERFEEDBACK (
