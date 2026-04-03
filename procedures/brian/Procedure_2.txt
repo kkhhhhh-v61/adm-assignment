@@ -30,7 +30,7 @@ PROMPT >> 2. Current Vouchers in Member's Wallet:
 
 SELECT 
     NVL(MV.MemberVoucherID, 'EMPTY') AS WALLET_ID, 
-    NVL(VT.TypeName, 'No Vouchers') AS VOUCHER_NAME,
+    NVL(V.VoucherName, 'No Vouchers') AS VOUCHER_NAME,
     NVL(V.VoucherCode, '-') AS VOUCHER_CODE, 
     NVL(TO_CHAR(MV.DateClaimed, 'DD-MON-YYYY'), '-') AS DATE_CLAIMED, 
     NVL(MV.IsUsed, '-') AS USED
@@ -38,7 +38,8 @@ FROM MEMBER M
 LEFT JOIN MEMBERVOUCHER MV ON M.MemberID = MV.MemberID
 LEFT JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
 LEFT JOIN VOUCHERTYPE VT ON V.VoucherTypeID = VT.VoucherTypeID
-WHERE M.MemberID = 'M00296';
+WHERE M.MemberID = 'M00296'
+ORDER BY MV.MemberVoucherID;
 
 PROMPT 
 PROMPT Press ENTER to simulate customer purchasing VIP...
@@ -72,7 +73,7 @@ PROMPT >> 2. Updated Vouchers in Member's Wallet (Check for the new WELCOME vouc
 
 SELECT 
     NVL(MV.MemberVoucherID, 'EMPTY') AS WALLET_ID, 
-    NVL(VT.TypeName, 'No Vouchers') AS VOUCHER_NAME,
+    NVL(V.VoucherName, 'No Vouchers') AS VOUCHER_NAME,
     NVL(V.VoucherCode, '-') AS VOUCHER_CODE, 
     NVL(TO_CHAR(MV.DateClaimed, 'DD-MON-YYYY'), '-') AS DATE_CLAIMED, 
     NVL(MV.IsUsed, '-') AS USED

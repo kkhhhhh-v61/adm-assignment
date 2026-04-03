@@ -72,7 +72,7 @@ BEGIN
     FROM MEMBERVOUCHER MV
     JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
     WHERE MV.MemberID = p_member_id
-      AND V.VoucherTypeID = 'VT00015'; -- 精准锁定你的 Welcome VIP 类型
+      AND V.VoucherTypeID = 'VT00015';
 
     -- Step 5b: If they never received it, explicitly find a VT00015 Voucher
     IF v_has_received_welcome = 0 THEN
@@ -81,7 +81,7 @@ BEGIN
             FROM (
                 SELECT VoucherID, VoucherCode
                 FROM VOUCHER 
-                WHERE VoucherTypeID = 'VT00015' -- 精准抓取你的 V00141 等数据
+                WHERE VoucherTypeID = 'VT00015'
                 ORDER BY VoucherID
             )
             WHERE ROWNUM = 1;

@@ -1,0 +1,6 @@
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed)
+VALUES ('MV09999', 'M00044', 'V00021', SYSDATE, 'N');
+
+UPDATE ORDERS
+SET MemberVoucherID = 'MV09999'
+WHERE OrderID = 'O00003';
