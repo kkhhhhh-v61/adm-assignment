@@ -153,13 +153,20 @@ CREATE TABLE DELIVERYRIDER (
 CREATE TABLE VOUCHER (
   VoucherID CHAR(6) NOT NULL,
   VoucherTypeID CHAR(7) NOT NULL,
+  VoucherName VARCHAR2(100) NOT NULL,
   VoucherCode VARCHAR2(50) NOT NULL,
+  DiscountPercentage NUMBER(3,2) DEFAULT 0,
+  DiscountAmount NUMBER(6,2) DEFAULT 0,
   MinSpend NUMBER(6,2) DEFAULT 0 NOT NULL,
+  MaxDiscountAmount NUMBER(6,2) DEFAULT 0 NOT NULL,
   ExpiryDate DATE NOT NULL,
   CONSTRAINT pk_v_voucherid PRIMARY KEY (VoucherID),
   CONSTRAINT fk_v_vouchertypeid FOREIGN KEY (VoucherTypeID) REFERENCES VOUCHERTYPE(VoucherTypeID),
   CONSTRAINT chk_v_voucherid CHECK (REGEXP_LIKE(VoucherID, '^V[0-9]{5}$')),
   CONSTRAINT uq_v_vouchercode UNIQUE (VoucherCode),
+  CONSTRAINT chk_v_discountpercentage CHECK (DiscountPercentage >= 0 AND DiscountPercentage <= 1),
+  CONSTRAINT chk_v_discountamount CHECK (DiscountAmount >= 0),
+  CONSTRAINT chk_v_discount_logic CHECK ((DiscountPercentage > 0 AND DiscountAmount = 0) OR (DiscountPercentage = 0 AND DiscountAmount > 0)),
   CONSTRAINT chk_v_minspend CHECK (MinSpend >= 0)
 );
 
