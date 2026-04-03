@@ -42,7 +42,7 @@ COLUMN TOTAL_REVENUE FORMAT $999,990.99 HEADING 'REVENUE (RM)'
 
 -- Report header
 TTITLE LEFT '========================================================================================' SKIP 1 -
-       LEFT '                       PACKAGE AND SET POPULARITY ANALYSIS REPORT                       ' SKIP 1 -
+       LEFT '                       PACKAGE AND SET POPULARITY ANALYSIS                              ' SKIP 1 -
        LEFT '========================================================================================' SKIP 2
 
 -- Calculate totals

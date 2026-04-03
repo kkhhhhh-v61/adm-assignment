@@ -40,7 +40,7 @@ COLUMN ORDER_SHARE FORMAT 990.00 HEADING 'ORDER SHARE (%)'
 COLUMN REVENUE_SHARE FORMAT 990.00 HEADING 'REVENUE SHARE (%)'
 
 TTITLE LEFT '===============================================================================================================================================' SKIP 1 -
-       LEFT '                                               RESTAURANT PROMOTION EFFECTIVENESS ANALYSIS QUERY                  ' SKIP 1 -
+       LEFT '                                               RESTAURANT PROMOTION EFFECTIVENESS ANALYSIS                          ' SKIP 1 -
        LEFT '===============================================================================================================================================' SKIP 2
 
 BREAK ON REPORT

@@ -29,7 +29,7 @@ COLUMN REVENUE_SHARE FORMAT 990.00 HEADING 'REVENUE SHARE (%)'
 
 -- Report header
 TTITLE LEFT '==========================================================================================' SKIP 1 -
-       LEFT '                         CATEGORY SALES CONTRIBUTION ANALYSIS REPORT                     ' SKIP 1 -
+       LEFT '                         CATEGORY SALES CONTRIBUTION ANALYSIS                             ' SKIP 1 -
        LEFT '==========================================================================================' SKIP 2
 
 -- Calculate totals

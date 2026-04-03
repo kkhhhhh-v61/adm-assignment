@@ -1,0 +1,125 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE generate_deliverytype_report (
+    p_start_date IN DATE,
+    p_end_date   IN DATE
+) AS
+    -- Cursor for delivery types
+    CURSOR c_deliverytype IS
+        SELECT DISTINCT DT.DeliveryName, DT.DeliveryTypeID
+        FROM DELIVERYTYPE DT
+        JOIN DELIVERY D ON DT.DeliveryTypeID = D.DeliveryTypeID
+        JOIN ORDERS O ON O.DeliveryID = D.DeliveryID
+        WHERE O.OrderStatus = 'Completed'
+          AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        ORDER BY DT.DeliveryName;
+
+    -- Cursor for orders per delivery type
+    CURSOR c_orders(v_deliverytype_id CHAR) IS
+        SELECT COUNT(O.OrderID) AS OrderVolume,
+               SUM(O.TotalAmount) AS TotalRevenue
+        FROM ORDERS O
+        JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+        WHERE O.OrderStatus = 'Completed'
+          AND D.DeliveryTypeID = v_deliverytype_id
+          AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date);
+
+    TYPE t_delivery_data IS RECORD (
+        delivery_name VARCHAR2(100),
+        order_volume  NUMBER,
+        revenue       NUMBER
+    );
+    TYPE t_delivery_tab IS TABLE OF t_delivery_data INDEX BY PLS_INTEGER;
+    v_data t_delivery_tab;
+
+    v_index PLS_INTEGER := 0;
+    v_grand_orders NUMBER := 0;
+    v_grand_revenue NUMBER := 0;
+
+    v_top_deliverytype VARCHAR2(100) := 'N/A';
+    v_top_revenue NUMBER := -1;
+
+    e_invalid_date EXCEPTION;
+    e_no_data EXCEPTION;
+    v_data_exists BOOLEAN := FALSE;
+
+BEGIN
+    IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
+        RAISE e_invalid_date;
+    END IF;
+
+    -- Collect data into collection
+    FOR r_dt IN c_deliverytype LOOP
+        v_data_exists := TRUE;
+        v_index := v_index + 1;
+        v_data(v_index).delivery_name := r_dt.DeliveryName;
+        v_data(v_index).order_volume := 0;
+        v_data(v_index).revenue := 0;
+
+        FOR r_order IN c_orders(r_dt.DeliveryTypeID) LOOP
+            v_data(v_index).order_volume := r_order.OrderVolume;
+            v_data(v_index).revenue := r_order.TotalRevenue;
+        END LOOP;
+
+        v_grand_orders := v_grand_orders + v_data(v_index).order_volume;
+        v_grand_revenue := v_grand_revenue + v_data(v_index).revenue;
+
+        IF v_data(v_index).revenue > v_top_revenue THEN
+            v_top_revenue := v_data(v_index).revenue;
+            v_top_deliverytype := r_dt.DeliveryName;
+        END IF;
+    END LOOP;
+
+    IF NOT v_data_exists THEN
+        RAISE e_no_data;
+    END IF;
+
+    -- Print report header
+    DBMS_OUTPUT.PUT_LINE('==========================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                    DELIVERY TYPE REVENUE AND ORDER VOLUME REPORT');
+    DBMS_OUTPUT.PUT_LINE('==========================================================================================');
+    DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date, 'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE('Generated : ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'));
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('DELIVERY TYPE', 25) || LPAD('ORDER VOLUME', 20) || LPAD('ORDER (%)',15) || LPAD('REVENUE (RM)',15) || LPAD('REVENUE (%)',15));
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------------');
+
+    -- Print each delivery type with percentage
+    FOR i IN 1..v_index LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(v_data(i).delivery_name,25) ||
+            LPAD(v_data(i).order_volume,20) ||
+            LPAD(ROUND((v_data(i).order_volume/v_grand_orders)*100,2)||'%',15) ||
+            LPAD(TO_CHAR(v_data(i).revenue,'999,990.99'),15) ||
+            LPAD(ROUND((v_data(i).revenue/v_grand_revenue)*100,2)||'%',15)
+        );
+    END LOOP;
+
+    -- Print grand total
+    DBMS_OUTPUT.PUT_LINE('==========================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('GRAND TOTAL',25) ||
+                         LPAD(v_grand_orders,20) ||
+                         LPAD('100%',15) ||
+                         LPAD(TO_CHAR(v_grand_revenue,'999,990.99'),15) ||
+                         LPAD('100%',15));
+    DBMS_OUTPUT.PUT_LINE('==========================================================================================');
+
+    -- Executive summary
+    DBMS_OUTPUT.PUT_LINE(' '); 
+    DBMS_OUTPUT.PUT_LINE('>> TOP DELIVERY TYPE BY REVENUE : ' || UPPER(v_top_deliverytype) ||
+                         ' (RM ' || TRIM(TO_CHAR(v_top_revenue,'999,990.99')) || ')');
+    DBMS_OUTPUT.PUT_LINE('==========================================================================================');
+    DBMS_OUTPUT.PUT_LINE('End of Report.');
+
+EXCEPTION
+    WHEN e_invalid_date THEN
+        RAISE_APPLICATION_ERROR(-20001, 'INVALID DATE RANGE: Start Date cannot be later than End Date.');
+    WHEN e_no_data THEN
+        DBMS_OUTPUT.PUT_LINE('>>> NO COMPLETED ORDERS FOUND FOR THIS DATE RANGE <<<');
+        DBMS_OUTPUT.PUT_LINE('================================================================================');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+
+END;
+/

@@ -29,7 +29,7 @@ COLUMN SPENDING_SHARE FORMAT 990.00 HEADING 'SPENDING SHARE (%)'
 
 -- Report header
 TTITLE LEFT '===========================================================================================================' SKIP 1 -
-       LEFT '                             MEMBER ORDER FREQUENCY AND SPENDING ANALYSIS REPORT                   ' SKIP 1 -
+       LEFT '                             MEMBER ORDER FREQUENCY AND SPENDING ANALYSIS                                  ' SKIP 1 -
        LEFT '===========================================================================================================' SKIP 2
 
 -- Totals
