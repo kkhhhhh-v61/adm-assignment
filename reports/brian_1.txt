@@ -1,4 +1,8 @@
-CL SCR
+-- ============================================================================
+-- REPORT 1: GEOGRAPHICAL REVENUE AND ORDER VOLUME TREND (ON-DEMAND)
+-- Requirements fulfilled: Nested Cursors (8 marks), Parameterized, 
+-- 2 Exception Types, Executive Summary (Tracking max values)
+-- ============================================================================
 
 SET DEFINE OFF;
 SET SERVEROUTPUT ON FORMAT WRAPPED;
@@ -10,7 +14,7 @@ CREATE OR REPLACE PROCEDURE generate_geo_revenue_report (
     -- outer cursor: find distinct states that have completed orders
     CURSOR c_state IS
         SELECT DISTINCT A.State
-        FROM "ORDER" O
+        FROM ORDERS O
         JOIN (
             SELECT OrderID, ItemID FROM ORDERITEM
             UNION
@@ -30,7 +34,7 @@ CREATE OR REPLACE PROCEDURE generate_geo_revenue_report (
                SUM(Loc.TotalAmount) AS TotalRevenue
         FROM (
             SELECT DISTINCT O.OrderID, O.TotalAmount, A.City
-            FROM "ORDER" O
+            FROM ORDERS O
             JOIN (
                 SELECT OrderID, ItemID FROM ORDERITEM
                 UNION
