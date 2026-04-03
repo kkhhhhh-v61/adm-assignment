@@ -1,0 +1,103 @@
+CL SCR
+
+CREATE OR REPLACE TRIGGER trg_restaurant_hours_control
+BEFORE INSERT ON ORDERITEM
+FOR EACH ROW
+DECLARE
+    v_order_time      VARCHAR2(20);
+    v_op_hours        RESTAURANT.OperationHours%TYPE;
+    v_category_name   CATEGORY.CategoryName%TYPE;
+    
+    v_open_raw        VARCHAR2(20);
+    v_close_raw       VARCHAR2(20);
+    
+    v_order_dt        DATE;
+    v_open_dt         DATE;
+    v_close_dt        DATE;
+    
+    v_diff_mins       NUMBER;
+    v_prep_time_req   NUMBER;
+BEGIN
+    -- Get current order time
+    SELECT OrderTime INTO v_order_time FROM ORDERS WHERE OrderID = :NEW.OrderID;
+
+    -- Get restaurant operation hours and item category
+    SELECT R.OperationHours, C.CategoryName
+    INTO v_op_hours, v_category_name
+    FROM ITEM I
+    JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+    JOIN CATEGORY C ON I.CategoryID = C.CategoryID
+    WHERE I.ItemID = :NEW.ItemID;
+
+    -- Format operation hours string ( sepearte'7.00a.m.- 8.00p.m.' by using INSTR.)
+    v_open_raw  := TRIM(SUBSTR(v_op_hours, 1, INSTR(v_op_hours, '-') - 1));
+    v_close_raw := TRIM(SUBSTR(v_op_hours, INSTR(v_op_hours, '-') + 1));
+
+    -- Clean formatting for TO_DATE conversion (change A.M. -> AM)
+    v_open_raw := REPLACE(REPLACE(UPPER(v_open_raw), 'A.M.', 'AM'), 'P.M.', 'PM');
+    v_open_raw := REPLACE(REPLACE(v_open_raw, '.', ':'), ' ', '');
+    v_close_raw := REPLACE(REPLACE(UPPER(v_close_raw), 'A.M.', 'AM'), 'P.M.', 'PM');
+    v_close_raw := REPLACE(REPLACE(v_close_raw, '.', ':'), ' ', '');
+
+    -- Convert strings to DATE objects
+    v_order_dt := TO_DATE(v_order_time, 'HH24:MI');
+    v_open_dt  := TO_DATE(v_open_raw, 'HH12:MIAM');
+    v_close_dt := TO_DATE(v_close_raw, 'HH12:MIAM');
+    
+    -- Adjust for restaurants closing past midnight
+    IF v_close_dt < v_open_dt THEN
+        v_close_dt := v_close_dt + 1;
+        IF v_order_dt < v_open_dt THEN
+            v_order_dt := v_order_dt + 1;
+        END IF;
+    END IF;
+    
+    -- Block orders outside operating hours
+    IF v_order_dt < v_open_dt THEN
+        RAISE_APPLICATION_ERROR(-20030, 
+            'Order failed: Restaurant opens at ' || v_open_raw || '. Current order time: ' || v_order_time);
+    ELSIF v_order_dt > v_close_dt THEN
+        RAISE_APPLICATION_ERROR(-20031, 
+            'Order failed: Restaurant closed at ' || v_close_raw || '. Current order time: ' || v_order_time);
+    END IF;
+
+    -- Check 2: Prep time limits for last 30 minutes
+    v_diff_mins := ROUND((v_close_dt - v_order_dt) * 24 * 60);
+
+    IF v_diff_mins <= 30 THEN
+        
+        -- Drinks and desserts do not require cooking time
+        IF UPPER(v_category_name) LIKE '%DRINK%' 
+           OR UPPER(v_category_name) LIKE '%BEVERAGE%'
+           OR UPPER(v_category_name) LIKE '%SMOOTHIE%'
+           OR UPPER(v_category_name) LIKE '%ICE CREAM%' 
+           OR UPPER(v_category_name) LIKE '%DESSERT%' THEN
+           
+            DBMS_OUTPUT.PUT_LINE('- System: No-cook item (' || v_category_name || ') accepted near closing time.');
+            RETURN;
+        
+        -- Light items take 2 mins per unit to prepare
+        ELSIF UPPER(v_category_name) LIKE '%APPETIZER%'
+           OR UPPER(v_category_name) LIKE '%SALAD%'
+           OR UPPER(v_category_name) LIKE '%SOUP%'
+           OR UPPER(v_category_name) LIKE '%SNACK%'
+           OR UPPER(v_category_name) LIKE '%DIM SUM%' THEN
+           
+            v_prep_time_req := :NEW.Quantity * 2; 
+
+        -- Heavy meals take 6 mins per unit to prepare
+        ELSE
+            v_prep_time_req := :NEW.Quantity * 6; 
+        END IF;
+
+        -- Compare required prep time with remaining operating time
+        IF v_prep_time_req > v_diff_mins THEN
+            RAISE_APPLICATION_ERROR(-20032, 
+                'Order failed: ' || :NEW.Quantity || 'x ' || v_category_name || ' requires ' || v_prep_time_req || 
+                ' mins to prepare, but restaurant closes in ' || v_diff_mins || ' mins.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('- System: Order accepted. Prep time (' || v_prep_time_req || ' mins) is within remaining time.');
+        END IF;
+    END IF;
+END;
+/

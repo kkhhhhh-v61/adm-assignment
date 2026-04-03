@@ -1,0 +1,43 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED
+SET LINESIZE 120
+WHENEVER SQLERROR CONTINUE;
+
+PROMPT =======================================================================
+PROMPT Trigger Demo: Operating Hours & Prep Time Logic
+PROMPT Target Restaurant Hours: 7.00a.m. - 8.00p.m.
+PROMPT =======================================================================
+
+-- Ensure times are set correctly for scenarios
+UPDATE ORDERS SET OrderTime = '06:30' WHERE OrderID = 'O03001';
+UPDATE ORDERS SET OrderTime = '19:45' WHERE OrderID = 'O03002';
+UPDATE ORDERS SET OrderTime = '19:45' WHERE OrderID = 'O03003';
+UPDATE ORDERS SET OrderTime = '19:45' WHERE OrderID = 'O03004';
+COMMIT;
+
+-- Scenario 1: Too early
+PAUSE Press ENTER to test Scenario 1 (Order at 06:30 AM)...
+PROMPT >> Result:
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O03001', 'I03001', 1, 15.00);
+
+PROMPT 
+-- Scenario 2: Heavy prep, not enough time (4 burgers = 24 mins > 15 mins left)
+PAUSE Press ENTER to test Scenario 2 (Insufficient time for 4 units at 7:45 PM)...
+PROMPT >> Result:
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O03002', 'I03001', 4, 15.00);
+
+PROMPT 
+-- Scenario 3: Heavy prep, enough time (2 burgers = 12 mins < 15 mins left)
+PAUSE Press ENTER to test Scenario 3 (Sufficient time for 2 units at 7:45 PM)...
+PROMPT >> Result:
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O03003', 'I03001', 2, 15.00);
+
+PROMPT 
+-- Scenario 4: Drinks bypass (10 drinks allowed even with 15 mins left)
+PAUSE Press ENTER to test Scenario 4 (No-cook items bypass at 7:45 PM)...
+PROMPT >> Result:
+
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O03004', 'I03002', 10, 5.00);
+
+PROMPT =======================================================================
+PROMPT Test completed.
