@@ -1,0 +1,64 @@
+CL SCR
+
+CREATE OR REPLACE TRIGGER trg_cross_city_safety_check
+BEFORE INSERT ON ORDERITEM
+FOR EACH ROW
+DECLARE
+    v_rest_city       ADDRESS.City%TYPE;
+    v_del_city        ADDRESS.City%TYPE;
+    v_category_name   CATEGORY.CategoryName%TYPE;
+    v_delivery_id     ORDERS.DeliveryID%TYPE;
+    v_member_id       ORDERS.MemberID%TYPE;
+    v_pickup_type     ORDERS.PickupType%TYPE;
+    v_vip_count       NUMBER;
+    v_cross_city_fee  NUMBER := 15.00;
+BEGIN
+    SELECT MemberID, DeliveryID, PickupType
+    INTO v_member_id, v_delivery_id, v_pickup_type
+    FROM ORDERS WHERE OrderID = :NEW.OrderID;
+
+    IF v_pickup_type = 'Pickup' OR v_delivery_id IS NULL THEN RETURN; END IF;
+
+    SELECT A.City, C.CategoryName INTO v_rest_city, v_category_name
+    FROM ITEM I
+    JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+    JOIN ADDRESS A ON R.AddressID = A.AddressID
+    JOIN CATEGORY C ON I.CategoryID = C.CategoryID
+    WHERE I.ItemID = :NEW.ItemID;
+
+    SELECT A.City INTO v_del_city
+    FROM DELIVERY D
+    JOIN ADDRESS A ON D.AddressID = A.AddressID
+    WHERE D.DeliveryID = v_delivery_id;
+
+    IF UPPER(v_rest_city) != UPPER(v_del_city) THEN
+        
+        IF UPPER(v_category_name) LIKE '%FROZEN%' 
+           OR UPPER(v_category_name) LIKE '%ICE CREAM%' 
+           OR UPPER(v_category_name) LIKE '%SUSHI%' 
+           OR UPPER(v_category_name) LIKE '%SEAFOOD%'
+           OR UPPER(v_category_name) LIKE '%SMOOTHIES%'
+           OR UPPER(v_category_name) LIKE '%SALADS%' THEN
+           
+            RAISE_APPLICATION_ERROR(-20011, 
+                'FOOD SAFETY ALERT: Items in category [' || v_category_name || '] cannot be delivered across cities (' || v_rest_city || ' to ' || v_del_city || ') to prevent health risks and spoilage.');
+        END IF;
+
+        SELECT COUNT(*) INTO v_vip_count
+        FROM SUBSCRIPTION
+        WHERE MemberID = v_member_id AND Status = 'Active';
+
+        IF v_vip_count = 0 THEN
+            RAISE_APPLICATION_ERROR(-20012, 
+                'LOGISTICS BLOCKED: Normal members cannot order food across cities. Please upgrade to VIP for Long-Distance Delivery!');
+        ELSE
+            UPDATE DELIVERY
+            SET DeliveryPrice = DeliveryPrice + v_cross_city_fee
+            WHERE DeliveryID = v_delivery_id;
+            
+            DBMS_OUTPUT.PUT_LINE('>> [ VIP SYSTEM TRIGGERED ] <<');
+            DBMS_OUTPUT.PUT_LINE('Cross-city logistics secured for VIP. Added RM ' || v_cross_city_fee || ' surcharge.');
+        END IF;
+    END IF;
+END;
+/
