@@ -1,8 +1,4 @@
--- ============================================================================
--- REPORT 1: GEOGRAPHICAL REVENUE AND ORDER VOLUME TREND (ON-DEMAND)
--- Requirements fulfilled: Nested Cursors (8 marks), Parameterized, 
--- 2 Exception Types, Executive Summary (Tracking max values)
--- ============================================================================
+CL SCR
 
 SET DEFINE OFF;
 SET SERVEROUTPUT ON FORMAT WRAPPED;

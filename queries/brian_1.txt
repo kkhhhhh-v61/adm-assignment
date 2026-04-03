@@ -1,6 +1,5 @@
 CL SCR
 
--- 1. 修正了 FROM ORDERS O
 CREATE OR REPLACE VIEW VIEW_MARKET_SHARE AS
 SELECT 
     DECODE(R.IsHalal, 'Y', 'Halal Restaurants', 'N', 'Non-Halal Restaurants') AS CATEGORY,

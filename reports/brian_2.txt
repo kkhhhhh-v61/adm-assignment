@@ -1,8 +1,4 @@
--- ============================================================================
--- REPORT 2: DELIVERY COMPANY PERFORMANCE COMPARISON (ON-DEMAND)
--- Requirements fulfilled: Nested Cursors (8 marks), Parameterized, 
--- 2 Exception Types, Executive Summary (Tiebreaker Logic Fixed)
--- ============================================================================
+CL SCR
 
 SET DEFINE OFF;
 SET SERVEROUTPUT ON FORMAT WRAPPED;

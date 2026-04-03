@@ -1,127 +1,129 @@
--- ============================================================================
--- PROCEDURE 1: CALCULATE DYNAMIC DELIVERY FEE (ULTIMATE EDITION)
--- Business Logic: Base Fee + Distance Surcharge - VIP Discount - Free Delivery Voucher
--- ============================================================================
+CL SCR
 
 SET DEFINE OFF;
 SET SERVEROUTPUT ON FORMAT WRAPPED;
 
 CREATE OR REPLACE PROCEDURE calculate_dynamic_delivery_fee (
-    p_order_id IN VARCHAR2
+    p_order_id IN VARCHAR2,
+    p_use_voucher IN CHAR DEFAULT 'Y'
 ) AS
-    -- declare variables to hold fetched data
-    v_member_id       "ORDER".MemberID%TYPE;
-    v_delivery_id     "ORDER".DeliveryID%TYPE;
-    v_mem_voucher_id  "ORDER".MemberVoucherID%TYPE;
-    v_distance        DELIVERY.Distance%TYPE;
+    -- declare variables
+    v_member_id       ORDERS.MemberID%TYPE;
+    v_delivery_id     ORDERS.DeliveryID%TYPE;
+    v_mem_voucher_id  ORDERS.MemberVoucherID%TYPE;
+    v_distance        DELIVERY.DistanceInKm%TYPE;
     v_base_fee        DELIVERYTYPE.DeliveryFee%TYPE;
     v_delivery_name   DELIVERYTYPE.DeliveryName%TYPE;
 
     -- variables for fee calculation
     v_vip_count       NUMBER := 0;
-    v_final_fee       NUMBER(6,2) := 0;
+    v_subtotal        NUMBER(6,2) := 0;  
+    v_final_fee       NUMBER(6,2) := 0;  
     v_dist_surcharge  NUMBER(6,2) := 0;
     v_vip_discount    NUMBER(6,2) := 0;
     
     -- variables for voucher processing
     v_voucher_type    VOUCHER.VoucherTypeID%TYPE;
+    v_voucher_is_used MEMBERVOUCHER.IsUsed%TYPE;
     v_voucher_waived  NUMBER(6,2) := 0;
+    v_voucher_msg     VARCHAR2(100) := 'No Voucher Attached';
 
-    -- declare custom exception for pick-up orders
     e_no_delivery     EXCEPTION;
     
 BEGIN
-    -- 1. fetch order, delivery, and voucher details
-    SELECT O.MemberID, O.DeliveryID, O.MemberVoucherID, D.Distance, DT.DeliveryFee, DT.DeliveryName
+    -- 1. fetch data
+    SELECT O.MemberID, O.DeliveryID, O.MemberVoucherID, D.DistanceInKm, DT.DeliveryFee, DT.DeliveryName
     INTO v_member_id, v_delivery_id, v_mem_voucher_id, v_distance, v_base_fee, v_delivery_name
-    FROM "ORDER" O
+    FROM ORDERS O
     LEFT JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
     LEFT JOIN DELIVERYTYPE DT ON D.DeliveryTypeID = DT.DeliveryTypeID
     WHERE O.OrderID = p_order_id;
 
-    -- if the order doesn't have a delivery ID (e.g., self-pickup), trigger error
     IF v_delivery_id IS NULL THEN
         RAISE e_no_delivery;
     END IF;
 
-    -- 2. evaluate distance surcharge (Free for first 5km, RM 1.50 per extra km)
+    -- ==========================================
+    -- STAGE 1: INITIAL CALCULATION (SUBTOTAL)
+    -- ==========================================
     IF v_distance > 5 THEN
         v_dist_surcharge := (v_distance - 5) * 1.50;
     END IF;
 
-    -- initial sum
-    v_final_fee := v_base_fee + v_dist_surcharge;
+    v_subtotal := v_base_fee + v_dist_surcharge;
 
-    -- 3. evaluate VIP status for discounts
     SELECT COUNT(*) INTO v_vip_count
     FROM SUBSCRIPTION
     WHERE MemberID = v_member_id AND Status = 'Active';
 
-    -- apply 50% discount if the user is an active VIP (capped at RM 5.00 discount)
     IF v_vip_count > 0 THEN
-        v_vip_discount := v_final_fee * 0.50;
-        
-        IF v_vip_discount > 5.00 THEN
-            v_vip_discount := 5.00;
-        END IF;
-        
-        v_final_fee := v_final_fee - v_vip_discount;
+        v_vip_discount := v_subtotal * 0.50;
+        IF v_vip_discount > 5.00 THEN v_vip_discount := 5.00; END IF;
+        v_subtotal := v_subtotal - v_vip_discount;
     END IF;
 
-    -- 4. evaluate Free Delivery Voucher (VT00003)
+    v_final_fee := v_subtotal;
+
+    -- ==========================================
+    -- STAGE 2: VOUCHER CHECK & RECALCULATION
+    -- ==========================================
     IF v_mem_voucher_id IS NOT NULL THEN
-        SELECT V.VoucherTypeID INTO v_voucher_type
+        SELECT V.VoucherTypeID, MV.IsUsed INTO v_voucher_type, v_voucher_is_used
         FROM MEMBERVOUCHER MV
         JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
         WHERE MV.MemberVoucherID = v_mem_voucher_id;
 
-        -- If it's a Free Delivery Voucher, waive the entire remaining fee!
-        IF v_voucher_type = 'VT00003' THEN
-            v_voucher_waived := v_final_fee;
-            v_final_fee := 0;
+        v_voucher_msg := 'Detected: ' || v_mem_voucher_id;
+
+        IF p_use_voucher = 'Y' THEN
+            IF v_voucher_is_used = 'N' THEN
+                IF v_voucher_type = 'VT00003' THEN
+                    v_voucher_waived := v_final_fee;
+                    v_final_fee := 0; 
+                    v_voucher_msg := v_voucher_msg || ' -> USER APPLIED! (-RM ' || LTRIM(TO_CHAR(v_voucher_waived, '990.99')) || ')';
+                    
+                    UPDATE MEMBERVOUCHER SET IsUsed = 'Y' WHERE MemberVoucherID = v_mem_voucher_id;
+                ELSE
+                    v_voucher_msg := v_voucher_msg || ' -> NOT APPLICABLE (Not a Delivery Voucher)';
+                END IF;
+            ELSE
+                v_voucher_msg := v_voucher_msg || ' -> REJECTED (Voucher Already Used!)';
+            END IF;
+        ELSE
+            v_voucher_msg := v_voucher_msg || ' -> USER DECLINED (Saved for next time)';
         END IF;
     END IF;
 
-    -- ensure fee doesn't drop below 0
-    IF v_final_fee < 0 THEN
-        v_final_fee := 0;
-    END IF;
+    IF v_final_fee < 0 THEN v_final_fee := 0; END IF;
 
-    -- 5. update the calculated fee into the DELIVERY table
-    UPDATE DELIVERY
-    SET DeliveryPrice = v_final_fee
-    WHERE DeliveryID = v_delivery_id;
-
+    -- 3. Update Delivery Table
+    UPDATE DELIVERY SET DeliveryPrice = v_final_fee WHERE DeliveryID = v_delivery_id;
     COMMIT;
 
-    -- 6. output a beautiful receipt-style summary
+    -- 4. Print beautiful 2-stage receipt
     DBMS_OUTPUT.PUT_LINE('===================================================');
     DBMS_OUTPUT.PUT_LINE('          DYNAMIC DELIVERY FEE ALGORITHM           ');
     DBMS_OUTPUT.PUT_LINE('===================================================');
     DBMS_OUTPUT.PUT_LINE('Order ID          : ' || UPPER(p_order_id));
-    DBMS_OUTPUT.PUT_LINE('Delivery ID       : ' || v_delivery_id);
     DBMS_OUTPUT.PUT_LINE('Delivery Speed    : ' || v_delivery_name);
     DBMS_OUTPUT.PUT_LINE('Total Distance    : ' || v_distance || ' KM');
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('             [ STAGE 1: SUBTOTAL ]                 ');
     DBMS_OUTPUT.PUT_LINE(RPAD('Base Fee', 25) || ': RM ' || LPAD(TO_CHAR(v_base_fee, '990.99'), 8));
     DBMS_OUTPUT.PUT_LINE(RPAD('Distance Surcharge', 25) || ': RM ' || LPAD(TO_CHAR(v_dist_surcharge, '990.99'), 8));
     
-    -- Print VIP Status
     IF v_vip_count > 0 THEN
         DBMS_OUTPUT.PUT_LINE(RPAD('VIP Discount (50%)', 25) || ':-RM ' || LPAD(TO_CHAR(v_vip_discount, '990.99'), 8));
-    ELSE
-        DBMS_OUTPUT.PUT_LINE(RPAD('VIP Discount', 25) || ': NONE (Normal Member)');
-    END IF;
-
-    -- Print Voucher Status
-    IF v_voucher_waived > 0 THEN
-        DBMS_OUTPUT.PUT_LINE(RPAD('Free Delivery Voucher', 25) || ':-RM ' || LPAD(TO_CHAR(v_voucher_waived, '990.99'), 8));
     END IF;
     
+    DBMS_OUTPUT.PUT_LINE(RPAD('>> SUBTOTAL', 25) || ': RM ' || LPAD(TO_CHAR(v_subtotal, '990.99'), 8));
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('             [ STAGE 2: VOUCHER ]                  ');
+    DBMS_OUTPUT.PUT_LINE(v_voucher_msg);
+    DBMS_OUTPUT.PUT_LINE('===================================================');
     DBMS_OUTPUT.PUT_LINE(RPAD('FINAL DELIVERY FEE', 25) || ': RM ' || LPAD(TO_CHAR(v_final_fee, '990.99'), 8));
     DBMS_OUTPUT.PUT_LINE('===================================================');
-    DBMS_OUTPUT.PUT_LINE('>> DB Status: DELIVERY table successfully updated.');
+    DBMS_OUTPUT.PUT_LINE('>> DB Status: DELIVERY table updated successfully.');
 
 EXCEPTION
     WHEN NO_DATA_FOUND THEN

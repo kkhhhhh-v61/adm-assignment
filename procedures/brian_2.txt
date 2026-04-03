@@ -1,0 +1,155 @@
+CL SCR
+
+SET DEFINE OFF;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE activate_vip_and_issue_perks (
+    p_member_id      IN VARCHAR2,
+    p_plan_id        IN VARCHAR2,
+    p_payment_method IN VARCHAR2
+) AS
+    -- Member and Plan Details
+    v_member_name     MEMBER.FullName%TYPE;
+    v_plan_name       SUBSCRIPTIONPLAN.PlanName%TYPE;
+    v_duration        SUBSCRIPTIONPLAN.DurationInDays%TYPE;
+    v_price           SUBSCRIPTIONPLAN.Price%TYPE;
+
+    -- State Check Variables
+    v_active_count    NUMBER := 0;
+
+    -- Auto-Generated IDs
+    v_new_sub_id      SUBSCRIPTION.SubscriptionID%TYPE;
+    v_new_pay_id      PAYMENT.PaymentID%TYPE;
+    v_new_mv_id       MEMBERVOUCHER.MemberVoucherID%TYPE;
+
+    -- Voucher Variables (NEW LOGIC)
+    v_welcome_voucher_id   VOUCHER.VoucherID%TYPE;
+    v_voucher_code         VOUCHER.VoucherCode%TYPE;
+    v_has_received_welcome NUMBER := 0;
+    v_voucher_issued       BOOLEAN := FALSE;
+
+    -- Custom Exceptions
+    e_already_vip     EXCEPTION;
+    e_invalid_payment EXCEPTION;
+    
+BEGIN
+    -- 1. Validate Payment Method constraint
+    IF p_payment_method NOT IN ('Credit Card', 'Debit Card', 'E-Wallet', 'Cash') THEN
+        RAISE e_invalid_payment;
+    END IF;
+
+    -- 2. Fetch Details & Validate Existence
+    SELECT FullName INTO v_member_name FROM MEMBER WHERE MemberID = p_member_id;
+    SELECT PlanName, DurationInDays, Price INTO v_plan_name, v_duration, v_price 
+    FROM SUBSCRIPTIONPLAN WHERE SubscriptionPlanID = p_plan_id;
+
+    -- 3. Security Check: Prevent double-subscription
+    SELECT COUNT(*) INTO v_active_count 
+    FROM SUBSCRIPTION 
+    WHERE MemberID = p_member_id AND Status = 'Active';
+
+    IF v_active_count > 0 THEN
+        RAISE e_already_vip;
+    END IF;
+
+    -- 4. AUTO-GENERATE NEW PRIMARY KEYS
+    SELECT 'S' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(SubscriptionID, 2))), 0) + 1, 5, '0')
+    INTO v_new_sub_id FROM SUBSCRIPTION;
+
+    SELECT 'PM' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(PaymentID, 3))), 0) + 1, 5, '0')
+    INTO v_new_pay_id FROM PAYMENT;
+
+    SELECT 'MV' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(MemberVoucherID, 3))), 0) + 1, 5, '0')
+    INTO v_new_mv_id FROM MEMBERVOUCHER;
+
+    -- =========================================================================
+    -- 5. STRICT ONE-TIME WELCOME VOUCHER LOGIC (Targeting VT00015)
+    -- =========================================================================
+    
+    -- Step 5a: Check if user has EVER received a Welcome Voucher (VT00015) in the past
+    SELECT COUNT(*)
+    INTO v_has_received_welcome
+    FROM MEMBERVOUCHER MV
+    JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
+    WHERE MV.MemberID = p_member_id
+      AND V.VoucherTypeID = 'VT00015'; -- 精准锁定你的 Welcome VIP 类型
+
+    -- Step 5b: If they never received it, explicitly find a VT00015 Voucher
+    IF v_has_received_welcome = 0 THEN
+        BEGIN
+            SELECT VoucherID, VoucherCode INTO v_welcome_voucher_id, v_voucher_code
+            FROM (
+                SELECT VoucherID, VoucherCode
+                FROM VOUCHER 
+                WHERE VoucherTypeID = 'VT00015' -- 精准抓取你的 V00141 等数据
+                ORDER BY VoucherID
+            )
+            WHERE ROWNUM = 1;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                v_welcome_voucher_id := NULL; 
+        END;
+    END IF;
+
+    -- =========================================================================
+    -- 6. PERFORM MULTI-TABLE DATA MANIPULATION (DML)
+    -- =========================================================================
+    
+    -- A. Create Subscription Record
+    INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status)
+    VALUES (v_new_sub_id, p_member_id, p_plan_id, SYSDATE, SYSDATE + v_duration, 'Active');
+
+    -- B. Create Payment Record
+    INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus)
+    VALUES (v_new_pay_id, NULL, v_new_sub_id, p_payment_method, 'Completed');
+
+    -- C. Issue Welcome Voucher ONLY if eligible and voucher exists
+    IF v_has_received_welcome = 0 AND v_welcome_voucher_id IS NOT NULL THEN
+        INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed)
+        VALUES (v_new_mv_id, p_member_id, v_welcome_voucher_id, SYSDATE, 'N');
+        v_voucher_issued := TRUE;
+    END IF;
+
+    COMMIT;
+
+    -- =========================================================================
+    -- 7. PRINT VIP WELCOME RECEIPT
+    -- =========================================================================
+    DBMS_OUTPUT.PUT_LINE('===================================================');
+    DBMS_OUTPUT.PUT_LINE('        VIP SUBSCRIPTION ACTIVATED SUCCESSFULLY    ');
+    DBMS_OUTPUT.PUT_LINE('===================================================');
+    DBMS_OUTPUT.PUT_LINE('Member Name       : ' || v_member_name || ' (' || p_member_id || ')');
+    DBMS_OUTPUT.PUT_LINE('Subscription ID   : ' || v_new_sub_id);
+    DBMS_OUTPUT.PUT_LINE('Plan Selected     : ' || v_plan_name);
+    DBMS_OUTPUT.PUT_LINE('Valid Until       : ' || TO_CHAR(SYSDATE + v_duration, 'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('Amount Paid', 25) || ': RM ' || LPAD(TO_CHAR(v_price, '990.99'), 8));
+    DBMS_OUTPUT.PUT_LINE(RPAD('Payment Method', 25) || ': ' || p_payment_method);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Payment Ref ID', 25) || ': ' || v_new_pay_id);
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------');
+    
+    IF v_voucher_issued THEN
+        DBMS_OUTPUT.PUT_LINE('>> [ EXCLUSIVE WELCOME PERK ISSUED ] <<');
+        DBMS_OUTPUT.PUT_LINE('A First-Time Welcome Voucher (' || v_voucher_code || ') has');
+        DBMS_OUTPUT.PUT_LINE('been automatically added to your wallet.');
+    ELSIF v_has_received_welcome > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('>> [ WELCOME PERK STATUS ] <<');
+        DBMS_OUTPUT.PUT_LINE('User has previously claimed the First-Time Welcome');
+        DBMS_OUTPUT.PUT_LINE('Voucher. No new welcome vouchers issued.');
+    END IF;
+    
+    DBMS_OUTPUT.PUT_LINE('===================================================');
+    DBMS_OUTPUT.PUT_LINE('>> DB Status: SUBSCRIPTION and PAYMENT tables updated.');
+
+EXCEPTION
+    WHEN e_invalid_payment THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Invalid Payment Method. Must be Credit Card, Debit Card, E-Wallet, or Cash.');
+    WHEN e_already_vip THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Transaction Failed. Member ' || p_member_id || ' is already an Active VIP.');
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Invalid Member ID or Subscription Plan ID.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+        ROLLBACK; 
+END;
+/

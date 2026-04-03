@@ -1,0 +1,84 @@
+CL SCR
+
+SET LINESIZE 120
+SET PAGESIZE 100
+
+COLUMN MEMBERID FORMAT A10 HEADING 'MEMBER ID'
+COLUMN FULLNAME FORMAT A25 HEADING 'FULL NAME'
+COLUMN PLANNAME FORMAT A25 HEADING 'VIP PLAN'
+COLUMN STATUS FORMAT A10 HEADING 'VIP STATUS'
+
+COLUMN WALLET_ID FORMAT A12 HEADING 'WALLET ID'
+COLUMN VOUCHER_NAME FORMAT A22 HEADING 'VOUCHER NAME'
+COLUMN VOUCHER_CODE FORMAT A18 HEADING 'VOUCHER CODE'
+COLUMN DATE_CLAIMED FORMAT A15 HEADING 'DATE CLAIMED'
+COLUMN USED FORMAT A8 HEADING 'USED?'
+
+PROMPT =================================================================
+PROMPT [ BEFORE EXECUTION ] Checking Current VIP Status & Wallet
+PROMPT =================================================================
+PROMPT >> 1. Current VIP Status for Member:
+
+SELECT M.MemberID, M.FullName, NVL(SP.PlanName, 'Not a VIP') AS PLANNAME, NVL(S.Status, 'None') AS STATUS
+FROM MEMBER M
+LEFT JOIN SUBSCRIPTION S ON M.MemberID = S.MemberID AND S.Status = 'Active'
+LEFT JOIN SUBSCRIPTIONPLAN SP ON S.SubscriptionPlanID = SP.SubscriptionPlanID
+WHERE M.MemberID = 'M00296';
+
+PROMPT
+PROMPT >> 2. Current Vouchers in Member's Wallet:
+
+SELECT 
+    NVL(MV.MemberVoucherID, 'EMPTY') AS WALLET_ID, 
+    NVL(VT.TypeName, 'No Vouchers') AS VOUCHER_NAME,
+    NVL(V.VoucherCode, '-') AS VOUCHER_CODE, 
+    NVL(TO_CHAR(MV.DateClaimed, 'DD-MON-YYYY'), '-') AS DATE_CLAIMED, 
+    NVL(MV.IsUsed, '-') AS USED
+FROM MEMBER M
+LEFT JOIN MEMBERVOUCHER MV ON M.MemberID = MV.MemberID
+LEFT JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
+LEFT JOIN VOUCHERTYPE VT ON V.VoucherTypeID = VT.VoucherTypeID
+WHERE M.MemberID = 'M00296';
+
+PROMPT 
+PROMPT Press ENTER to simulate customer purchasing VIP...
+PAUSE
+
+PROMPT =================================================================
+PROMPT [ EXECUTING PROCEDURE ] Activating VIP & Issuing Welcome Perks...
+PROMPT =================================================================
+
+
+EXEC activate_vip_and_issue_perks('M00296', 'SP00001', 'Credit Card');
+
+PROMPT 
+PROMPT Press ENTER to verify database updates...
+PAUSE
+
+
+PROMPT =================================================================
+PROMPT [ AFTER EXECUTION ] Verifying New VIP Status & New Vouchers
+PROMPT =================================================================
+PROMPT >> 1. Updated VIP Status for Member:
+
+SELECT M.MemberID, M.FullName, NVL(SP.PlanName, 'Not a VIP') AS PLANNAME, NVL(S.Status, 'None') AS STATUS
+FROM MEMBER M
+LEFT JOIN SUBSCRIPTION S ON M.MemberID = S.MemberID AND S.Status = 'Active'
+LEFT JOIN SUBSCRIPTIONPLAN SP ON S.SubscriptionPlanID = SP.SubscriptionPlanID
+WHERE M.MemberID = 'M00296';
+
+PROMPT
+PROMPT >> 2. Updated Vouchers in Member's Wallet (Check for the new WELCOME voucher!):
+
+SELECT 
+    NVL(MV.MemberVoucherID, 'EMPTY') AS WALLET_ID, 
+    NVL(VT.TypeName, 'No Vouchers') AS VOUCHER_NAME,
+    NVL(V.VoucherCode, '-') AS VOUCHER_CODE, 
+    NVL(TO_CHAR(MV.DateClaimed, 'DD-MON-YYYY'), '-') AS DATE_CLAIMED, 
+    NVL(MV.IsUsed, '-') AS USED
+FROM MEMBER M
+LEFT JOIN MEMBERVOUCHER MV ON M.MemberID = MV.MemberID
+LEFT JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
+LEFT JOIN VOUCHERTYPE VT ON V.VoucherTypeID = VT.VoucherTypeID
+WHERE M.MemberID = 'M00296'
+ORDER BY MV.MemberVoucherID;
