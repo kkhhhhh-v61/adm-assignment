@@ -13,3 +13,4 @@ INSERT INTO VOUCHERTYPE VALUES ('VT00012', 'Midnight Craving', 'Valid from 11 PM
 INSERT INTO VOUCHERTYPE VALUES ('VT00013', 'Combo Meal Discount', 'Discount when ordering specific sets.');
 INSERT INTO VOUCHERTYPE VALUES ('VT00014', 'App Exclusive', 'Only valid for mobile app orders.');
 INSERT INTO VOUCHERTYPE VALUES ('VT00015', 'Welcome VIP', 'Exclusive one-time reward for joining VIP plan.');
+INSERT INTO VOUCHERTYPE VALUES ('VT00016', 'First Order Bonus', 'Exclusive one-time reward for completing the first order.');
