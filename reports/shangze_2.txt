@@ -1,118 +1,256 @@
 CL SCR
-
 SET SERVEROUTPUT ON FORMAT WRAPPED;
-SET LINESIZE 160;
 
-CREATE OR REPLACE PROCEDURE proc_revenue (
+CREATE OR REPLACE PROCEDURE generate_package_item_report (
     p_start_date IN DATE,
     p_end_date   IN DATE
 ) AS
-    -- Cursor: All packages sold
-    CURSOR c_packages IS
-        SELECT P.PackageID, P.PackageName, P.DiscountedPrice, 
-               SUM(OP.Quantity) as TimesPkgSold
-        FROM PACKAGE P
-        JOIN ORDERPACKAGE OP ON P.PackageID = OP.PackageID
+
+    CURSOR c_sales_type IS
+        SELECT 'PACKAGE' AS sales_type FROM dual
+        UNION
+        SELECT 'INDIVIDUAL ITEM' FROM dual;
+
+    CURSOR c_package_sales IS
+        SELECT 
+            COUNT(DISTINCT OP.OrderID) AS total_orders,
+            SUM(OP.Quantity) AS total_qty,
+            SUM(OP.Quantity * OP.PriceEach) AS revenue
+        FROM ORDERPACKAGE OP
         JOIN ORDERS O ON OP.OrderID = O.OrderID
         WHERE O.OrderStatus = 'Completed'
-          AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
-        GROUP BY P.PackageID, P.PackageName, P.DiscountedPrice;
+        AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date);
 
-    -- Nested Cursor: Items inside the package
-    CURSOR c_pkg_contents(v_pkg_id CHAR) IS
-        SELECT PI.ItemID, PI.Quantity as QtyPerPkg, I.Price as UnitPrice
-        FROM PACKAGEITEM PI
+    CURSOR c_item_sales IS
+        SELECT 
+            COUNT(DISTINCT OI.OrderID) AS total_orders,
+            SUM(OI.Quantity) AS total_qty,
+            SUM(OI.Quantity * OI.PriceEach) AS revenue
+        FROM ORDERITEM OI
+        JOIN ORDERS O ON OI.OrderID = O.OrderID
+        WHERE O.OrderStatus = 'Completed'
+        AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date);
+
+    CURSOR c_total_orders IS
+        SELECT COUNT(DISTINCT OrderID) total_orders
+        FROM ORDERS
+        WHERE OrderStatus = 'Completed'
+        AND TRUNC(OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date);
+
+    CURSOR c_top_package_restaurant IS
+        SELECT R.RestaurantName,
+               SUM(OP.Quantity * OP.PriceEach) revenue
+        FROM ORDERPACKAGE OP
+        JOIN PACKAGEITEM PI ON OP.PackageID = PI.PackageID
         JOIN ITEM I ON PI.ItemID = I.ItemID
-        WHERE PI.PackageID = v_pkg_id;
+        JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+        JOIN ORDERS O ON OP.OrderID = O.OrderID
+        WHERE O.OrderStatus = 'Completed'
+        AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        GROUP BY R.RestaurantName
+        ORDER BY revenue DESC;
 
-    v_original_pkg_value NUMBER := 0;
-    v_actual_pkg_revenue NUMBER := 0;
-    v_total_indiv_sales  NUMBER := 0;
-    v_indiv_item_rev     NUMBER := 0;
-    
-    v_diff_percent       NUMBER := 0;
-    v_status             VARCHAR2(20);
-    v_data_exists        BOOLEAN := FALSE;
+    CURSOR c_top_item_restaurant IS
+        SELECT R.RestaurantName,
+               SUM(OI.Quantity * OI.PriceEach) revenue
+        FROM ORDERITEM OI
+        JOIN ITEM I ON OI.ItemID = I.ItemID
+        JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+        JOIN ORDERS O ON OI.OrderID = O.OrderID
+        WHERE O.OrderStatus = 'Completed'
+        AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        GROUP BY R.RestaurantName
+        ORDER BY revenue DESC;
+
+    TYPE t_sales_data IS RECORD (
+        sales_type VARCHAR2(30),
+        total_orders NUMBER,
+        total_qty NUMBER,
+        revenue NUMBER
+    );
+
+    TYPE t_sales_tab IS TABLE OF t_sales_data INDEX BY PLS_INTEGER;
+    v_data t_sales_tab;
+
+    v_index NUMBER := 0;
+
+    v_grand_orders NUMBER := 0;
+    v_grand_qty NUMBER := 0;
+    v_grand_revenue NUMBER := 0;
+
+    v_total_unique_orders NUMBER := 0;
+
+    v_pkg_revenue NUMBER := 0;
+    v_item_revenue NUMBER := 0;
+
+    v_pkg_share NUMBER := 0;
+    v_item_share NUMBER := 0;
+
+    v_revenue_gap NUMBER := 0;
+    v_gap_percent NUMBER := 0;
+
+    v_top_type VARCHAR2(30) := 'N/A';
+    v_top_revenue NUMBER := -1;
+
+    e_invalid_date EXCEPTION;
+    e_no_data EXCEPTION;
+
+    v_data_exists BOOLEAN := FALSE;
 
 BEGIN
-    -- Header
-    DBMS_OUTPUT.PUT_LINE(RPAD('=', 150, '='));
-    DBMS_OUTPUT.PUT_LINE(LPAD('PACKAGE REVENUE VS. INDEPENDENT ITEM SALES REPORT', 95));
-    DBMS_OUTPUT.PUT_LINE(RPAD('=', 150, '='));
-    DBMS_OUTPUT.PUT_LINE(
-        RPAD('PACKAGE NAME', 30) || 
-        LPAD('PKG REVENUE', 25) || 
-        LPAD('INDIV. SALES REV', 25) || 
-        LPAD('REV DIFF (%)', 20) || 
-        LPAD('HIGHER YIELD', 25)
-    );
-    DBMS_OUTPUT.PUT_LINE(RPAD('-', 150, '-'));
 
-    FOR r_pkg IN c_packages LOOP
-        v_data_exists        := TRUE;
-        v_original_pkg_value := 0;
-        v_total_indiv_sales  := 0;
+    IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
+        RAISE e_invalid_date;
+    END IF;
 
-        -- 1. Calculate Package Revenue based on Item components
-        FOR r_item IN c_pkg_contents(r_pkg.PackageID) LOOP
-            -- Sum of (Item Price * Qty in Package)
-            v_original_pkg_value := v_original_pkg_value + (r_item.UnitPrice * r_item.QtyPerPkg);
-            
-            -- 2. Calculate Total Revenue of these items when sold INDIVIDUALLY (from ORDERITEM)
-            SELECT NVL(SUM(Quantity * PriceEach), 0)
-            INTO v_indiv_item_rev
-            FROM ORDERITEM OI
-            JOIN ORDERS O ON OI.OrderID = O.OrderID
-            WHERE OI.ItemID = r_item.ItemID
-              AND OI.ItemSetID IS NULL -- Ensuring it was sold individually, not in a set
-              AND O.OrderStatus = 'Completed'
-              AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date);
-              
-            v_total_indiv_sales := v_total_indiv_sales + v_indiv_item_rev;
-        END LOOP;
-
-        -- Actual Package Revenue = (Sum of Items - Discount) * Number of Packages Sold
-        v_actual_pkg_revenue := (v_original_pkg_value - r_pkg.DiscountedPrice) * r_pkg.TimesPkgSold;
-
-        -- 3. Calculate Percentage Difference
-        IF v_total_indiv_sales > 0 THEN
-            v_diff_percent := ((v_actual_pkg_revenue - v_total_indiv_sales) / v_total_indiv_sales) * 100;
-        ELSE
-            v_diff_percent := 100; -- If no indiv sales, package is 100% of the revenue
-        END IF;
-
-        -- 4. Determine which yielded more revenue
-        IF v_actual_pkg_revenue > v_total_indiv_sales THEN
-            v_status := 'PACKAGE';
-        ELSE
-            v_status := 'INDIVIDUAL';
-        END IF;
-
-        -- Output Row
-        DBMS_OUTPUT.PUT_LINE(
-            RPAD(r_pkg.PackageName, 30) || 
-            LPAD('RM ' || TO_CHAR(v_actual_pkg_revenue, '999,990.99'), 25) || 
-            LPAD('RM ' || TO_CHAR(v_total_indiv_sales, '999,990.99'), 25) || 
-            LPAD(TO_CHAR(v_diff_percent, '990.99') || '%', 20) || 
-            LPAD(v_status, 25)
-        );
+    FOR r_total IN c_total_orders LOOP
+        v_total_unique_orders := r_total.total_orders;
     END LOOP;
 
-    -- Conclusion
-    IF v_data_exists THEN
-        DBMS_OUTPUT.PUT_LINE(RPAD('=', 150, '='));
-        DBMS_OUTPUT.PUT_LINE('CONCLUSION:');
-        DBMS_OUTPUT.PUT_LINE('This report compares the revenue generated by selling items bundled in packages');
-        DBMS_OUTPUT.PUT_LINE('versus the revenue generated by those same items sold as standalone individual units.');
-        DBMS_OUTPUT.PUT_LINE('If "INDIVIDUAL" shows a higher yield, consider increasing package pricing or promotion.');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('No package sales found for the selected dates.');
+    FOR r_type IN c_sales_type LOOP
+
+        v_data_exists := TRUE;
+        v_index := v_index + 1;
+
+        v_data(v_index).sales_type := r_type.sales_type;
+
+        IF r_type.sales_type = 'PACKAGE' THEN
+
+            FOR r_pkg IN c_package_sales LOOP
+                v_data(v_index).total_orders := NVL(r_pkg.total_orders,0);
+                v_data(v_index).total_qty := NVL(r_pkg.total_qty,0);
+                v_data(v_index).revenue := NVL(r_pkg.revenue,0);
+                v_pkg_revenue := NVL(r_pkg.revenue,0);
+            END LOOP;
+
+        ELSE
+
+            FOR r_item IN c_item_sales LOOP
+                v_data(v_index).total_orders := NVL(r_item.total_orders,0);
+                v_data(v_index).total_qty := NVL(r_item.total_qty,0);
+                v_data(v_index).revenue := NVL(r_item.revenue,0);
+                v_item_revenue := NVL(r_item.revenue,0);
+            END LOOP;
+
+        END IF;
+
+        v_grand_orders := v_grand_orders + v_data(v_index).total_orders;
+        v_grand_qty := v_grand_qty + v_data(v_index).total_qty;
+        v_grand_revenue := v_grand_revenue + v_data(v_index).revenue;
+
+        IF v_data(v_index).revenue > v_top_revenue THEN
+            v_top_revenue := v_data(v_index).revenue;
+            v_top_type := v_data(v_index).sales_type;
+        END IF;
+
+    END LOOP;
+
+    IF NOT v_data_exists THEN
+        RAISE e_no_data;
     END IF;
-    
-    DBMS_OUTPUT.PUT_LINE(RPAD('=', 150, '='));
+
+    v_pkg_share := ROUND((v_pkg_revenue / v_grand_revenue) * 100,2);
+    v_item_share := ROUND((v_item_revenue / v_grand_revenue) * 100,2);
+
+    v_revenue_gap := ABS(v_pkg_revenue - v_item_revenue);
+    v_gap_percent := ROUND((v_revenue_gap / v_grand_revenue) * 100,2);
+
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                     PACKAGE VS INDIVIDUAL ITEM SALES PERFORMANCE REPORT');
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+
+    DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date,'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date,'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE('Generated : ' || TO_CHAR(SYSDATE,'DD-MON-YYYY HH24:MI:SS'));
+    DBMS_OUTPUT.PUT_LINE('Total Unique Orders : ' || v_total_unique_orders);
+
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('SALES TYPE',20) ||
+        LPAD('ORDERS',10) ||
+        LPAD('QUANTITY',15) ||
+        LPAD('AVG ORDER (RM)',20) ||
+        LPAD('REVENUE (RM)',20) ||
+        LPAD('REVENUE (%)',15)
+    );
+
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+
+    FOR i IN 1..v_index LOOP
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(v_data(i).sales_type,20) ||
+            LPAD(v_data(i).total_orders,10) ||
+            LPAD(v_data(i).total_qty,15) ||
+            LPAD(ROUND(v_data(i).revenue / NULLIF(v_data(i).total_orders,0),2),20) ||
+            LPAD(TO_CHAR(v_data(i).revenue,'999,999,990.99'),20) ||
+            LPAD(ROUND((v_data(i).revenue / v_grand_revenue)*100,2)||'%',15)
+        );
+
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('GRAND TOTAL',20) ||
+        LPAD('-',10) ||
+        LPAD(v_grand_qty,15) ||
+        LPAD('-',20) ||
+        LPAD(TO_CHAR(v_grand_revenue,'999,999,990.99'),20) ||
+        LPAD('100%',15)
+    );
+
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE('===================================== EXECUTIVE SUMMARY ============================================');
+
+    DBMS_OUTPUT.PUT_LINE('>> TOP SALES CONTRIBUTOR : ' || v_top_type ||
+                         ' (RM ' || TRIM(TO_CHAR(v_top_revenue,'999,999,990.99')) || ')');
+
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE('>> SALES SHARE DIFFERENCE');
+    DBMS_OUTPUT.PUT_LINE('PACKAGE SALES SHARE : ' || v_pkg_share || '%');
+    DBMS_OUTPUT.PUT_LINE('ITEM SALES SHARE    : ' || v_item_share || '%');
+
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE('>> REVENUE GAP ANALYSIS');
+
+    IF v_pkg_revenue > v_item_revenue THEN
+        DBMS_OUTPUT.PUT_LINE('Package revenue exceeds Item revenue by RM ' ||
+        TO_CHAR(v_revenue_gap,'999,999.99') || ' (' || v_gap_percent || '%)');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Item revenue exceeds Package revenue by RM ' ||
+        TO_CHAR(v_revenue_gap,'999,999.99') || ' (' || v_gap_percent || '%)');
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE(' ');
+
+    FOR r1 IN c_top_package_restaurant LOOP
+        DBMS_OUTPUT.PUT_LINE('>> TOP PACKAGE RESTAURANT : ' || r1.RestaurantName ||
+                             ' (RM ' || TO_CHAR(r1.revenue,'999,999.99') || ')');
+        EXIT;
+    END LOOP;
+
+    FOR r2 IN c_top_item_restaurant LOOP
+        DBMS_OUTPUT.PUT_LINE('>> TOP ITEM RESTAURANT    : ' || r2.RestaurantName ||
+                             ' (RM ' || TO_CHAR(r2.revenue,'999,999.99') || ')');
+        EXIT;
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('End of Report.');
 
 EXCEPTION
+
+    WHEN e_invalid_date THEN
+        RAISE_APPLICATION_ERROR(-20001,'INVALID DATE RANGE: Start Date cannot be later than End Date.');
+
+    WHEN e_no_data THEN
+        DBMS_OUTPUT.PUT_LINE('>>> NO SALES DATA FOUND FOR THIS DATE RANGE <<<');
+
     WHEN OTHERS THEN
-        DBMS_OUTPUT.PUT_LINE('Error in report: ' || SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
+
 END;
 /

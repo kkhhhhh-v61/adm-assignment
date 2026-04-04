@@ -13,7 +13,7 @@ WHERE O.OrderStatus = 'Completed'
 GROUP BY M.MemberID, M.FullName;
 
 -- SQL*Plus settings
-SET LINESIZE 150
+SET LINESIZE 170
 SET PAGESIZE 200
 SET FEEDBACK OFF
 SET SQLBLANKLINES ON
@@ -26,11 +26,12 @@ COLUMN TOTAL_ORDERS FORMAT 999,990 HEADING 'TOTAL ORDERS'
 COLUMN ORDER_SHARE FORMAT 990.00 HEADING 'ORDER SHARE (%)'
 COLUMN TOTAL_SPENDING FORMAT $999,990.99 HEADING 'TOTAL SPENDING (RM)'
 COLUMN SPENDING_SHARE FORMAT 990.00 HEADING 'SPENDING SHARE (%)'
+COLUMN LOYALTY_TIER FORMAT A12 HEADING 'LOYALTY TIER' 
 
 -- Report header
-TTITLE LEFT '===========================================================================================================' SKIP 1 -
-       LEFT '                             MEMBER ORDER FREQUENCY AND SPENDING ANALYSIS                                  ' SKIP 1 -
-       LEFT '===========================================================================================================' SKIP 2
+TTITLE LEFT '========================================================================================================================' SKIP 1 -
+       LEFT '                                 MEMBER ORDER FREQUENCY AND SPENDING ANALYSIS REPORT                                   ' SKIP 1 -
+       LEFT '========================================================================================================================' SKIP 2
 
 -- Totals
 BREAK ON REPORT
@@ -43,7 +44,16 @@ SELECT
     TOTAL_ORDERS,
     ROUND(RATIO_TO_REPORT(TOTAL_ORDERS) OVER () * 100, 2) AS ORDER_SHARE,
     TOTAL_SPENDING,
-    ROUND(RATIO_TO_REPORT(TOTAL_SPENDING) OVER () * 100, 2) AS SPENDING_SHARE
+    ROUND(RATIO_TO_REPORT(TOTAL_SPENDING) OVER () * 100, 2) AS SPENDING_SHARE,
+
+    LPAD(
+    CASE
+        WHEN TOTAL_SPENDING >= 800 THEN 'Platinum'
+        WHEN TOTAL_SPENDING >= 500 THEN 'Gold'
+        ELSE 'Silver'
+    END, 12
+	) AS LOYALTY_TIER
+
 FROM VIEW_MEMBER_SPENDING
 ORDER BY TOTAL_SPENDING DESC;
 
@@ -59,10 +69,19 @@ DECLARE
     v_memberid VARCHAR2(10);
     v_orders NUMBER;
     v_spending NUMBER;
+    v_loyalty VARCHAR2(12);
 BEGIN
 
-    SELECT MemberID, FullName, TOTAL_ORDERS, TOTAL_SPENDING
-    INTO v_memberid, v_member, v_orders, v_spending
+    SELECT MemberID,
+           FullName,
+           TOTAL_ORDERS,
+           TOTAL_SPENDING,
+           CASE
+               WHEN TOTAL_SPENDING >= 800 THEN 'Platinum'
+               WHEN TOTAL_SPENDING >= 500 THEN 'Gold'
+               ELSE 'Silver'
+           END
+    INTO v_memberid, v_member, v_orders, v_spending, v_loyalty
     FROM (
         SELECT MemberID, FullName, TOTAL_ORDERS, TOTAL_SPENDING
         FROM VIEW_MEMBER_SPENDING
@@ -70,14 +89,15 @@ BEGIN
     )
     WHERE ROWNUM = 1;
 
-    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------------------------------------------');
     DBMS_OUTPUT.PUT_LINE(' [ MEMBER SPENDING SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> TOP MEMBER ID      : ' || v_memberid);
     DBMS_OUTPUT.PUT_LINE(' >> MEMBER NAME        : ' || v_member);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL ORDERS       : ' || v_orders);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL SPENDING     : RM ' || v_spending);
-    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(' >> LOYALTY TIER       : ' || v_loyalty);
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------------------------------------------');
 
 END;
 /

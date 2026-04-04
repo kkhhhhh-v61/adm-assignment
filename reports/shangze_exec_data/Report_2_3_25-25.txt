@@ -1,0 +1,3 @@
+CL SCR
+
+EXEC generate_package_item_report(TO_DATE('01-01-2025','DD-MM-YYYY'), TO_DATE('31-12-2025','DD-MM-YYYY') );

@@ -2,11 +2,12 @@ CL SCR
 
 -- Create view to combine Package and Item Set popularity
 CREATE OR REPLACE VIEW VIEW_PACKAGE_SET_POPULARITY AS
+
 SELECT
     'PACKAGE' AS PRODUCT_TYPE,
     P.PackageName AS PRODUCT_NAME,
     SUM(OP.Quantity) AS TOTAL_ORDERED,
-    SUM(OP.Quantity * P.DiscountedPrice) AS TOTAL_REVENUE
+    SUM(OP.Quantity * OP.PriceEach) AS TOTAL_REVENUE
 FROM PACKAGE P
 JOIN ORDERPACKAGE OP ON P.PackageID = OP.PackageID
 JOIN ORDERS O ON OP.OrderID = O.OrderID
@@ -27,7 +28,7 @@ WHERE O.OrderStatus = 'Completed'
 GROUP BY S.SetName;
 
 -- SQL*Plus settings
-SET LINESIZE 110
+SET LINESIZE 200
 SET PAGESIZE 200
 SET FEEDBACK OFF
 SET SQLBLANKLINES ON
@@ -35,15 +36,15 @@ SET SERVEROUTPUT ON
 
 -- Format columns
 COLUMN PRODUCT_TYPE FORMAT A15 HEADING 'PRODUCT TYPE'
-COLUMN PRODUCT_NAME FORMAT A30 HEADING 'PACKAGE / SET NAME'
+COLUMN PRODUCT_NAME FORMAT A70 HEADING 'PACKAGE / SET NAME'
 COLUMN TOTAL_ORDERED FORMAT 999,990 HEADING 'TOTAL ORDERED'
 COLUMN POPULARITY_SHARE FORMAT 990.00 HEADING 'POPULARITY (%)'
-COLUMN TOTAL_REVENUE FORMAT $999,990.99 HEADING 'REVENUE (RM)'
+COLUMN TOTAL_REVENUE FORMAT 999,990.99 HEADING 'REVENUE (RM)'
 
 -- Report header
-TTITLE LEFT '========================================================================================' SKIP 1 -
-       LEFT '                       PACKAGE AND SET POPULARITY ANALYSIS                              ' SKIP 1 -
-       LEFT '========================================================================================' SKIP 2
+TTITLE LEFT '================================================================================================================================' SKIP 1 -
+       LEFT '                                           PACKAGE AND SET POPULARITY ANALYSIS                              ' SKIP 1 -
+       LEFT '================================================================================================================================' SKIP 2
 
 -- Calculate totals
 BREAK ON REPORT
@@ -82,14 +83,14 @@ BEGIN
     )
     WHERE ROWNUM = 1;
 
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------------------------------------------------------');
     DBMS_OUTPUT.PUT_LINE(' [ PACKAGE / SET POPULARITY SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> MOST POPULAR PRODUCT : ' || v_top_product);
     DBMS_OUTPUT.PUT_LINE(' >> PRODUCT TYPE         : ' || v_top_type);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL ORDERS         : ' || v_top_qty);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || v_top_rev);
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------------------------------------------------------');
 
 END;
 /
