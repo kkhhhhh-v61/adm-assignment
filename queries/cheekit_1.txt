@@ -1,32 +1,26 @@
--- Clear the terminal screen for a clean output
 CLEAR SCREEN;
 
--- Formatting Commands
 SET LINESIZE 100;
-SET PAGESIZE 100;
+SET PAGESIZE 50000;
 
--- Add the Report Title
-TTITLE CENTER '========================================================' SKIP 1 -
-       CENTER 'PEAK HOUR ORDER VOLUME AND DELIVERY BOTTLENECK SUMMARY' SKIP 1 -
-       CENTER '========================================================' SKIP 2
+TTITLE LEFT '             ========================================================' SKIP 1 -
+       LEFT '              PEAK HOUR ORDER VOLUME AND DELIVERY BOTTLENECK SUMMARY' SKIP 1 -
+       LEFT '             ========================================================' SKIP 2
 
--- Column Definitions (Everything is now set to Text / 'A' format to allow dashes)
 COLUMN "Peak Hour" FORMAT A22;
 COLUMN "Delivery Company" FORMAT A20;
 COLUMN "Total Orders" FORMAT A12;
 COLUMN "Avg Wait (Min)" FORMAT A14;
 COLUMN "Performance Status" FORMAT A25;
 
--- Advanced Analytical Query
 WITH WaitTimeData AS (
     SELECT 
-        TO_CHAR(TO_TIMESTAMP(o.OrderTime, 'HH12:MI AM'), 'HH24') || ':00' AS PeakHour,
+        TO_CHAR(TO_DATE(o.OrderTime, 'HH24:MI'), 'HH24') || ':00' AS PeakHour,
         dc.CompanyName AS DeliveryCompany,
         o.OrderID,
-        (CAST(TO_TIMESTAMP(TO_CHAR(d.DeliveryDate, 'YYYY-MM-DD') || ' ' || d.DeliveryTime, 'YYYY-MM-DD HH12:MI AM') AS DATE) - 
-        CAST(TO_TIMESTAMP(TO_CHAR(o.OrderDate, 'YYYY-MM-DD') || ' ' || o.OrderTime, 'YYYY-MM-DD HH12:MI AM') AS DATE)) * 24 * 60 AS WaitTimeMins
+        MOD((TO_DATE(d.DeliveryTime, 'HH24:MI') - TO_DATE(o.OrderTime, 'HH24:MI')) * 24 * 60 + 1440, 1440) AS WaitTimeMins
     FROM 
-        "ORDER" o
+        ORDERS o
     JOIN 
         DELIVERY d ON o.DeliveryID = d.DeliveryID
     JOIN 
@@ -40,13 +34,11 @@ MainData AS (
     SELECT 
         PeakHour AS PeakHour,
         DeliveryCompany AS DeliveryCompany,
-        -- Convert to String and right-align (12 spaces)
         LPAD(TO_CHAR(COUNT(OrderID)), 12) AS TotalOrders,
-        -- Convert to String, force 2 decimals, and right-align (14 spaces)
         LPAD(TO_CHAR(ROUND(AVG(WaitTimeMins), 2), 'FM990.00'), 14) AS AvgWaitMins,
         CASE 
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 45 THEN '🚨 CRITICAL BOTTLENECK'
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 30 THEN '⚠️ HIGH TRAFFIC'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 120 THEN '🚨 CRITICAL BOTTLENECK'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 60  THEN '⚠️ HIGH TRAFFIC'
             ELSE '✅ NORMAL SPEED'
         END AS PerfStatus,
         1 AS SortOrder 
@@ -60,8 +52,8 @@ TotalData AS (
         LPAD(TO_CHAR(COUNT(OrderID)), 12) AS TotalOrders,
         LPAD(TO_CHAR(ROUND(AVG(WaitTimeMins), 2), 'FM990.00'), 14) AS AvgWaitMins,
         CASE 
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 45 THEN '🚨 CRITICAL BOTTLENECK'
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 30 THEN '⚠️ HIGH TRAFFIC'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 120 THEN '🚨 CRITICAL BOTTLENECK'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 60  THEN '⚠️ HIGH TRAFFIC'
             ELSE '✅ NORMAL SPEED'
         END AS PerfStatus,
         3 AS SortOrder 
@@ -71,13 +63,12 @@ Separator AS (
     SELECT 
         '----------------------' AS PeakHour,
         '--------------------' AS DeliveryCompany,
-        '------------' AS TotalOrders,     -- Dashes added here!
-        '--------------' AS AvgWaitMins,   -- Dashes added here!
+        '------------' AS TotalOrders,
+        '--------------' AS AvgWaitMins,
         '-------------------------' AS PerfStatus,
         2 AS SortOrder 
     FROM DUAL
 )
--- Bring it all together!
 SELECT 
     PeakHour AS "Peak Hour",
     DeliveryCompany AS "Delivery Company",
@@ -95,5 +86,4 @@ ORDER BY
     SortOrder ASC, 
     PeakHour DESC;
 
--- Turn off the title for future queries
 TTITLE OFF;

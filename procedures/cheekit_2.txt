@@ -1,0 +1,89 @@
+CREATE OR REPLACE PROCEDURE PR_PROCESS_ORDER_REFUND (
+    p_order_id IN ORDERS.OrderID%TYPE
+) AS
+    -- Using %ROWTYPE to grab all order and payment details cleanly
+    v_order_rec      ORDERS%ROWTYPE;
+    v_payment_rec    PAYMENT%ROWTYPE;
+    
+    v_order_count    NUMBER;
+
+    -- Custom Exceptions
+    e_invalid_order  EXCEPTION;
+BEGIN
+    SAVEPOINT start_refund;
+
+    -- 1. Validate if the Order actually exists
+    SELECT COUNT(*) INTO v_order_count FROM ORDERS WHERE OrderID = p_order_id;
+    IF v_order_count = 0 THEN
+        RAISE e_invalid_order;
+    END IF;
+
+    -- 2. Fetch the records safely
+    SELECT * INTO v_order_rec FROM ORDERS WHERE OrderID = p_order_id;
+
+    -- Safely get payment (Using an inner block just in case an order has no payment yet)
+    BEGIN
+        SELECT * INTO v_payment_rec FROM PAYMENT WHERE OrderID = p_order_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            v_payment_rec.PaymentStatus := 'No Payment Record';
+    END;
+
+    -- Lock tables to prevent users from updating the order while we are refunding it
+    LOCK TABLE ORDERS, PAYMENT IN EXCLUSIVE MODE;
+
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('[ORDER STATE MACHINE] Target: ' || p_order_id);
+
+    -- ==========================================================
+    -- 3. STATE MACHINE LOGIC (Mapped to your exact schema constraints)
+    -- ==========================================================
+    
+    IF v_order_rec.OrderStatus = 'Pending' THEN
+        -- STATE 1: Before Dispatch -> Cancel the Order completely
+        UPDATE ORDERS SET OrderStatus = 'Cancelled' WHERE OrderID = p_order_id;
+
+        IF v_payment_rec.PaymentStatus = 'Completed' THEN
+            UPDATE PAYMENT SET PaymentStatus = 'Refunded' WHERE PaymentID = v_payment_rec.PaymentID;
+            DBMS_OUTPUT.PUT_LINE('Action  : Order Cancelled and Financial Refund Processed.');
+            DBMS_OUTPUT.PUT_LINE('Amount  : RM ' || TO_CHAR(v_order_rec.TotalAmount, '999.99') || ' Refunded.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Action  : Order Cancelled.');
+            DBMS_OUTPUT.PUT_LINE('Note    : No refund needed (Payment was ' || v_payment_rec.PaymentStatus || ').');
+        END IF;
+
+    ELSIF v_order_rec.OrderStatus = 'Completed' THEN
+        -- STATE 2: Already Delivered -> Process Financial Refund only (e.g., poor quality complaint)
+        IF v_payment_rec.PaymentStatus = 'Completed' THEN
+            UPDATE PAYMENT SET PaymentStatus = 'Refunded' WHERE PaymentID = v_payment_rec.PaymentID;
+            DBMS_OUTPUT.PUT_LINE('Action  : Post-Delivery Compensation Approved.');
+            DBMS_OUTPUT.PUT_LINE('Amount  : RM ' || TO_CHAR(v_order_rec.TotalAmount, '999.99') || ' Refunded.');
+            DBMS_OUTPUT.PUT_LINE('Note    : Order Status remains "Completed" for historical records.');
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Action  : Refund Denied.');
+            DBMS_OUTPUT.PUT_LINE('Note    : Original payment was not successfully Completed.');
+        END IF;
+
+    ELSIF v_order_rec.OrderStatus = 'Cancelled' THEN
+        -- STATE 3: Already Cancelled
+        DBMS_OUTPUT.PUT_LINE('Action  : Ignored. This order is already Cancelled.');
+
+    ELSIF v_order_rec.OrderStatus = 'Delivering' THEN
+        -- STATE 4: Rider currently has the food
+        DBMS_OUTPUT.PUT_LINE('Action  : Blocked. Order is currently "Delivering".');
+        DBMS_OUTPUT.PUT_LINE('Note    : Please contact Rider to abort delivery before cancelling.');
+
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+    COMMIT;
+    
+EXCEPTION
+    WHEN e_invalid_order THEN
+        ROLLBACK TO start_refund;
+        DBMS_OUTPUT.PUT_LINE('ERROR: Order ID (' || p_order_id || ') does not exist in the database.');
+    WHEN OTHERS THEN
+        ROLLBACK TO start_refund;
+        DBMS_OUTPUT.PUT_LINE('CRITICAL ERROR: ' || SQLERRM);
+END;
+/

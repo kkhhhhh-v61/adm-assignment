@@ -1,0 +1,4 @@
+SELECT SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status 
+FROM SUBSCRIPTION 
+WHERE MemberID = 'M00002' 
+ORDER BY SubscriptionID DESC;

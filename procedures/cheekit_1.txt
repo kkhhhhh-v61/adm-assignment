@@ -1,0 +1,162 @@
+CREATE OR REPLACE PROCEDURE PR_MANAGE_SUBSCRIPTION (
+    p_action      IN VARCHAR2, -- Accepts 'EXTEND' or 'CANCEL'
+    p_member_id   IN MEMBER.MemberID%TYPE,
+    p_plan_id     IN SUBSCRIPTIONPLAN.SubscriptionPlanID%TYPE DEFAULT NULL
+) AS
+    -- Variable to store the Member's Name
+    v_member_name    MEMBER.FullName%TYPE;
+
+    -- Variables for Extension
+    v_plan_rec       SUBSCRIPTIONPLAN%ROWTYPE;
+    v_old_end_date   DATE;
+    v_final_amount   NUMBER(6,2);
+    v_discount_rate  NUMBER(3,2) := 0;
+    v_new_sub_id     CHAR(6);
+    v_new_pay_id     CHAR(7);
+    v_new_start      DATE;
+    v_new_end        DATE;
+    
+    -- Variables for Cancellation
+    v_active_sub_id  SUBSCRIPTION.SubscriptionID%TYPE;
+
+    -- Custom Exceptions
+    e_invalid_action EXCEPTION;
+    e_invalid_member EXCEPTION;
+    e_invalid_plan   EXCEPTION;
+    e_no_active_sub  EXCEPTION;
+BEGIN
+    SAVEPOINT start_process;
+
+    -- 1. VALIDATE THE ACTION PARAMETER
+    IF UPPER(p_action) NOT IN ('EXTEND', 'CANCEL') THEN
+        RAISE e_invalid_action;
+    END IF;
+
+    -- 2. VALIDATE IF MEMBER EXISTS AND GET THEIR NAME
+    BEGIN
+        SELECT FullName INTO v_member_name 
+        FROM MEMBER 
+        WHERE MemberID = p_member_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE e_invalid_member;
+    END;
+
+    -- ==========================================================
+    -- LOGIC BLOCK A: CANCEL SUBSCRIPTION
+    -- ==========================================================
+    IF UPPER(p_action) = 'CANCEL' THEN
+        BEGIN
+            -- Find the current active subscription for this member
+            SELECT MAX(SubscriptionID) INTO v_active_sub_id
+            FROM SUBSCRIPTION
+            WHERE MemberID = p_member_id AND Status = 'Active';
+
+            IF v_active_sub_id IS NULL THEN
+                RAISE e_no_active_sub;
+            END IF;
+
+            -- FIX: Use GREATEST to prevent date constraint violations on future subscriptions!
+            UPDATE SUBSCRIPTION
+            SET Status = 'Cancelled', 
+                EndDate = GREATEST(SYSDATE, StartDate) 
+            WHERE SubscriptionID = v_active_sub_id;
+
+            DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+            DBMS_OUTPUT.PUT_LINE('[SUCCESS] Subscription Cancelled.');
+            DBMS_OUTPUT.PUT_LINE('Member          : ' || v_member_name || ' (' || p_member_id || ')');
+            DBMS_OUTPUT.PUT_LINE('Target ID       : ' || v_active_sub_id);
+            DBMS_OUTPUT.PUT_LINE('Action          : Status changed to Cancelled.');
+            DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+            
+            COMMIT;
+            
+        EXCEPTION
+            WHEN e_no_active_sub THEN
+                RAISE;
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('DEBUG UPDATE ERROR: ' || SQLERRM);
+                RAISE e_no_active_sub;
+        END;
+
+    -- ==========================================================
+    -- LOGIC BLOCK B: EXTEND/RENEW SUBSCRIPTION
+    -- ==========================================================
+    ELSIF UPPER(p_action) = 'EXTEND' THEN
+        -- Validate Plan Exists and Get Plan Details
+        BEGIN
+            SELECT * INTO v_plan_rec FROM SUBSCRIPTIONPLAN WHERE SubscriptionPlanID = p_plan_id;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE e_invalid_plan;
+        END;
+
+        -- Find Latest End Date
+        SELECT MAX(EndDate) INTO v_old_end_date
+        FROM SUBSCRIPTION
+        WHERE MemberID = p_member_id AND SubscriptionPlanID = p_plan_id;
+
+        -- Calculate Dates and Discounts
+        IF v_old_end_date IS NOT NULL THEN
+            IF (v_old_end_date - SYSDATE) BETWEEN 0 AND 7 THEN
+                v_discount_rate := 0.05; 
+                DBMS_OUTPUT.PUT_LINE('[PROMO] 5% Early-Bird Discount applied!');
+            ELSIF SYSDATE > v_old_end_date THEN
+                DBMS_OUTPUT.PUT_LINE('[INFO] Previous subscription expired. Normal rate applies.');
+            END IF;
+            v_new_start := GREATEST(SYSDATE, v_old_end_date);
+        ELSE
+            v_new_start := SYSDATE;
+            DBMS_OUTPUT.PUT_LINE('[INFO] First-time subscription activated.');
+        END IF;
+
+        v_final_amount := v_plan_rec.Price * (1 - v_discount_rate);
+        v_new_end := v_new_start + v_plan_rec.DurationInDays;
+
+        -- Lock tables for safe ID generation
+        LOCK TABLE SUBSCRIPTION, PAYMENT IN EXCLUSIVE MODE;
+
+        -- Auto-Generate IDs
+        SELECT 'S' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(SubscriptionID, 2))), 0) + 1, 5, '0')
+        INTO v_new_sub_id FROM SUBSCRIPTION;
+
+        SELECT 'PM' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(PaymentID, 3))), 0) + 1, 5, '0')
+        INTO v_new_pay_id FROM PAYMENT;
+
+        -- Insert Records
+        INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status)
+        VALUES (v_new_sub_id, p_member_id, p_plan_id, v_new_start, v_new_end, 'Active');
+
+        INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus)
+        VALUES (v_new_pay_id, NULL, v_new_sub_id, 'Credit Card', 'Completed');
+
+        DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE('[SUCCESS] Subscription Extended.');
+        DBMS_OUTPUT.PUT_LINE('Member          : ' || v_member_name || ' (' || p_member_id || ')');
+        DBMS_OUTPUT.PUT_LINE('Plan Selected   : ' || v_plan_rec.PlanName || ' (' || p_plan_id || ')');
+        DBMS_OUTPUT.PUT_LINE('New Sub ID      : ' || v_new_sub_id);
+        DBMS_OUTPUT.PUT_LINE('Amount Paid     : RM ' || TO_CHAR(v_final_amount, '999.99'));
+        DBMS_OUTPUT.PUT_LINE('Valid Period    : ' || TO_CHAR(v_new_start, 'DD-MON-YYYY') || ' to ' || TO_CHAR(v_new_end, 'DD-MON-YYYY'));
+        DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+        
+        COMMIT;
+    END IF;
+
+EXCEPTION
+    WHEN e_invalid_action THEN
+        ROLLBACK TO start_process;
+        DBMS_OUTPUT.PUT_LINE('ERROR: Action must be either ''EXTEND'' or ''CANCEL''.');
+    WHEN e_invalid_member THEN
+        ROLLBACK TO start_process;
+        DBMS_OUTPUT.PUT_LINE('ERROR: Member ID (' || p_member_id || ') does not exist.');
+    WHEN e_invalid_plan THEN
+        ROLLBACK TO start_process;
+        DBMS_OUTPUT.PUT_LINE('ERROR: Subscription Plan ID (' || p_plan_id || ') does not exist.');
+    WHEN e_no_active_sub THEN
+        ROLLBACK TO start_process;
+        DBMS_OUTPUT.PUT_LINE('ERROR: No Active subscription found to cancel for this member.');
+    WHEN OTHERS THEN
+        ROLLBACK TO start_process;
+        DBMS_OUTPUT.PUT_LINE('CRITICAL ERROR: ' || SQLCODE || ' - ' || SQLERRM);
+END;
+/
