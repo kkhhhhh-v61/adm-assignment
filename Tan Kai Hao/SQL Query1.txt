@@ -1,0 +1,101 @@
+CL SCR
+
+SET FEEDBACK OFF
+
+CREATE OR REPLACE VIEW vw_order_composition AS
+SELECT
+    'Package' AS CompositionType,
+    P.PackageName AS EntityName,
+    OP.Quantity,
+    (OP.Quantity * OP.PriceEach) AS RevenueGenerated
+FROM ORDERPACKAGE OP
+JOIN PACKAGE P ON OP.PackageID = P.PackageID
+JOIN ORDERS O ON OP.OrderID = O.OrderID
+WHERE O.OrderStatus = 'Completed'
+UNION ALL
+SELECT
+    'Set' AS CompositionType,
+    S.SetName AS EntityName,
+    OI.Quantity,
+    (OI.Quantity * OI.PriceEach) AS RevenueGenerated
+FROM ORDERITEM OI
+JOIN ITEMSET S ON OI.ItemSetID = S.ItemSetID
+JOIN ORDERS O ON OI.OrderID = O.OrderID
+WHERE O.OrderStatus = 'Completed'
+UNION ALL
+SELECT
+    'Individual Item' AS CompositionType,
+    I.ItemName AS EntityName,
+    OI.Quantity,
+    (OI.Quantity * OI.PriceEach) AS RevenueGenerated
+FROM ORDERITEM OI
+JOIN ITEM I ON OI.ItemID = I.ItemID
+JOIN ORDERS O ON OI.OrderID = O.OrderID
+WHERE OI.ItemSetID IS NULL 
+AND O.OrderStatus = 'Completed';
+
+SET LINESIZE 110
+SET PAGESIZE 100
+SET SQLBLANKLINES ON
+SET SERVEROUTPUT ON
+
+COLUMN CompositionType FORMAT A25 HEADING 'COMPOSITION TYPE'
+COLUMN TOTAL_UNITS FORMAT 999,990 HEADING 'TOTAL UNITS SOLD'
+COLUMN TOTAL_REVENUE FORMAT $99,999,990.99 HEADING 'TOTAL REVENUE (RM)'
+COLUMN REVENUE_SHARE FORMAT 990.00 HEADING 'CONTRIBUTION (%)'
+
+TTITLE LEFT '==============================================================================' SKIP 1 -
+       LEFT '                      ORDER COMPOSITION REVENUE ANALYSIS                      ' SKIP 1 -
+       LEFT '==============================================================================' SKIP 2
+
+BREAK ON REPORT
+COMPUTE SUM LABEL 'GRAND TOTAL :' OF TOTAL_UNITS TOTAL_REVENUE REVENUE_SHARE ON REPORT
+
+SELECT
+    CompositionType,
+    SUM(Quantity) AS TOTAL_UNITS,
+    SUM(RevenueGenerated) AS TOTAL_REVENUE,
+    ROUND(RATIO_TO_REPORT(SUM(RevenueGenerated)) OVER () * 100, 2) AS REVENUE_SHARE
+FROM vw_order_composition
+GROUP BY CompositionType
+ORDER BY TOTAL_REVENUE DESC;
+
+TTITLE OFF
+CLEAR BREAKS
+CLEAR COMPUTES
+SET HEADING OFF
+
+DECLARE
+    v_compType VARCHAR2(25);
+    v_units NUMBER;
+    v_revenue NUMBER;
+    v_contrib NUMBER;
+BEGIN
+    SELECT CompositionType, TOTAL_UNITS, TOTAL_REVENUE, REVENUE_SHARE
+    INTO v_compType, v_units, v_revenue, v_contrib
+    FROM (
+        SELECT
+            CompositionType,
+            SUM(Quantity) AS TOTAL_UNITS,
+            SUM(RevenueGenerated) AS TOTAL_REVENUE,
+            ROUND(RATIO_TO_REPORT(SUM(RevenueGenerated)) OVER () * 100, 2) AS REVENUE_SHARE
+        FROM vw_order_composition
+        GROUP BY CompositionType
+        ORDER BY TOTAL_REVENUE DESC
+    )
+    WHERE ROWNUM = 1;
+
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(' [ ORDER COMPOSITION SUMMARY ]');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP COMPOSITION TYPE : ' || v_compType);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL UNITS SOLD     : ' || v_units);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || v_revenue);
+    DBMS_OUTPUT.PUT_LINE(' >> REVENUE CONTRIBUTION : ' || v_contrib || '%');
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------');
+END;
+/
+
+SET HEADING ON
+SET FEEDBACK ON
+CLEAR COLUMNS
