@@ -201,7 +201,7 @@ LPAD(r.vouchers_used,12)||
 LPAD(TO_CHAR(r.total_spending,'999,999.99'),15)||
 LPAD(TO_CHAR(r.total_discount,'999,999.99'),15)||
 LPAD(TO_CHAR(r.total_spending-r.total_discount,'999,999.99'),12)||
-LPAD(ROUND(r.total_spending/r.total_orders,2),12)
+LPAD(TO_CHAR(ROUND(r.total_spending/r.total_orders,2),'999,999.99'),12)
 );
 
 END LOOP;

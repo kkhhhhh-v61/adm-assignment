@@ -1,0 +1,137 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE add_item_promotion (
+    p_item_id            IN CHAR,
+    p_promo_name         IN VARCHAR2,
+    p_discount           IN NUMBER,
+    p_min_spend          IN NUMBER,
+    p_max_discount       IN NUMBER,
+    p_max_redemptions    IN NUMBER,
+    p_start_date         IN DATE,
+    p_end_date           IN DATE
+)
+AS
+
+    v_item_count      NUMBER;
+    v_promotion_id    CHAR(6);
+
+BEGIN
+
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('     ADD NEW PROMOTION FOR ITEM');
+    DBMS_OUTPUT.PUT_LINE('========================================');
+
+    -- =====================================
+    -- Validate Item
+    -- =====================================
+    SELECT COUNT(*)
+    INTO v_item_count
+    FROM ITEM
+    WHERE ItemID = p_item_id;
+
+    IF v_item_count = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Item does not exist.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Item validated');
+
+    -- =====================================
+    -- Validation Rules
+    -- =====================================
+
+    IF p_min_spend < 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Minimum spend must be >= 0.');
+        RETURN;
+    END IF;
+
+    IF p_max_discount <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Maximum discount must be greater than 0.');
+        RETURN;
+    END IF;
+
+    IF p_max_redemptions <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Maximum redemptions must be greater than 0.');
+        RETURN;
+    END IF;
+
+    IF p_discount <= 0 OR p_discount > 1 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Discount must be between 0 and 1.');
+        RETURN;
+    END IF;
+
+    IF p_start_date < TRUNC(SYSDATE) THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Start date must be today or a future date.');
+        RETURN;
+    END IF;
+
+    IF p_end_date < p_start_date THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: End date must be later than start date.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Promotion validation passed');
+
+    -- =====================================
+    -- Generate New PromotionID
+    -- =====================================
+    SELECT 'P' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(PromotionID,2))),0)+1,5,'0')
+    INTO v_promotion_id
+    FROM PROMOTION;
+
+    -- =====================================
+    -- Insert Promotion
+    -- =====================================
+    INSERT INTO PROMOTION
+    VALUES (
+        v_promotion_id,
+        p_promo_name,
+        p_discount,
+        p_min_spend,
+        p_max_discount,
+        p_max_redemptions,
+        0,
+        p_start_date,
+        p_end_date,
+        'Y'
+    );
+
+    DBMS_OUTPUT.PUT_LINE('Promotion inserted');
+
+    -- =====================================
+    -- Link Promotion to Item
+    -- =====================================
+    INSERT INTO ITEMPROMOTION
+    VALUES (
+        p_item_id,
+        v_promotion_id
+    );
+
+    DBMS_OUTPUT.PUT_LINE('Promotion linked to item');
+
+    COMMIT;
+
+    -- =====================================
+    -- Output Result
+    -- =====================================
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('Promotion Created Successfully');
+    DBMS_OUTPUT.PUT_LINE('Promotion ID  : ' || v_promotion_id);
+    DBMS_OUTPUT.PUT_LINE('Item ID       : ' || p_item_id);
+    DBMS_OUTPUT.PUT_LINE('Promo Name    : ' || p_promo_name);
+    DBMS_OUTPUT.PUT_LINE('Discount      : ' || (p_discount*100) || '%');
+    DBMS_OUTPUT.PUT_LINE('Min Spend     : RM ' || TO_CHAR(p_min_spend,'9990.99'));
+    DBMS_OUTPUT.PUT_LINE('Max Discount  : RM ' || TO_CHAR(p_max_discount,'9990.99'));
+    DBMS_OUTPUT.PUT_LINE('Max Redeem    : ' || p_max_redemptions);
+    DBMS_OUTPUT.PUT_LINE('Start Date    : ' || TO_CHAR(p_start_date,'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE('End Date      : ' || TO_CHAR(p_end_date,'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
+
+END;
+/

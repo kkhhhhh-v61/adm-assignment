@@ -1,0 +1,199 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE calculate_update_order_total (
+    p_order_id IN CHAR
+)
+AS
+    -- totals
+    v_item_total        NUMBER(8,2) := 0;
+    v_package_total     NUMBER(8,2) := 0;
+    v_delivery_fee      NUMBER(8,2) := 0;
+    v_subtotal          NUMBER(8,2) := 0;
+    v_final_total       NUMBER(8,2) := 0;
+
+    -- order info
+    v_pickup_type       ORDERS.PickupType%TYPE;
+    v_delivery_id       ORDERS.DeliveryID%TYPE;
+    v_member_voucher_id ORDERS.MemberVoucherID%TYPE;
+
+    -- discount info
+    v_discount          ITEMSET.Discount%TYPE;
+
+    -- voucher variables
+    v_discount_percent  VOUCHER.DiscountPercentage%TYPE;
+    v_discount_amount   VOUCHER.DiscountAmount%TYPE;
+    v_min_spend         VOUCHER.MinSpendAmount%TYPE;
+    v_max_discount      VOUCHER.MaxDiscountAmount%TYPE;
+    v_voucher_discount  NUMBER(8,2) := 0;
+
+BEGIN
+
+    -- =========================================
+    -- Validate Order
+    -- =========================================
+    SELECT PickupType, DeliveryID, MemberVoucherID
+    INTO v_pickup_type, v_delivery_id, v_member_voucher_id
+    FROM ORDERS
+    WHERE OrderID = p_order_id;
+
+    DBMS_OUTPUT.PUT_LINE('===========================================================================');
+    DBMS_OUTPUT.PUT_LINE('                         ORDER PAYMENT CALCULATION       ');
+    DBMS_OUTPUT.PUT_LINE('===========================================================================');
+    DBMS_OUTPUT.PUT_LINE('Order ID : ' || p_order_id);
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------------');
+
+    -- =========================================
+    -- Process Order Items
+    -- =========================================
+    FOR r IN (
+        SELECT oi.ItemID, oi.Quantity, oi.PriceEach, oi.ItemSetID, i.ItemName
+        FROM ORDERITEM oi
+        JOIN ITEM i ON oi.ItemID = i.ItemID
+        WHERE oi.OrderID = p_order_id
+    )
+    LOOP
+        IF r.ItemSetID IS NOT NULL THEN
+            SELECT Discount
+            INTO v_discount
+            FROM ITEMSET
+            WHERE ItemSetID = r.ItemSetID;
+
+            v_item_total := v_item_total + (r.Quantity * r.PriceEach * (1 - v_discount));
+
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(r.ItemName || ' (Set Discount)',60) ||
+                ' RM ' ||
+                TO_CHAR(r.Quantity * r.PriceEach * (1 - v_discount),'9990.00')
+            );
+        ELSE
+            v_item_total := v_item_total + (r.Quantity * r.PriceEach);
+
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(r.ItemName || ' x' || r.Quantity,60) ||
+                ' RM ' ||
+                TO_CHAR(r.Quantity * r.PriceEach,'9990.00')
+            );
+        END IF;
+    END LOOP;
+
+    -- =========================================
+    -- Process Packages
+    -- =========================================
+    FOR p IN (
+        SELECT op.Quantity, op.PriceEach, pk.PackageName
+        FROM ORDERPACKAGE op
+        JOIN PACKAGE pk ON op.PackageID = pk.PackageID
+        WHERE op.OrderID = p_order_id
+    )
+    LOOP
+        v_package_total := v_package_total + (p.Quantity * p.PriceEach);
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(p.PackageName,60) ||
+            ' RM ' ||
+            TO_CHAR(p.Quantity * p.PriceEach,'9990.00')
+        );
+    END LOOP;
+
+    -- =========================================
+    -- Delivery Fee
+    -- =========================================
+    IF v_pickup_type = 'Delivery' AND v_delivery_id IS NOT NULL THEN
+        SELECT DiscountedDeliveryPrice
+        INTO v_delivery_fee
+        FROM DELIVERY
+        WHERE DeliveryID = v_delivery_id;
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD('Delivery Fee',60) ||
+            ' RM ' ||
+            TO_CHAR(v_delivery_fee,'9990.00')
+        );
+    END IF;
+
+    -- =========================================
+    -- Subtotal
+    -- =========================================
+    v_subtotal := v_item_total + v_package_total + v_delivery_fee;
+
+    -- =========================================
+    -- Voucher Calculation
+    -- =========================================
+    IF v_member_voucher_id IS NOT NULL THEN
+        BEGIN
+            SELECT v.DiscountPercentage,
+                   v.DiscountAmount,
+                   v.MinSpendAmount,
+                   v.MaxDiscountAmount
+            INTO v_discount_percent,
+                 v_discount_amount,
+                 v_min_spend,
+                 v_max_discount
+            FROM MEMBERVOUCHER mv
+            JOIN VOUCHER v ON mv.VoucherID = v.VoucherID
+            WHERE mv.MemberVoucherID = v_member_voucher_id;
+
+            IF v_discount_percent IS NOT NULL THEN
+                v_voucher_discount := v_subtotal * v_discount_percent;
+                IF v_voucher_discount > v_max_discount THEN
+                    v_voucher_discount := v_max_discount;
+                END IF;
+            ELSE
+                v_voucher_discount := v_discount_amount;
+            END IF;
+
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD('Voucher Discount',60) ||
+                ' RM ' ||
+                TO_CHAR(v_voucher_discount,'9990.00')
+            );
+
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                DBMS_OUTPUT.PUT_LINE(
+                    RPAD('Voucher Discount',60) ||
+                    ' RM ' ||
+                    LPAD('0.00',7)
+                );
+        END;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD('Voucher Discount',60) ||
+            ' RM ' ||
+            LPAD('0.00',7)
+        );
+    END IF;
+
+    -- =========================================
+    -- Final Total
+    -- =========================================
+    v_final_total := v_subtotal - v_voucher_discount;
+
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('TOTAL',60) ||
+        ' RM ' ||
+        TO_CHAR(v_final_total,'9990.00')
+    );
+    DBMS_OUTPUT.PUT_LINE('===========================================================================');
+
+    -- =========================================
+    -- Update Order
+    -- =========================================
+    UPDATE ORDERS
+    SET TotalAmount = v_final_total
+    WHERE OrderID = p_order_id;
+
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('ORDER RECORD UPDATED');
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Order ID not found.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
+
+END;
+/
