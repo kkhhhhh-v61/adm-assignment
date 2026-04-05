@@ -1,37 +1,44 @@
 CL SCR
 SET SERVEROUTPUT ON FORMAT WRAPPED
 SET LINESIZE 120
-
+SET DEFINE OFF; 
+SET ECHO OFF;
+SET VERIFY OFF;
 WHENEVER SQLERROR CONTINUE;
+
+COLUMN DeliveryID FORMAT A15 HEADING 'DELIVERY ID'
+COLUMN OriginalDeliveryPrice FORMAT 999.99 HEADING 'ORIGINAL PRICE'
+COLUMN DiscountedDeliveryPrice FORMAT 999.99 HEADING 'FINAL PRICE'
 
 PROMPT =======================================================================
 PROMPT [ TRIGGER DEMO: CROSS-CITY LOGISTICS & FOOD SAFETY ]
 PROMPT =======================================================================
 PAUSE Press ENTER to start Scenario 1 (Normal Member Block)...
 
--- =======================================================================
+PROMPT 
 PROMPT >> SCENARIO 1: Normal Member cross-city delivery (BLOCK)
-PROMPT =======================================================================
+PROMPT -----------------------------------------------------------------------
 
 INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O01001', 'I00010', 1, 15.00);
 
 PROMPT 
 PAUSE Press ENTER to start Scenario 2 (Food Safety Block)...
 
--- =======================================================================
+PROMPT 
 PROMPT >> SCENARIO 2: VIP Member ordering HIGH-RISK FOOD (BLOCK)
-PROMPT =======================================================================
+PROMPT -----------------------------------------------------------------------
 
 INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O01002', 'I00044', 1, 8.00);
 
 PROMPT 
 PAUSE Press ENTER to start Scenario 3 (VIP Success & Surcharge)...
 
--- =======================================================================
+PROMPT 
 PROMPT >> SCENARIO 3: VIP Member ordering Safe Food (ALLOW & ADD SURCHARGE)
-PROMPT =======================================================================
+PROMPT -----------------------------------------------------------------------
 PROMPT [ BEFORE TRIGGER ] Checking current BASE delivery fee for Order O01003...
-SELECT DeliveryID, DeliveryPrice FROM DELIVERY WHERE DeliveryID = 'D01003';
+
+SELECT DeliveryID, OriginalDeliveryPrice, DiscountedDeliveryPrice FROM DELIVERY WHERE DeliveryID = 'D01003';
 
 PROMPT 
 PROMPT Executing Insert (Adding Safe Item to Cart for VIP)...
@@ -40,7 +47,8 @@ INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O01003', '
 
 PROMPT
 PROMPT [ AFTER TRIGGER ] Checking new delivery fee (Base Fee + RM 15 Surcharge)...
-SELECT DeliveryID, DeliveryPrice FROM DELIVERY WHERE DeliveryID = 'D01003';
+
+SELECT DeliveryID, OriginalDeliveryPrice, DiscountedDeliveryPrice FROM DELIVERY WHERE DeliveryID = 'D01003';
 
 PROMPT =======================================================================
-
+PROMPT Test completed.

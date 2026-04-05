@@ -1,7 +1,3 @@
--- ============================================================================
--- Setup data for Trigger 3 (3000-series to avoid conflicts)
--- ============================================================================
-
 -- 1. Create a dedicated test address
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) 
 VALUES ('A03001', '3000 Testing Street', 'Kuala Lumpur', 'WPKL', '50000');
@@ -16,11 +12,11 @@ VALUES ('R03001', 'A03001', 'Trigger Test Kitchen', '03-30003000', 'Y', '7.00a.m
 
 -- 4. Create items (I03001 = Burger/Heavy, I03002 = Drink/Quick)
 -- Using C00009 for Burgers and C00016 for Drinks
-INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Price, IsAvailable) 
-VALUES ('I03001', 'R03001', 'C00009', 'Algorithm Burger', 15.00, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I03001', 'R03001', 'C00009', 'Algorithm Burger', 'A heavy burger for testing', 15.00, 'Y');
 
-INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Price, IsAvailable) 
-VALUES ('I03002', 'R03001', 'C00016', 'Algorithm Soda', 5.00, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I03002', 'R03001', 'C00016', 'Algorithm Soda', 'A quick drink for testing', 5.00, 'Y');
 
 -- 5. Create 4 empty orders for different scenarios
 INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 

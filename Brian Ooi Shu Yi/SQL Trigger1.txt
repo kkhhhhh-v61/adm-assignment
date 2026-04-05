@@ -53,7 +53,8 @@ BEGIN
                 'LOGISTICS BLOCKED: Normal members cannot order food across cities. Please upgrade to VIP for Long-Distance Delivery!');
         ELSE
             UPDATE DELIVERY
-            SET DeliveryPrice = DeliveryPrice + v_cross_city_fee
+            SET OriginalDeliveryPrice = OriginalDeliveryPrice + v_cross_city_fee,
+                DiscountedDeliveryPrice = DiscountedDeliveryPrice + v_cross_city_fee
             WHERE DeliveryID = v_delivery_id;
             
             DBMS_OUTPUT.PUT_LINE('>> [ VIP SYSTEM TRIGGERED ] <<');

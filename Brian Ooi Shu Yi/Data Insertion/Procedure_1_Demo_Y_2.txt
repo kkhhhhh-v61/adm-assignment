@@ -1,0 +1,35 @@
+CL SCR
+
+SET LINESIZE 120
+COLUMN ORDERID FORMAT A10 HEADING 'ORDER ID'
+COLUMN DELIVERYID FORMAT A12 HEADING 'DELIVERY ID'
+COLUMN DISTANCEINKM FORMAT 990.99 HEADING 'DISTANCE(KM)'
+COLUMN ORIGINAL_FEE FORMAT $990.99 HEADING 'ORIGINAL FEE'
+COLUMN FINAL_FEE FORMAT $990.99 HEADING 'FINAL FEE'
+
+PROMPT =======================================================================
+PROMPT [ ULTIMATE TEST: 25km + Fast Speed + VIP + RM 15 Voucher ]
+PROMPT =======================================================================
+PROMPT 
+PROMPT >>> [ BEFORE EXECUTION ] Checking current values for Order O88888...
+
+SELECT O.OrderID, D.DeliveryID, D.DistanceInKm, D.OriginalDeliveryPrice AS ORIGINAL_FEE, D.DiscountedDeliveryPrice AS FINAL_FEE
+FROM ORDERS O 
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID 
+WHERE O.OrderID = 'O88888';
+
+PROMPT 
+PROMPT >>> [ EXECUTING PROCEDURE ] Calculating Dynamic Delivery Fee...
+
+EXEC calculate_dynamic_delivery_fee('O88888', 'Y');
+
+PROMPT 
+PROMPT >>> [ AFTER EXECUTION ] Verifying the calculated fees...
+
+SELECT O.OrderID, D.DeliveryID, D.DistanceInKm, D.OriginalDeliveryPrice AS ORIGINAL_FEE, D.DiscountedDeliveryPrice AS FINAL_FEE
+FROM ORDERS O 
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID 
+WHERE O.OrderID = 'O88888';
+
+PROMPT =======================================================================
+PROMPT Demo for Order O88888 Completed.

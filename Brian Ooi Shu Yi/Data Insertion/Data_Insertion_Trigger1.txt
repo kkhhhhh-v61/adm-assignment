@@ -15,15 +15,14 @@ VALUES ('M01002', 'Trigger VIP User', 'vip1002@test.com', '0121002002', '123456'
 INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status) 
 VALUES ('S09001', 'M01002', 'SP00001', TO_DATE('2026-04-01', 'YYYY-MM-DD'), TO_DATE('2026-12-31', 'YYYY-MM-DD'), 'Active');
 
--- DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, DeliveryPrice
-INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, DeliveryPrice) 
-VALUES ('D01001', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:00', 8.00);
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D01001', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:00', 8.00, 8.00);
 
-INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, DeliveryPrice) 
-VALUES ('D01002', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:15', 8.00);
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D01002', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:15', 8.00, 8.00);
 
-INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, DeliveryPrice) 
-VALUES ('D01003', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:30', 8.00);
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D01003', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:30', 8.00, 8.00);
 
 -- OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 

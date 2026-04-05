@@ -1,31 +1,29 @@
 CL SCR
 
-SET LINESIZE 100
+SET LINESIZE 120
 COLUMN ORDERID FORMAT A10 HEADING 'ORDER ID'
 COLUMN DELIVERYID FORMAT A12 HEADING 'DELIVERY ID'
 COLUMN DISTANCEINKM FORMAT 990.99 HEADING 'DISTANCE(KM)'
-COLUMN DELIVERYPRICE FORMAT $990.99 HEADING 'DELIVERY PRICE(RM)'
+COLUMN ORIGINAL_FEE FORMAT $990.99 HEADING 'ORIGINAL FEE(RM)'
+COLUMN DISCOUNTED_FEE FORMAT $990.99 HEADING 'FINAL FEE(RM)'
 
 
-PROMPT >>> [ BEFORE EXECUTION ] Checking current DeliveryPrice in Database...
+PROMPT >>> [ BEFORE EXECUTION ] Checking current Delivery Fees in Database...
 
-SELECT O.OrderID, D.DeliveryID, D.DistanceInKm, D.DeliveryPrice 
+SELECT O.OrderID, D.DeliveryID, D.DistanceInKm, D.OriginalDeliveryPrice AS ORIGINAL_FEE, D.DiscountedDeliveryPrice AS DISCOUNTED_FEE
 FROM ORDERS O 
 JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID 
 WHERE O.OrderID = 'O00003';
 
-
-
-
-PROMPT >>> [ EXECUTING PROCEDURE ] Calculating Dynamic Fee...
+PROMPT 
+PROMPT >>> [ EXECUTING PROCEDURE ] Calculating Dynamic Fee (WITH Voucher)...
 
 EXEC calculate_dynamic_delivery_fee('O00003', 'Y');
 
+PROMPT 
+PROMPT >>> [ AFTER EXECUTION ] Verifying the new Delivery Fees in Database...
 
-
-PROMPT >>> [ AFTER EXECUTION ] Verifying the new DeliveryPrice in Database...
-
-SELECT O.OrderID, D.DeliveryID, D.DistanceInKm, D.DeliveryPrice 
+SELECT O.OrderID, D.DeliveryID, D.DistanceInKm, D.OriginalDeliveryPrice AS ORIGINAL_FEE, D.DiscountedDeliveryPrice AS DISCOUNTED_FEE
 FROM ORDERS O 
 JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID 
 WHERE O.OrderID = 'O00003';

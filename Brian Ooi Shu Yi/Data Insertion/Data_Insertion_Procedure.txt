@@ -4,3 +4,24 @@ VALUES ('MV09999', 'M00044', 'V00021', SYSDATE, 'N');
 UPDATE ORDERS
 SET MemberVoucherID = 'MV09999'
 WHERE OrderID = 'O00003';
+
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) 
+VALUES ('A88888', '88888 Infinite Loop Road', 'Kuala Lumpur', 'WPKL', '50000');
+
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
+VALUES ('M88888', 'Super VIP Tester', 'vip88888@test.com', '0188888888', 'pass88888', SYSDATE);
+
+INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status) 
+VALUES ('S88888', 'M88888', 'SP00001', SYSDATE - 5, SYSDATE + 30, 'Active');
+
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, DiscountAmount, MinSpendAmount, MaxDiscountAmount, ExpiryDate) 
+VALUES ('V88888', 'VT00003', 'Max Saver Delivery (RM 15 Off)', 'MAXSAVE88888', NULL, 15.00, 0, 15.00, SYSDATE + 30);
+
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) 
+VALUES ('MV88888', 'M88888', 'V88888', SYSDATE, 'N');
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D88888', 'DT00003', 'DR00001', 'A88888', 25.00, SYSDATE, '15:00', 0.00, 0.00);
+
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O88888', 'M88888', 'D88888', 'MV88888', 'Delivery', SYSDATE, '14:30', 100.00, 'Pending');

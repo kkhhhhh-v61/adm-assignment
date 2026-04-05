@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE generate_delivery_perf_report (
     CURSOR c_rider (v_company_id VARCHAR2) IS
         SELECT DR.RiderName,
                COUNT(O.OrderID) AS OrderVolume,
-               SUM(D.DeliveryPrice) AS TotalDeliveryFee
+               SUM(D.OriginalDeliveryPrice) AS TotalDeliveryFee
         FROM DELIVERYRIDER DR
         JOIN DELIVERY D ON DR.DeliveryRiderID = D.DeliveryRiderID
         JOIN ORDERS O ON D.DeliveryID = O.DeliveryID

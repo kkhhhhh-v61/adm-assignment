@@ -102,8 +102,11 @@ BEGIN
 
     IF v_final_fee < 0 THEN v_final_fee := 0; END IF;
 
-    -- 3. Update Delivery Table
-    UPDATE DELIVERY SET DeliveryPrice = v_final_fee WHERE DeliveryID = v_delivery_id;
+    UPDATE DELIVERY 
+    SET OriginalDeliveryPrice = v_subtotal,
+        DiscountedDeliveryPrice = v_final_fee 
+    WHERE DeliveryID = v_delivery_id;
+    
     COMMIT;
 
     -- 4. Print beautiful 2-stage receipt
