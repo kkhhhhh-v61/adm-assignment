@@ -1,0 +1,281 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+PROMPT ==========================================
+PROMPT        DEMO DATASET (77777 SERIES)
+PROMPT ==========================================
+
+-------------------------------------------------
+-- ADDRESS
+-------------------------------------------------
+INSERT INTO ADDRESS VALUES
+('A77777','777 Demo Street','Penang','Penang','14000');
+
+COMMIT;
+
+
+-------------------------------------------------
+-- CATEGORY (use unique names to avoid constraint)
+-------------------------------------------------
+INSERT INTO CATEGORY VALUES
+('C77777','DemoFastFood777','Demo fast food category');
+
+INSERT INTO CATEGORY VALUES
+('C77778','DemoDrink777','Demo beverage category');
+
+COMMIT;
+
+
+-------------------------------------------------
+-- RESTAURANT
+-------------------------------------------------
+INSERT INTO RESTAURANT VALUES
+(
+'R77777',
+'A77777',
+'777 Burger House',
+'0177777777',
+4.5,
+'Y',
+'10AM-10PM'
+);
+
+COMMIT;
+
+
+INSERT INTO ITEM VALUES
+(
+'I77777',
+'R77777',
+'C77777',
+'Original Burger',
+'Existing burger item',
+12.00,
+'Y'
+);
+
+COMMIT;
+
+
+PROMPT
+PROMPT ==========================================
+PROMPT     PROCEDURE TEST 1 : REGISTER MENU ITEM
+PROMPT ==========================================
+
+PROMPT
+PROMPT -------- SUCCESS CASE --------
+
+BEGIN
+register_restaurant_menu_item(
+'R77777',
+'C77777',
+'Chicken Burger',
+'Crispy chicken burger',
+15
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : RESTAURANT NOT EXIST --------
+
+BEGIN
+register_restaurant_menu_item(
+'R99999',
+'C77777',
+'Ghost Burger',
+'Invalid restaurant',
+10
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : CATEGORY NOT EXIST --------
+
+BEGIN
+register_restaurant_menu_item(
+'R77777',
+'C99999',
+'Fish Burger',
+'Invalid category',
+12
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : NEGATIVE PRICE --------
+
+BEGIN
+register_restaurant_menu_item(
+'R77777',
+'C77777',
+'Negative Burger',
+'Invalid price',
+-5
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : DUPLICATE ITEM --------
+
+BEGIN
+register_restaurant_menu_item(
+'R77777',
+'C77777',
+'Original Burger',
+'Duplicate test',
+12
+);
+END;
+/
+
+
+PROMPT
+PROMPT ==========================================
+PROMPT     PROCEDURE TEST 2 : ADD ITEM PROMOTION
+PROMPT ==========================================
+
+
+PROMPT
+PROMPT -------- SUCCESS PROMOTION --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Burger Weekend Promo',
+0.20,
+10,
+8,
+100,
+TRUNC(SYSDATE)+1,
+TRUNC(SYSDATE)+30
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : ITEM NOT EXIST --------
+
+BEGIN
+add_item_promotion(
+'I99999',
+'Ghost Promo',
+0.20,
+10,
+5,
+50,
+TRUNC(SYSDATE)+1,
+TRUNC(SYSDATE)+30
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : MIN SPEND < 0 --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Negative Min Spend',
+0.20,
+-5,
+5,
+50,
+TRUNC(SYSDATE)+1,
+TRUNC(SYSDATE)+30
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : MAX DISCOUNT <= 0 --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Invalid Max Discount',
+0.20,
+10,
+0,
+50,
+TRUNC(SYSDATE)+1,
+TRUNC(SYSDATE)+30
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : MAX REDEMPTIONS <= 0 --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Invalid Redemption',
+0.20,
+10,
+5,
+0,
+TRUNC(SYSDATE)+1,
+TRUNC(SYSDATE)+30
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : INVALID DISCOUNT --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Invalid Discount',
+1.5,
+10,
+5,
+50,
+TRUNC(SYSDATE)+1,
+TRUNC(SYSDATE)+30
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : START DATE IN PAST --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Past Promo',
+0.20,
+10,
+5,
+50,
+TRUNC(SYSDATE)-3,
+TRUNC(SYSDATE)+10
+);
+END;
+/
+
+PROMPT
+PROMPT -------- ERROR : END DATE BEFORE START --------
+
+BEGIN
+add_item_promotion(
+'I77777',
+'Invalid Date Promo',
+0.20,
+10,
+5,
+50,
+TRUNC(SYSDATE)+10,
+TRUNC(SYSDATE)+5
+);
+END;
+/
+
+PROMPT
+PROMPT ==========================================
+PROMPT             DEMO FINISHED
+PROMPT ==========================================

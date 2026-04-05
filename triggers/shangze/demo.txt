@@ -1,0 +1,250 @@
+CL SCR
+SET SERVEROUTPUT ON
+
+-- =========================================
+-- TEST DATA USING ID 33333
+-- =========================================
+
+-- 1️⃣ ADDRESS
+INSERT INTO ADDRESS
+VALUES (
+'A33333',
+'123 Test Street',
+'Kuala Lumpur',
+'Selangor',
+'43333'
+);
+
+-- 2️⃣ CATEGORY
+INSERT INTO CATEGORY
+VALUES (
+'C33333',
+'Test Category',
+'Category for testing'
+);
+
+-- 3️⃣ MEMBER
+INSERT INTO MEMBER
+VALUES (
+'M33333',
+'Test Member',
+'test33333@email.com',
+'0123333333',
+'password',
+SYSDATE
+);
+
+-- 4️⃣ RESTAURANT
+INSERT INTO RESTAURANT
+VALUES (
+'R33333',
+'A33333',
+'Test Restaurant',
+'0128888888',
+0,
+'Y',
+'10AM - 10PM'
+);
+
+-- 5️⃣ ITEM
+INSERT INTO ITEM
+VALUES (
+'I33333',
+'R33333',
+'C33333',
+'Test Burger',
+'Burger used for trigger testing',
+20,
+'Y'
+);
+
+-- 6️⃣ PROMOTION
+INSERT INTO PROMOTION
+VALUES (
+'P33333',
+'Test Promotion',
+0.20,        -- 20% discount
+30,          -- Minimum spend RM30
+15,          -- Max discount RM15
+100,         -- Max redemption
+0,
+SYSDATE - 1,
+SYSDATE + 30,
+'Y'
+);
+
+-- 7️⃣ LINK ITEM TO PROMOTION
+INSERT INTO ITEMPROMOTION
+VALUES (
+'I33333',
+'P33333'
+);
+
+-- 8️⃣ CREATE ORDER
+INSERT INTO ORDERS
+VALUES (
+'O33333',
+'M33333',
+NULL,
+NULL,
+'Pickup',
+SYSDATE,
+'12:00',
+0,
+'Pending'
+);
+
+INSERT INTO ORDERS
+VALUES (
+'O33334',
+'M33333',
+NULL,
+NULL,
+'Pickup',
+SYSDATE,
+'12:00',
+0,
+'Pending'
+);
+
+COMMIT;
+
+-- =========================================
+-- TEST CASE 1 : VALID PROMOTION
+-- =========================================
+
+PROMPT ===== TEST 1 : VALID PROMOTION =====
+SELECT PromotionID, CurrentRedemptions
+FROM PROMOTION
+WHERE PromotionID = 'P33333';
+
+INSERT INTO ORDERITEM
+VALUES (
+'O33333',
+'I33333',
+NULL,
+2,
+20
+);
+
+COMMIT;
+
+-- Check promotion redemption count
+SELECT PromotionID, CurrentRedemptions
+FROM PROMOTION
+WHERE PromotionID = 'P33333';
+
+
+-- =========================================
+-- TEST CASE 2 : MINIMUM SPEND FAIL
+-- =========================================
+
+PROMPT ===== TEST 2 : MIN SPEND FAIL =====
+
+INSERT INTO ORDERITEM
+VALUES (
+'O33334',
+'I33333',
+NULL,
+1,
+10
+);
+
+-- Expected error:
+-- ORA-20006: Order does not meet minimum spend
+
+-- =========================================
+-- TEST CASE 3 : PROMOTION EXPIRED
+-- =========================================
+
+PROMPT ===== TEST 3 : PROMOTION NOT ACTIVE  =====
+
+UPDATE PROMOTION
+SET ISACTIVE = 'N'
+WHERE PromotionID = 'P33333';
+
+COMMIT;
+
+INSERT INTO ORDERITEM
+VALUES (
+'O33333',
+'I33333',
+NULL,
+2,
+20
+);
+
+-- Expected error:
+-- ORA-20004: Promotion is not active
+
+-- =========================================
+-- TEST CASE 4 : PROMOTION EXPIRED
+-- =========================================
+
+PROMPT ===== TEST 4 : PROMOTION EXPIRED =====
+
+UPDATE PROMOTION
+SET EndDate = SYSDATE - 1,
+ISACTIVE = 'Y'
+WHERE PromotionID = 'P33333';
+
+COMMIT;
+
+INSERT INTO ORDERITEM
+VALUES (
+'O33333',
+'I33333',
+NULL,
+2,
+20
+);
+
+-- Expected error:
+-- ORA-20004: Promotion is outside validity period
+
+
+-- =========================================
+-- TEST CASE 5 : REDEMPTION LIMIT REACHED
+-- =========================================
+
+PROMPT ===== TEST 5 : REDEMPTION LIMIT =====
+
+UPDATE PROMOTION
+SET EndDate = SYSDATE + 30,
+    CurrentRedemptions = 100
+WHERE PromotionID = 'P33333';
+
+COMMIT;
+
+INSERT INTO ORDERITEM
+VALUES (
+'O33333',
+'I33333',
+NULL,
+2,
+20
+);
+
+-- Expected error:
+-- ORA-20005: Promotion redemption limit reached
+
+
+-- =========================================
+-- VIEW FINAL DATA
+-- =========================================
+
+PROMPT ===== ORDER ITEMS =====
+
+SELECT *
+FROM ORDERITEM
+WHERE OrderID = 'O33333';
+
+PROMPT ===== PROMOTION STATUS =====
+
+SELECT PromotionID,
+       PromoName,
+       CurrentRedemptions,
+       MaxRedemptions
+FROM PROMOTION
+WHERE PromotionID = 'P33333';
+

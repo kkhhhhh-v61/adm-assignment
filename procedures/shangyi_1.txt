@@ -52,6 +52,16 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Category validated');
 
     -- ======================================
+    -- Validate Price
+    -- ======================================
+    IF p_price < 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Price must be greater than or equal to 0.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Price validated');
+
+    -- ======================================
     -- Prevent Duplicate Menu Item
     -- ======================================
     SELECT COUNT(*)
