@@ -1,0 +1,65 @@
+-- ==========================================================
+-- SETUP: FORMATTING & TEST DATA INSERTION
+-- ==========================================================
+SET SERVEROUTPUT ON;
+SET LINESIZE 150;
+SET PAGESIZE 100;
+COLUMN OrderID FORMAT A10;
+COLUMN OrderStatus FORMAT A15;
+COLUMN OrderTime FORMAT A10;
+COLUMN DeliveryTime FORMAT A15;
+COLUMN MemberVoucherID FORMAT A15;
+COLUMN VoucherID FORMAT A10;
+
+-- 1. Insert a test delivery using D99998 (Set for 2 hours AFTER the order)
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D99998', 'DT00001', 'DR00001', 'A00001', 5.0, SYSDATE, '14:00', 5.00, 5.00);
+
+-- 2. Insert the test order using O99998 (Set at 12:00, Status 'Delivering')
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O99998', 'M00001', 'D99998', NULL, 'Delivery', SYSDATE, '12:00', 50.00, 'Delivering');
+
+COMMIT;
+PROMPT >>> TEST DATA (O99998) INSERTED SUCCESSFULLY <<<
+PROMPT 
+
+-- ==========================================================
+-- STEP 1: "BEFORE" PROCEDURE EXECUTION
+-- ==========================================================
+PROMPT [BEFORE] Order Status and Times:
+SELECT o.OrderID, o.OrderStatus, o.OrderTime, d.DeliveryTime 
+FROM ORDERS o JOIN DELIVERY d ON o.DeliveryID = d.DeliveryID 
+WHERE o.OrderID = 'O99998';
+
+PROMPT [BEFORE] Voucher Count for Member M00001:
+SELECT COUNT(*) AS Voucher_Count FROM MEMBERVOUCHER WHERE MemberID = 'M00001';
+PROMPT 
+
+-- ==========================================================
+-- STEP 2: EXECUTION
+-- ==========================================================
+PROMPT >>> EXECUTING PROCEDURE <<<
+EXEC PR_PROCESS_DELIVERY_HANDOVER('O99998');
+PROMPT 
+
+-- ==========================================================
+-- STEP 3: "AFTER" PROCEDURE EXECUTION
+-- ==========================================================
+PROMPT [AFTER] Updated Order Status:
+SELECT OrderID, OrderStatus FROM ORDERS WHERE OrderID = 'O99998';
+
+PROMPT [AFTER] New Voucher Count (Should be +1):
+SELECT COUNT(*) AS Voucher_Count FROM MEMBERVOUCHER WHERE MemberID = 'M00001';
+
+PROMPT [AFTER] Details of the newly issued Apology Voucher:
+SELECT MemberVoucherID, VoucherID, DateClaimed
+FROM (
+    SELECT MemberVoucherID, VoucherID, DateClaimed
+    FROM MEMBERVOUCHER
+    WHERE MemberID = 'M00001'
+    ORDER BY MemberVoucherID DESC
+)
+WHERE ROWNUM = 1;
+PROMPT ==========================================================
+PROMPT TEST COMPLETED
+PROMPT ==========================================================

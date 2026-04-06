@@ -1,4 +1,25 @@
-SELECT SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status 
-FROM SUBSCRIPTION 
-WHERE MemberID = 'M00002' 
-ORDER BY SubscriptionID DESC;
+-- Create 3 Fake Deliveries for testing
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D99991', 'DT00001', 'DR00001', 'A00001', 5.0, SYSDATE, '12:30', 5.00, 5.00);
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D99992', 'DT00001', 'DR00001', 'A00001', 10.0, SYSDATE, '14:00', 8.00, 8.00);
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D99993', 'DT00001', 'DR00001', 'A00001', 2.0, SYSDATE, '18:30', 3.00, 3.00);
+
+-- Create 3 Fake Orders for the 3 Scenarios
+-- Scenario 1: 'Pending' order
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O99991', 'M00001', 'D99991', NULL, 'Delivery', SYSDATE, '12:00', 45.00, 'Pending');
+
+-- Scenario 2: 'Delivering' order with a 2-Hour Delay (12:00 to 14:00)
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O99992', 'M00002', 'D99992', NULL, 'Delivery', SYSDATE, '12:00', 85.00, 'Delivering');
+
+-- Scenario 3: 'Completed' order (To test the blocking mechanism)
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O99993', 'M00003', 'D99993', NULL, 'Delivery', SYSDATE, '18:00', 25.00, 'Completed');
+
+COMMIT;
+PROMPT >>> DUMMY DATA INSERTED SUCCESSFULLY <<<
