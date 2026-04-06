@@ -85,8 +85,8 @@ Update → Update Restaurant.AverageRating)
 - Menu Item "Dead Stock" & Underperformance Summary (Finds active food items that have never been ordered or generate very low revenue to help clean up the menu)
 
 2）Procedures
-- Process VIP Subscription Renewal & Apply Early-Bird Discount (Handles renewals, applies a 5% discount if renewed within 7 days of expiry, inserts the payment, and extends the active date)
-- Process Order Cancellation and Refund State Machine (Cancels the order if food is still pending, or processes a financial refund if food was already delivered)
+- Manage VIP Subscription (Renew & Cancel) (A dual-action procedure that handles both early-bird subscription renewals with a 5% discount, and safely processes subscription cancellations by preventing future date constraint violations).
+- Process Delivery Handover & Auto-Apology State Machine (Manages the physical delivery states from 'Pending' to 'Delivering' to 'Completed'. Automatically calculates delivery wait times and issues an Apology Voucher to the member's wallet if the delivery took longer than 60 minutes).
 
 3）Triggers
 - Enforce Outstanding Debt Lock on New Orders (Blocks a user from placing a new order if they have a previous order with a FAILED or PENDING payment status)

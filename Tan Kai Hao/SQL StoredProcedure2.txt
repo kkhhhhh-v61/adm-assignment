@@ -123,12 +123,14 @@ BEGIN
     SELECT 'PK' || LPAD(seq_package_id.NEXTVAL, 5, '0') INTO v_pkg_id FROM DUAL;
 
     v_orig_price := (v_item1_price * p_qty1) + (v_item2_price * p_qty2);
-    v_pkg_name := v_item1_name || ' & ' || v_item2_name || ' Combo';
+    v_pkg_name := v_item1_name || ' & ' || v_item2_name;
 
     IF p_item3_id IS NOT NULL THEN
         v_orig_price := v_orig_price + (v_item3_price * p_qty3);
-        v_pkg_name := v_pkg_name || ' & ' || v_item3_name || ' Combo';
+        v_pkg_name := v_pkg_name || ' & ' || v_item3_name;
     END IF;
+
+    v_pkg_name := v_pkg_name || ' Combo';
     
     v_disc_price := v_orig_price * (1 - p_discount);
 
