@@ -16,6 +16,11 @@ PROMPT ==========================================
 PROMPT CLEANUP 77777 DATASET
 PROMPT ==========================================
 
+DROP PROCEDURE calculate_update_order_total;
+DROP PROCEDURE redeem_voucher_for_order;
+DROP TRIGGER trg_validate_item_promotion;
+DROP TRIGGER trg_order_feedback_system;
+
 -- Child tables first
 
 DELETE FROM ITEMPROMOTION 

@@ -12,6 +12,11 @@ PROMPT =====================================================
    CLEAN PREVIOUS DEMO DATA
 ===================================================== */
 
+DROP PROCEDURE calculate_dynamic_delivery_fee;
+DROP PROCEDURE activate_vip_and_issue_perks;
+DROP TRIGGER trg_cross_city_safety_check;
+DROP TRIGGER trg_restaurant_hours_control;
+
 DELETE FROM ORDERITEM WHERE OrderID LIKE 'O6666%';
 DELETE FROM ORDERPACKAGE WHERE OrderID LIKE 'O6666%';
 DELETE FROM ORDERS WHERE OrderID LIKE 'O6666%';
