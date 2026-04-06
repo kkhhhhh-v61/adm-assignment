@@ -1,0 +1,31 @@
+CREATE OR REPLACE TRIGGER TRG_FEEDBACK_VALIDITY
+BEFORE INSERT OR UPDATE ON ORDERFEEDBACK
+FOR EACH ROW
+DECLARE
+    v_order_status ORDERS.OrderStatus%TYPE;
+    v_order_date   ORDERS.OrderDate%TYPE;
+BEGIN
+    -- Fetch the exact status and date of the order being reviewed
+    SELECT OrderStatus, OrderDate
+    INTO v_order_status, v_order_date
+    FROM ORDERS
+    WHERE OrderID = :NEW.OrderID;
+
+    -- RULE 1: Block reviews for un-delivered food
+    IF v_order_status != 'Completed' THEN
+        RAISE_APPLICATION_ERROR(-20002, 'FEEDBACK BLOCKED: You can only leave a review for completed orders. Current status: ' || v_order_status);
+    END IF;
+
+    -- RULE 2: Restrict reviews to a 7-day window
+    -- (We subtract the dates. In Oracle, subtracting two DATEs gives the difference in days)
+    IF (:NEW.FeedbackDate - v_order_date) > 7 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'FEEDBACK BLOCKED: Reviews are only allowed within 7 days of the order date.');
+    END IF;
+
+    -- RULE 3: Force a comment if the rating is 1 or 2 stars
+    IF :NEW.Rating IN (1, 2) AND :NEW.FeedbackComment IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20004, 'FEEDBACK BLOCKED: A comment is required when giving a 1 or 2-star rating to help us improve.');
+    END IF;
+
+END;
+/
