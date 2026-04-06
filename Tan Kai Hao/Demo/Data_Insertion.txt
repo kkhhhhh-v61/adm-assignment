@@ -1,0 +1,49 @@
+-- Rider without Bonus
+INSERT INTO DELIVERYRIDER VALUES ('DR10001', 'DC00001', 'Abu Bakar', '0111111111', 0);
+-- Rider with Bonus
+INSERT INTO DELIVERYRIDER VALUES ('DR10002', 'DC00002', 'Tan Ah Ming', '0122222222', 0);
+
+-- Delivery of Feedback for Bronze Rider
+INSERT INTO DELIVERY VALUES ('D10001', 'DT00001', 'DR10001', 'A00001', 5.00, TO_DATE('2026-02-27', 'YYYY-MM-DD'), '09:00', 10.00, 10.00);
+-- Delivery of Feedback for Diamond Rider
+INSERT INTO DELIVERY VALUES ('D10002', 'DT00002', 'DR10002', 'A00001', 10.00, TO_DATE('2026-02-28', 'YYYY-MM-DD'), '10:00', 20.00, 15.00);
+
+-- Feedback for Bronze Rider
+INSERT INTO DELIVERYFEEDBACK VALUES ('DF10001', 'D10001', 3, 'Average service.', TO_DATE('2026-03-01', 'YYYY-MM-DD'));
+-- Feedback for Diamond Rider
+INSERT INTO DELIVERYFEEDBACK VALUES ('DF10002', 'D10002', 5, 'Great service!', TO_DATE('2026-03-02', 'YYYY-MM-DD'));
+
+-- Order with Completed status
+INSERT INTO ORDERS VALUES ('O10001', 'M00001', NULL, NULL, 'Pickup', TO_DATE('2026-03-03', 'YYYY-MM-DD'), '11:00', 10.00, 'Completed');
+-- Order with Pickup type
+INSERT INTO ORDERS VALUES ('O10002', 'M00001', NULL, NULL, 'Pickup', TO_DATE('2026-03-04', 'YYYY-MM-DD'), '12:00', 20.00, 'Pending');
+-- Order with Delivery type and assigned DeliveryID
+INSERT INTO ORDERS VALUES ('O10003', 'M00001', 'D00001', NULL, 'Delivery', TO_DATE('2026-03-05', 'YYYY-MM-DD'), '14:00', 30.00, 'Pending');
+-- Order with Cancelled status
+INSERT INTO ORDERS VALUES ('O10004', 'M00001', NULL, NULL, 'Delivery', TO_DATE('2026-03-06', 'YYYY-MM-DD'), '13:00', 40.00, 'Cancelled');
+-- Order with Delivery type, unassigned DeliveryID, and Pending status
+INSERT INTO ORDERS VALUES ('O10005', 'M00001', NULL, NULL, 'Delivery', TO_DATE('2026-03-07', 'YYYY-MM-DD'), '15:00', 50.00, 'Pending');
+INSERT INTO ORDERS VALUES ('O10006', 'M00001', NULL, NULL, 'Delivery', TO_DATE('2026-03-08', 'YYYY-MM-DD'), '16:00', 60.00, 'Pending');
+-- Orders for Trigger 1
+INSERT INTO ORDERS VALUES ('O10007', 'M00001', NULL, NULL, 'Delivery', TO_DATE('2026-03-09', 'YYYY-MM-DD'), '17:00', 70.00, 'Pending');
+INSERT INTO ORDERS VALUES ('O10008', 'M00001', NULL, NULL, 'Delivery', TO_DATE('2026-03-10', 'YYYY-MM-DD'), '18:00', 80.00, 'Pending');
+INSERT INTO ORDERS VALUES ('O10009', 'M00001', NULL, NULL, 'Delivery', TO_DATE('2026-03-11', 'YYYY-MM-DD'), '19:00', 90.00, 'Pending');
+-- MemberVoucher for Trigger 2
+INSERT INTO MEMBERVOUCHER VALUES('MV10001', 'M00001', 'V00002', TO_DATE('2026-03-11', 'YYYY-MM-DD'), 'Y');
+-- Orders for Trigger 2
+INSERT INTO ORDERS VALUES ('O10010', 'M00001', NULL, NULL, 'Pickup', TO_DATE('2026-03-12', 'YYYY-MM-DD'), '10:00', 100.00, 'Pending');
+INSERT INTO ORDERS VALUES ('O10011', 'M00001', NULL, 'MV10001', 'Pickup', TO_DATE('2026-03-13', 'YYYY-MM-DD'), '11:00', 110.00, 'Pending');
+INSERT INTO ORDERS VALUES ('O10012', 'M00001', NULL, NULL, 'Pickup', TO_DATE('2026-03-14', 'YYYY-MM-DD'), '12:00', 120.00, 'Completed');
+
+-- Items for Procedure 2
+INSERT INTO ITEM VALUES ('I10001', 'R00001', 'C00001', 'Beef Burger', 'Classic beef patty.', 10.00, 'Y');
+INSERT INTO ITEM VALUES ('I10002', 'R00001', 'C00002', 'Chicken Sandwich', 'Juicy chicken patty.', 8.00, 'Y');
+INSERT INTO ITEM VALUES ('I10003', 'R00001', 'C00003', 'Fries', 'Crispy and golden.', 5.00, 'Y');
+INSERT INTO ITEM VALUES ('I10004', 'R00002', 'C00004', 'Veggie Burger', 'Healthy vegetarian patty.', 12.00, 'Y');
+
+-- Payments for Trigger 2
+INSERT INTO PAYMENT VALUES ('PM10001', 'O10010', NULL, 'Credit Card', 'Pending');
+INSERT INTO PAYMENT VALUES ('PM10002', 'O10011', NULL, 'Debit Card', 'Pending');
+INSERT INTO PAYMENT VALUES ('PM10003', 'O10012', NULL, 'E-Wallet', 'Completed');
+
+COMMIT;

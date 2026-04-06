@@ -51,16 +51,20 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20001, 'Validation Failed: Order ID (' || p_order_id || ') does not exist.');
     END;
 
+    IF v_order_status = 'Completed' THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Validation Failed: Order (' || p_order_id || ') is already Completed.');
+    END IF;
+
     IF v_pickup_type != 'Delivery' THEN
-        RAISE_APPLICATION_ERROR(-20002, 'Validation Failed: Order (' || p_order_id || ') is registered as ' || v_pickup_type || '. Rider cannot be assigned.');
+        RAISE_APPLICATION_ERROR(-20003, 'Validation Failed: Order (' || p_order_id || ') is registered as ' || v_pickup_type || '. Rider cannot be assigned.');
     END IF;
 
     IF v_delivery_id_chk IS NOT NULL THEN
-        RAISE_APPLICATION_ERROR(-20003, 'Validation Failed: Order (' || p_order_id || ') already has Delivery ID (' || v_delivery_id_chk || ') assigned.');
+        RAISE_APPLICATION_ERROR(-20004, 'Validation Failed: Order (' || p_order_id || ') already has Delivery ID (' || v_delivery_id_chk || ') assigned.');
     END IF;
 
     IF v_order_status != 'Pending' THEN
-        RAISE_APPLICATION_ERROR(-20004, 'Validation Failed: Order (' || p_order_id || ') is not Pending. Current Status: ' || v_order_status);
+        RAISE_APPLICATION_ERROR(-20005, 'Validation Failed: Order (' || p_order_id || ') is not Pending. Current Status: ' || v_order_status);
     END IF;
 
     BEGIN

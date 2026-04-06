@@ -1,0 +1,32 @@
+CL SCR;
+
+CREATE OR REPLACE TRIGGER trg_auto_cancel_failed_payment
+BEFORE UPDATE OF PaymentStatus ON PAYMENT
+FOR EACH ROW
+WHEN ((OLD.PaymentStatus = 'Pending' OR OLD.PaymentStatus = 'Completed') AND (NEW.PaymentStatus = 'Failed'))
+DECLARE
+    v_voucher_id ORDERS.MemberVoucherID%TYPE;
+    v_order_status ORDERS.OrderStatus%TYPE;
+BEGIN
+    IF :OLD.PaymentStatus = 'Completed' THEN
+        :NEW.PaymentStatus := 'Completed';
+    ELSE
+        SELECT MemberVoucherID, OrderStatus
+        INTO v_voucher_id, v_order_status
+        FROM ORDERS
+        WHERE OrderID = :NEW.OrderID;
+
+        IF v_order_status = 'Pending' THEN
+            UPDATE ORDERS
+            SET OrderStatus = 'Cancelled'
+            WHERE OrderID = :NEW.OrderID;
+
+            IF v_voucher_id IS NOT NULL THEN
+                UPDATE MEMBERVOUCHER
+                SET IsUsed = 'N'
+                WHERE MemberVoucherID = v_voucher_id;
+            END IF;
+        END IF;
+    END IF;
+END;
+/
