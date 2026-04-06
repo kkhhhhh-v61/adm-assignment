@@ -1,6 +1,17 @@
 CL SCR
 SET SERVEROUTPUT ON FORMAT WRAPPED;
 
+COLUMN RestaurantID FORMAT A12
+COLUMN CategoryID FORMAT A12
+COLUMN ItemName FORMAT A20
+COLUMN Description FORMAT A30
+COLUMN IsAvailable FORMAT A11
+
+COLUMN PromotionID FORMAT A11
+COLUMN PromoName FORMAT A20
+COLUMN IsActive FORMAT A8
+COLUMN Discount FORMAT 0.00
+
 PROMPT ==========================================
 PROMPT CLEANUP 77777 DATASET
 PROMPT ==========================================
@@ -11,7 +22,7 @@ DELETE FROM ITEMPROMOTION
 WHERE ItemID = 'I77777';
 
 DELETE FROM PROMOTION 
-WHERE PromotionID LIKE 'P777%';
+WHERE PromotionID LIKE 'P3334%';
 
 DELETE FROM ITEM 
 WHERE ItemID = 'I77777'
@@ -19,7 +30,7 @@ WHERE ItemID = 'I77777'
 
 -- If your procedure inserted new items (Chicken Burger etc.)
 DELETE FROM ITEM 
-WHERE RestaurantID = 'R77777';
+WHERE RestaurantID LIKE 'R7777%';
 
 -- Parent tables
 
@@ -97,6 +108,8 @@ PROMPT ==========================================
 PROMPT     PROCEDURE TEST 1 : REGISTER MENU ITEM
 PROMPT ==========================================
 
+SELECT * FROM ITEM WHERE ITEMID = 'I77778';
+
 PROMPT
 PROMPT -------- SUCCESS CASE --------
 
@@ -110,6 +123,8 @@ register_restaurant_menu_item(
 );
 END;
 /
+
+SELECT * FROM ITEM WHERE ITEMID = 'I77778';
 
 PROMPT
 PROMPT -------- ERROR : RESTAURANT NOT EXIST --------
@@ -173,6 +188,7 @@ PROMPT ==========================================
 PROMPT     PROCEDURE TEST 2 : ADD ITEM PROMOTION
 PROMPT ==========================================
 
+SELECT * FROM PROMOTION WHERE PROMOTIONID = 'P33340';
 
 PROMPT
 PROMPT -------- SUCCESS PROMOTION --------
@@ -190,6 +206,8 @@ TRUNC(SYSDATE)+30
 );
 END;
 /
+
+SELECT * FROM PROMOTION WHERE PROMOTIONID = 'P33340';
 
 PROMPT
 PROMPT -------- ERROR : ITEM NOT EXIST --------

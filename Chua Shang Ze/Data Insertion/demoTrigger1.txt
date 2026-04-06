@@ -1,6 +1,10 @@
 CL SCR
 SET SERVEROUTPUT ON
 
+COLUMN PROMOTIONID FORMAT A11;
+COLUMN PROMONAME FORMAT A25;
+COLUMN ORDERID FORMAT A7;
+
 -- =========================================
 -- CLEAN TEST DATA (ID 33333)
 -- =========================================
@@ -276,11 +280,6 @@ NULL,
 -- VIEW FINAL DATA
 -- =========================================
 
-PROMPT ===== ORDER ITEMS =====
-
-SELECT *
-FROM ORDERITEM
-WHERE OrderID = 'O33333';
 
 PROMPT ===== PROMOTION STATUS =====
 
