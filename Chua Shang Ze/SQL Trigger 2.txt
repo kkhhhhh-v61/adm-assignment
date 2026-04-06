@@ -1,0 +1,199 @@
+CL SCR
+SET SERVEROUTPUT ON
+
+-- ==========================================================
+-- INDEX (Improve performance)
+-- ==========================================================
+DROP INDEX idx_orderfeedback_order;
+
+CREATE INDEX idx_orderfeedback_order
+ON ORDERFEEDBACK(OrderID);
+
+
+-- ==========================================================
+-- VIEW (Restaurant Feedback Source)
+-- ==========================================================
+
+CREATE OR REPLACE VIEW vw_restaurant_feedback AS
+SELECT 
+    r.RestaurantID,
+    ofb.Rating
+FROM ORDERFEEDBACK ofb
+JOIN ORDERS o ON ofb.OrderID = o.OrderID
+JOIN ORDERITEM oi ON o.OrderID = oi.OrderID
+JOIN ITEM i ON oi.ItemID = i.ItemID
+JOIN RESTAURANT r ON i.RestaurantID = r.RestaurantID;
+
+
+-- ==========================================================
+-- ADVANCED TRIGGER
+-- VALIDATION + RUNNING AVERAGE UPDATE
+-- ==========================================================
+
+CREATE OR REPLACE TRIGGER trg_order_feedback_system
+FOR INSERT ON ORDERFEEDBACK
+COMPOUND TRIGGER
+
+    v_restaurant_id   RESTAURANT.RestaurantID%TYPE;
+    v_current_avg     RESTAURANT.AverageRating%TYPE;
+    v_feedback_count  NUMBER;
+    v_new_rating      NUMBER;
+
+--------------------------------------------------
+-- BEFORE EACH ROW  (VALIDATIONS)
+--------------------------------------------------
+
+BEFORE EACH ROW IS
+
+    v_order_status ORDERS.OrderStatus%TYPE;
+    v_order_date   DATE;
+    v_item_count   NUMBER;
+    v_today        DATE := TRUNC(SYSDATE);
+
+BEGIN
+
+--------------------------------------------------
+-- Check order exists
+--------------------------------------------------
+
+SELECT OrderStatus, OrderDate
+INTO v_order_status, v_order_date
+FROM ORDERS
+WHERE OrderID = :NEW.OrderID;
+
+--------------------------------------------------
+-- Order must be completed
+--------------------------------------------------
+
+IF v_order_status <> 'Completed' THEN
+    RAISE_APPLICATION_ERROR(-20001,
+    'Feedback allowed only for completed orders.');
+END IF;
+
+--------------------------------------------------
+-- Order must contain items
+--------------------------------------------------
+
+SELECT COUNT(*)
+INTO v_item_count
+FROM ORDERITEM
+WHERE OrderID = :NEW.OrderID;
+
+IF v_item_count = 0 THEN
+    RAISE_APPLICATION_ERROR(-20002,
+    'Cannot give feedback for order without items.');
+END IF;
+
+--------------------------------------------------
+-- Rating validation
+--------------------------------------------------
+
+IF :NEW.Rating < 1 OR :NEW.Rating > 5 THEN
+    RAISE_APPLICATION_ERROR(-20004,
+    'Rating must be between 1 and 5.');
+END IF;
+
+--------------------------------------------------
+-- Feedback date validation
+--------------------------------------------------
+
+IF TRUNC(:NEW.FeedbackDate) < v_today THEN
+    RAISE_APPLICATION_ERROR(-20006,
+    'Feedback date cannot be before today.');
+END IF;
+
+IF :NEW.FeedbackDate < v_order_date THEN
+    RAISE_APPLICATION_ERROR(-20007,
+    'Feedback cannot be before order date.');
+END IF;
+
+IF :NEW.FeedbackDate > v_order_date + 30 THEN
+    RAISE_APPLICATION_ERROR(-20008,
+    'Feedback must be submitted within 30 days.');
+END IF;
+
+--------------------------------------------------
+-- Comment validation
+--------------------------------------------------
+
+IF LENGTH(:NEW.FeedbackComment) > 200 THEN
+    RAISE_APPLICATION_ERROR(-20009,
+    'Feedback comment exceeds 200 maximum length.');
+END IF;
+
+IF :NEW.FeedbackComment IS NOT NULL THEN
+    IF TRIM(:NEW.FeedbackComment) IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20010,
+        'Feedback comment cannot contain only spaces.');
+    END IF;
+END IF;
+
+--------------------------------------------------
+-- Get restaurant id from order
+--------------------------------------------------
+
+SELECT i.RestaurantID
+INTO v_restaurant_id
+FROM ORDERITEM oi
+JOIN ITEM i ON oi.ItemID = i.ItemID
+WHERE oi.OrderID = :NEW.OrderID
+AND ROWNUM = 1;
+
+--------------------------------------------------
+-- Store new rating
+--------------------------------------------------
+
+v_new_rating := :NEW.Rating;
+
+END BEFORE EACH ROW;
+
+
+--------------------------------------------------
+-- AFTER STATEMENT (UPDATE RATING)
+--------------------------------------------------
+
+AFTER STATEMENT IS
+
+BEGIN
+
+--------------------------------------------------
+-- Get current restaurant average rating
+--------------------------------------------------
+
+SELECT AverageRating
+INTO v_current_avg
+FROM RESTAURANT
+WHERE RestaurantID = v_restaurant_id;
+
+--------------------------------------------------
+-- Count existing feedback records
+--------------------------------------------------
+
+SELECT COUNT(*)
+INTO v_feedback_count
+FROM ORDERFEEDBACK ofb
+JOIN ORDERS o ON ofb.OrderID = o.OrderID
+WHERE EXISTS (
+    SELECT 1
+    FROM ORDERITEM oi
+    JOIN ITEM i ON oi.ItemID = i.ItemID
+    WHERE oi.OrderID = o.OrderID
+    AND i.RestaurantID = v_restaurant_id
+);
+
+--------------------------------------------------
+-- Calculate running average
+--------------------------------------------------
+
+UPDATE RESTAURANT
+SET AverageRating =
+    ROUND(
+        ((v_current_avg * (v_feedback_count - 1)) + v_new_rating)
+        / v_feedback_count
+    ,2)
+WHERE RestaurantID = v_restaurant_id;
+
+END AFTER STATEMENT;
+
+END trg_order_feedback_system;
+/

@@ -1,0 +1,288 @@
+SET SERVEROUTPUT ON
+SET DEFINE OFF
+
+-- ==========================================================
+-- INDEXES (Performance Optimization)
+-- ==========================================================
+DROP INDEX idx_item_restaurant;
+DROP INDEX idx_orderitem_order;
+DROP INDEX idx_orderitem_item;
+DROP INDEX idx_orders_status;
+
+CREATE INDEX idx_item_restaurant
+ON ITEM(RestaurantID);
+
+CREATE INDEX idx_orderitem_order
+ON ORDERITEM(OrderID);
+
+CREATE INDEX idx_orderitem_item
+ON ORDERITEM(ItemID);
+
+CREATE INDEX idx_orders_status
+ON ORDERS(OrderStatus);
+
+
+
+-- ==========================================================
+-- FUNCTION
+-- Return restaurant of an order
+-- ==========================================================
+
+CREATE OR REPLACE FUNCTION fn_get_order_restaurant(
+    p_order_id ORDERS.OrderID%TYPE
+)
+RETURN VARCHAR2
+IS
+    v_restaurant_id ITEM.RestaurantID%TYPE;
+BEGIN
+
+SELECT i.RestaurantID
+INTO v_restaurant_id
+FROM ORDERITEM oi
+JOIN ITEM i
+ON oi.ItemID = i.ItemID
+WHERE oi.OrderID = p_order_id
+AND ROWNUM = 1;
+
+RETURN v_restaurant_id;
+
+EXCEPTION
+
+WHEN NO_DATA_FOUND THEN
+RETURN NULL;
+
+END;
+/
+ 
+
+
+
+-- ==========================================================
+-- COMPOUND TRIGGER
+-- Enforce Order Item Integrity
+-- Prevent Mutating Table
+-- ==========================================================
+
+CREATE OR REPLACE TRIGGER trg_orderitem_integrity
+FOR INSERT OR UPDATE ON ORDERITEM
+COMPOUND TRIGGER
+
+
+TYPE t_order_tab IS TABLE OF ORDERITEM.OrderID%TYPE INDEX BY PLS_INTEGER;
+TYPE t_item_tab  IS TABLE OF ORDERITEM.ItemID%TYPE INDEX BY PLS_INTEGER;
+
+g_orders t_order_tab;
+g_items  t_item_tab;
+
+g_count NUMBER := 0;
+
+
+
+------------------------------------------------------------
+-- BEFORE EACH ROW
+------------------------------------------------------------
+BEFORE EACH ROW IS
+
+v_item_price ITEM.Price%TYPE;
+v_available ITEM.IsAvailable%TYPE;
+v_restaurant ITEM.RestaurantID%TYPE;
+v_order_status ORDERS.OrderStatus%TYPE;
+v_order_date DATE;
+v_qty NUMBER;
+v_itemset_exists NUMBER;
+
+BEGIN
+
+-- =====================================================
+-- VALIDATION 1
+-- Quantity must be positive
+-- =====================================================
+IF :NEW.Quantity <= 0 THEN
+RAISE_APPLICATION_ERROR(-20501,'Quantity must be greater than zero.');
+END IF;
+
+
+-- =====================================================
+-- VALIDATION 2
+-- Prevent unrealistic quantity
+-- =====================================================
+IF :NEW.Quantity > 100 THEN
+RAISE_APPLICATION_ERROR(-20502,'Quantity exceeds allowed limit.');
+END IF;
+
+
+-- =====================================================
+-- VALIDATION 3
+-- Item must exist
+-- =====================================================
+BEGIN
+
+SELECT Price, IsAvailable, RestaurantID
+INTO v_item_price, v_available, v_restaurant
+FROM ITEM
+WHERE ItemID = :NEW.ItemID;
+
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+RAISE_APPLICATION_ERROR(-20503,'Item does not exist.');
+
+END;
+
+
+-- =====================================================
+-- VALIDATION 4
+-- Item must be available
+-- =====================================================
+IF v_available = 'N' THEN
+RAISE_APPLICATION_ERROR(-20504,'Item is not available.');
+END IF;
+
+
+-- =====================================================
+-- VALIDATION 5
+-- Order must exist
+-- =====================================================
+BEGIN
+
+SELECT OrderStatus, OrderDate
+INTO v_order_status, v_order_date
+FROM ORDERS
+WHERE OrderID = :NEW.OrderID;
+
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+RAISE_APPLICATION_ERROR(-20506,'Order does not exist.');
+
+END;
+
+
+-- =====================================================
+-- VALIDATION 6
+-- Cannot modify completed orders
+-- =====================================================
+IF v_order_status IN ('Completed','Cancelled') THEN
+RAISE_APPLICATION_ERROR(-20507,'Cannot modify completed or cancelled orders.');
+END IF;
+
+
+-- =====================================================
+-- VALIDATION 7
+-- Order date validation
+-- =====================================================
+IF v_order_date > SYSDATE THEN
+RAISE_APPLICATION_ERROR(-20508,'Order date cannot be in future.');
+END IF;
+
+
+-- =====================================================
+-- VALIDATION 8
+-- ItemSet validation
+-- =====================================================
+IF :NEW.ItemSetID IS NOT NULL THEN
+
+SELECT COUNT(*)
+INTO v_itemset_exists
+FROM ITEMSET
+WHERE ItemSetID = :NEW.ItemSetID;
+
+IF v_itemset_exists = 0 THEN
+RAISE_APPLICATION_ERROR(-20509,'Invalid ItemSet.');
+END IF;
+
+END IF;
+
+
+
+-- =====================================================
+-- STORE DATA FOR STATEMENT LEVEL CHECK
+-- =====================================================
+
+g_count := g_count + 1;
+
+g_orders(g_count) := :NEW.OrderID;
+g_items(g_count)  := :NEW.ItemID;
+
+
+END BEFORE EACH ROW;
+
+
+
+------------------------------------------------------------
+-- AFTER STATEMENT
+-- Single Restaurant Rule
+------------------------------------------------------------
+AFTER STATEMENT IS
+
+v_order_restaurant VARCHAR2(10);
+v_item_restaurant VARCHAR2(10);
+v_count NUMBER;
+
+BEGIN
+
+FOR i IN 1..g_count LOOP
+
+-- =====================================================
+-- GET ITEM RESTAURANT
+-- =====================================================
+
+SELECT RestaurantID
+INTO v_item_restaurant
+FROM ITEM
+WHERE ItemID = g_items(i);
+
+
+-- =====================================================
+-- GET ORDER RESTAURANT
+-- =====================================================
+
+v_order_restaurant := fn_get_order_restaurant(g_orders(i));
+
+
+-- =====================================================
+-- VALIDATION 9
+-- Prevent multiple restaurant order
+-- =====================================================
+
+IF v_order_restaurant IS NOT NULL
+AND v_order_restaurant <> v_item_restaurant THEN
+
+RAISE_APPLICATION_ERROR
+(
+-20510,
+'Items from multiple restaurants cannot be added to same order.'
+);
+
+END IF;
+
+
+
+-- =====================================================
+-- VALIDATION 10
+-- Prevent duplicate item insert
+-- =====================================================
+
+SELECT COUNT(*)
+INTO v_count
+FROM ORDERITEM
+WHERE OrderID = g_orders(i)
+AND ItemID = g_items(i);
+
+IF v_count > 1 THEN
+RAISE_APPLICATION_ERROR
+(
+-20511,
+'Duplicate item detected in order.'
+);
+END IF;
+
+
+
+END LOOP;
+
+
+DBMS_OUTPUT.PUT_LINE('Order item validation passed.');
+
+END AFTER STATEMENT;
+
+END trg_orderitem_integrity;
+/

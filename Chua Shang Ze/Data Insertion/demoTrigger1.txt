@@ -2,6 +2,49 @@ CL SCR
 SET SERVEROUTPUT ON
 
 -- =========================================
+-- CLEAN TEST DATA (ID 33333)
+-- =========================================
+
+-- 1️⃣ ORDERITEM (child of ORDERS & ITEM)
+DELETE FROM ORDERITEM 
+WHERE OrderID IN ('O33333', 'O33334');
+
+-- 2️⃣ ORDERS
+DELETE FROM ORDERS 
+WHERE OrderID IN ('O33333', 'O33334');
+
+-- 3️⃣ ITEMPROMOTION (child of ITEM & PROMOTION)
+DELETE FROM ITEMPROMOTION 
+WHERE ItemID = 'I33333' 
+   OR PromotionID = 'P33333';
+
+-- 4️⃣ PROMOTION
+DELETE FROM PROMOTION 
+WHERE PromotionID = 'P33333';
+
+-- 5️⃣ ITEM
+DELETE FROM ITEM 
+WHERE ItemID = 'I33333';
+
+-- 6️⃣ RESTAURANT
+DELETE FROM RESTAURANT 
+WHERE RestaurantID = 'R33333';
+
+-- 7️⃣ CATEGORY
+DELETE FROM CATEGORY 
+WHERE CategoryID = 'C33333';
+
+-- 8️⃣ MEMBER
+DELETE FROM MEMBER 
+WHERE MemberID = 'M33333';
+
+-- 9️⃣ ADDRESS
+DELETE FROM ADDRESS 
+WHERE AddressID = 'A33333';
+
+COMMIT;
+
+-- =========================================
 -- TEST DATA USING ID 33333
 -- =========================================
 

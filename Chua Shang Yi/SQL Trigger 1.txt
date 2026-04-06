@@ -1,0 +1,287 @@
+CL SCR
+SET SERVEROUTPUT ON
+SET DEFINE OFF
+
+-- ==========================================================
+-- INDEXES
+-- ==========================================================
+DROP INDEX idx_orders_member;
+DROP INDEX idx_payment_order;
+DROP INDEX idx_membervoucher_member;
+
+CREATE INDEX idx_orders_member ON ORDERS(MemberID);
+CREATE INDEX idx_payment_order ON PAYMENT(OrderID);
+CREATE INDEX idx_membervoucher_member ON MEMBERVOUCHER(MemberID);
+
+
+-- ==========================================================
+-- FUNCTION
+-- ==========================================================
+CREATE OR REPLACE FUNCTION fn_member_has_reward(
+    p_member_id MEMBER.MemberID%TYPE
+)
+RETURN NUMBER
+IS
+    v_count NUMBER;
+BEGIN
+
+    SELECT COUNT(*)
+    INTO v_count
+    FROM MEMBERVOUCHER mv
+    JOIN VOUCHER v
+    ON mv.VoucherID = v.VoucherID
+    WHERE mv.MemberID = p_member_id
+    AND v.VoucherName = 'WELCOME REWARD';
+
+    RETURN v_count;
+
+END;
+/
+    
+
+
+-- ==========================================================
+-- COMPOUND TRIGGER (NO MUTATING TABLE)
+-- ==========================================================
+CREATE OR REPLACE TRIGGER trg_first_order_reward
+FOR UPDATE OF OrderStatus ON ORDERS
+COMPOUND TRIGGER
+
+
+TYPE t_order_tab IS TABLE OF ORDERS.OrderID%TYPE INDEX BY PLS_INTEGER;
+TYPE t_member_tab IS TABLE OF ORDERS.MemberID%TYPE INDEX BY PLS_INTEGER;
+
+g_orders  t_order_tab;
+g_members t_member_tab;
+
+g_count NUMBER := 0;
+
+
+------------------------------------------------
+-- AFTER EACH ROW
+------------------------------------------------
+AFTER EACH ROW IS
+BEGIN
+
+IF :NEW.OrderStatus = 'Completed'
+AND (:OLD.OrderStatus IS NULL OR :OLD.OrderStatus <> 'Completed')
+THEN
+
+    g_count := g_count + 1;
+    g_orders(g_count)  := :NEW.OrderID;
+    g_members(g_count) := :NEW.MemberID;
+
+END IF;
+
+END AFTER EACH ROW;
+
+
+
+------------------------------------------------
+-- AFTER STATEMENT
+------------------------------------------------
+AFTER STATEMENT IS
+
+v_payment_count NUMBER;
+v_member_orders NUMBER;
+v_existing_reward NUMBER;
+v_voucher_id VOUCHER.VoucherID%TYPE;
+v_new_mv_id VARCHAR2(7);
+v_next_number NUMBER;
+v_member_exists NUMBER;
+v_voucher_valid NUMBER;
+v_order_total NUMBER;
+v_order_date DATE;
+v_skip BOOLEAN;
+
+BEGIN
+
+FOR i IN 1..g_count LOOP
+
+v_skip := FALSE;
+
+------------------------------------------------
+-- GET ORDER DATA
+------------------------------------------------
+SELECT TotalAmount, OrderDate
+INTO v_order_total, v_order_date
+FROM ORDERS
+WHERE OrderID = g_orders(i);
+
+
+------------------------------------------------
+-- VALIDATION 2
+------------------------------------------------
+SELECT COUNT(*)
+INTO v_member_exists
+FROM MEMBER
+WHERE MemberID = g_members(i);
+
+IF v_member_exists = 0 THEN
+    RAISE_APPLICATION_ERROR(-20100,'Invalid member ID.');
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 3
+------------------------------------------------
+IF v_order_total < 0 THEN
+    RAISE_APPLICATION_ERROR(-20102,'Invalid order total amount.');
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 4 & 5
+------------------------------------------------
+SELECT COUNT(*)
+INTO v_payment_count
+FROM PAYMENT
+WHERE OrderID = g_orders(i)
+AND PaymentStatus = 'Completed';
+
+IF v_payment_count = 0 THEN
+
+    SELECT COUNT(*)
+    INTO v_payment_count
+    FROM PAYMENT
+    WHERE OrderID = g_orders(i);
+
+    IF v_payment_count = 0 THEN
+        RAISE_APPLICATION_ERROR(-20103,'Payment record does not exist.');
+    ELSE
+        RAISE_APPLICATION_ERROR(-20104,'Payment not completed.');
+    END IF;
+
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 6
+------------------------------------------------
+IF v_order_date > SYSDATE THEN
+    RAISE_APPLICATION_ERROR(-20105,'Order date cannot be in the future.');
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 7
+------------------------------------------------
+SELECT COUNT(*)
+INTO v_member_orders
+FROM ORDERS
+WHERE MemberID = g_members(i)
+AND OrderStatus = 'Completed';
+
+IF v_member_orders > 1 THEN
+    v_skip := TRUE;
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 8
+------------------------------------------------
+v_existing_reward := fn_member_has_reward(g_members(i));
+
+IF v_existing_reward > 0 THEN
+    RAISE_APPLICATION_ERROR(-20108,'Reward already issued.');
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 9
+------------------------------------------------
+SELECT COUNT(*)
+INTO v_voucher_valid
+FROM VOUCHER
+WHERE VoucherName = 'WELCOME REWARD';
+
+IF v_voucher_valid = 0 THEN
+    RAISE_APPLICATION_ERROR(-20106,'Welcome voucher not configured.');
+END IF;
+
+
+------------------------------------------------
+-- VALIDATION 10
+------------------------------------------------
+BEGIN
+
+SELECT VoucherID
+INTO v_voucher_id
+FROM VOUCHER
+WHERE VoucherName = 'WELCOME REWARD'
+AND ExpiryDate > SYSDATE
+AND ROWNUM = 1;
+
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Voucher expired.');
+    v_skip := TRUE;
+END;
+
+
+------------------------------------------------
+-- VALIDATION 11
+------------------------------------------------
+SELECT NVL(MAX(TO_NUMBER(SUBSTR(MemberVoucherID,3))),0) + 1
+INTO v_next_number
+FROM MEMBERVOUCHER;
+
+v_new_mv_id := 'MV' || LPAD(v_next_number,5,'0');
+
+
+------------------------------------------------
+-- VALIDATION 12
+------------------------------------------------
+SELECT COUNT(*)
+INTO v_voucher_valid
+FROM MEMBERVOUCHER
+WHERE MemberVoucherID = v_new_mv_id;
+
+IF v_voucher_valid > 0 THEN
+    RAISE_APPLICATION_ERROR(-20107,'Generated voucher ID conflict.');
+END IF;
+
+
+------------------------------------------------
+-- FINAL ACTION
+------------------------------------------------
+IF v_skip = FALSE THEN
+
+INSERT INTO MEMBERVOUCHER
+VALUES
+(
+v_new_mv_id,
+g_members(i),
+v_voucher_id,
+SYSDATE,
+'N'
+);
+
+DBMS_OUTPUT.PUT_LINE('------------------------------------');
+DBMS_OUTPUT.PUT_LINE('FIRST ORDER REWARD ISSUED');
+DBMS_OUTPUT.PUT_LINE('Member ID   : ' || g_members(i));
+DBMS_OUTPUT.PUT_LINE('Order ID    : ' || g_orders(i));
+DBMS_OUTPUT.PUT_LINE('Voucher ID  : ' || v_voucher_id);
+DBMS_OUTPUT.PUT_LINE('MemberVoucherID : ' || v_new_mv_id);
+DBMS_OUTPUT.PUT_LINE('------------------------------------');
+
+END IF;
+
+END LOOP;
+
+
+EXCEPTION
+
+WHEN NO_DATA_FOUND THEN
+DBMS_OUTPUT.PUT_LINE('Reward not issued: required data missing.');
+
+WHEN TOO_MANY_ROWS THEN
+DBMS_OUTPUT.PUT_LINE('Reward not issued: data inconsistency detected.');
+
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE('Unexpected system error: ' || SQLERRM);
+
+END AFTER STATEMENT;
+
+END trg_first_order_reward;
+/

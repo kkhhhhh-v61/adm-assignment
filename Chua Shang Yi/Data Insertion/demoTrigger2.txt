@@ -1,0 +1,287 @@
+CL SCR
+SET SERVEROUTPUT ON
+SET DEFINE OFF
+
+PROMPT =========================================
+PROMPT DEMO START - TRIGGER ORDER ITEM INTEGRITY
+PROMPT =========================================
+
+------------------------------------------------
+-- CLEANUP PREVIOUS DEMO DATA
+------------------------------------------------
+
+DELETE FROM ORDERITEM WHERE OrderID='O55555';
+DELETE FROM ORDERITEM WHERE OrderID='O55554';
+DELETE FROM ORDERITEM WHERE OrderID='O55553';
+DELETE FROM ORDERITEM WHERE OrderID='O55552';
+
+DELETE FROM ORDERS WHERE OrderID IN ('O55555','O55554','O55553','O55552');
+
+DELETE FROM ITEM WHERE ItemID IN ('I55555','I55554','I55553');
+
+DELETE FROM RESTAURANT WHERE RestaurantID IN ('R55555','R55554');
+
+DELETE FROM CATEGORY WHERE CategoryID='C55555';
+
+DELETE FROM MEMBER WHERE MemberID='M55555';
+
+DELETE FROM ADDRESS WHERE AddressID='A55555';
+
+COMMIT;
+
+
+------------------------------------------------
+-- CREATE REQUIRED BASE DATA
+------------------------------------------------
+
+INSERT INTO ADDRESS VALUES ('A55555','Demo Street','KL','Selangor','50000');
+
+INSERT INTO MEMBER VALUES ('M55555','Demo Member','demo@email.com','0123455555','pw',SYSDATE);
+
+INSERT INTO CATEGORY VALUES ('C55555','DemoCategory','Demo');
+
+INSERT INTO RESTAURANT VALUES
+('R55555','A55555','Restaurant Demo 1','0120000000',4.5,'Y','10AM-10PM');
+
+INSERT INTO RESTAURANT VALUES
+('R55554','A55555','Restaurant Demo 2','0120000001',4.5,'Y','10AM-10PM');
+
+
+INSERT INTO ITEM VALUES
+('I55555','R55555','C55555','Burger','Demo Burger',10,'Y');
+
+INSERT INTO ITEM VALUES
+('I55554','R55555','C55555','Pizza','Demo Pizza',15,'Y');
+
+INSERT INTO ITEM VALUES
+('I55553','R55554','C55555','Rice','Demo Rice',8,'Y');
+
+
+INSERT INTO ORDERS VALUES
+('O55555','M55555',NULL,NULL,'Pickup',SYSDATE,'10:00',0,'Pending');
+
+INSERT INTO ORDERS VALUES
+('O55554','M55555',NULL,NULL,'Pickup',SYSDATE,'10:00',0,'Completed');
+
+INSERT INTO ORDERS VALUES
+('O55553','M55555',NULL,NULL,'Pickup',SYSDATE+1,'10:00',0,'Pending');
+
+INSERT INTO ORDERS VALUES
+('O55552','M55555',NULL,NULL,'Pickup',SYSDATE,'10:00',0,'Pending');
+
+COMMIT;
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT SUCCESS CASE
+PROMPT =========================================
+
+PROMPT BEFORE INSERT
+SELECT * FROM ORDERITEM WHERE OrderID='O55555';
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55555','I55555',NULL,2,10);
+
+DBMS_OUTPUT.PUT_LINE('SUCCESS: Valid order item inserted.');
+
+END;
+/
+
+PROMPT AFTER INSERT
+SELECT * FROM ORDERITEM WHERE OrderID='O55555';
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 1 - Quantity <= 0
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55552','I55555',NULL,0,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 2 - Quantity > 100
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55552','I55555',NULL,101,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 3 - Item does not exist
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55552','I99999',NULL,2,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 4 - Item not available
+PROMPT =========================================
+
+UPDATE ITEM
+SET IsAvailable='N'
+WHERE ItemID='I55554';
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55552','I55554',NULL,1,15);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+UPDATE ITEM SET IsAvailable='Y' WHERE ItemID='I55554';
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 5 - Order does not exist
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O99999','I55555',NULL,1,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 6 - Cannot modify completed order
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55554','I55555',NULL,1,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 7 - Future order date
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55553','I55555',NULL,1,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 8 - Invalid ItemSet
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55552','I55555','IS99999',1,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 9 - Multiple Restaurant Rule
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55555','I55553',NULL,1,8);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT
+PROMPT =========================================
+PROMPT FAIL CASE 10 - Duplicate Item
+PROMPT =========================================
+
+BEGIN
+
+INSERT INTO ORDERITEM
+VALUES ('O55555','I55555',NULL,1,10);
+
+EXCEPTION
+WHEN OTHERS THEN
+DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+
+
+PROMPT =========================================
+PROMPT DEMO FINISHED
+PROMPT =========================================

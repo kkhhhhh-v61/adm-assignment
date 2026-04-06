@@ -1,4 +1,4 @@
-CL SCR
+CL SCR 
 SET SERVEROUTPUT ON FORMAT WRAPPED;
 SET LINESIZE 170
 SET PAGESIZE 200
@@ -72,39 +72,6 @@ GROUP BY VT.TypeName
 ORDER BY revenue DESC;
 
 ------------------------------------------------------------
--- TOP 5 VOUCHER CAMPAIGNS
-------------------------------------------------------------
-
-CURSOR c_top_voucher IS
-SELECT *
-FROM
-(
-SELECT
-    V.VoucherName,
-    COUNT(O.OrderID) usage_count,
-    SUM(O.TotalAmount) revenue,
-
-    SUM(
-        CASE
-            WHEN V.DiscountAmount IS NOT NULL
-            THEN V.DiscountAmount
-            ELSE O.TotalAmount * V.DiscountPercentage
-        END
-    ) discount_given
-
-FROM ORDERS O
-JOIN MEMBERVOUCHER MV ON O.MemberVoucherID = MV.MemberVoucherID
-JOIN VOUCHER V ON MV.VoucherID = V.VoucherID
-
-WHERE O.OrderStatus='Completed'
-AND TRUNC(O.OrderDate) BETWEEN p_start_date AND p_end_date
-
-GROUP BY V.VoucherName
-ORDER BY usage_count DESC
-)
-WHERE ROWNUM <= 5;
-
-------------------------------------------------------------
 -- VARIABLES
 ------------------------------------------------------------
 
@@ -112,9 +79,11 @@ v_total_orders NUMBER:=0;
 v_total_vouchers NUMBER:=0;
 v_total_spending NUMBER:=0;
 v_total_discount NUMBER:=0;
-
+v_counter NUMBER := 1;
 v_percentage NUMBER;
 v_bar VARCHAR2(100);
+
+v_color VARCHAR2(20);
 
 v_top_member VARCHAR2(120);
 v_top_spending NUMBER:=0;
@@ -162,14 +131,14 @@ END IF;
 -- REPORT HEADER
 ------------------------------------------------------------
 
-DBMS_OUTPUT.PUT_LINE('===================================================================================================================');
-DBMS_OUTPUT.PUT_LINE('                            VOUCHER REDEMPTION AND MEMBER SPENDING REPORT');
-DBMS_OUTPUT.PUT_LINE('===================================================================================================================');
+DBMS_OUTPUT.PUT_LINE('===============================================================================================================================');
+DBMS_OUTPUT.PUT_LINE('                                    VOUCHER REDEMPTION AND MEMBER SPENDING REPORT');
+DBMS_OUTPUT.PUT_LINE('===============================================================================================================================');
 
 DBMS_OUTPUT.PUT_LINE('Period    : '||TO_CHAR(p_start_date,'DD-MON-YYYY')||' to '||TO_CHAR(p_end_date,'DD-MON-YYYY'));
 DBMS_OUTPUT.PUT_LINE('Generated : '||TO_CHAR(SYSDATE,'DD-MON-YYYY HH24:MI:SS'));
 
-DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------------------------');
+DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------------------------------------');
 
 DBMS_OUTPUT.PUT_LINE(
 RPAD('RANK',6)||
@@ -179,19 +148,33 @@ LPAD('VOUCHERS',12)||
 LPAD('SPENDING(RM)',15)||
 LPAD('DISCOUNT(RM)',15)||
 LPAD('NET(RM)',12)||
-LPAD('AVG(RM)',12)
+LPAD('AVG(RM)',12)||
+'   SPENDING SHARE'
 );
 
-DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------------------------');
+DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------------------------------------');
 
 ------------------------------------------------------------
--- MEMBER RESULTS
+-- MEMBER RESULTS (ONLY ENHANCED HERE)
 ------------------------------------------------------------
 
 FOR r IN c_member_voucher LOOP
 
 v_percentage := ROUND((r.total_spending/v_total_spending)*100,2);
-v_bar := RPAD('#',ROUND(v_percentage/2),'#');
+
+/* ✅ COLOR LOGIC ADDED */
+IF v_percentage >= 20 THEN
+    v_color := CHR(27)||'[31m'; -- RED
+ELSIF v_percentage >= 10 THEN
+    v_color := CHR(27)||'[33m'; -- YELLOW
+ELSIF v_percentage >= 5 THEN
+    v_color := CHR(27)||'[32m'; -- GREEN
+ELSE
+    v_color := CHR(27)||'[36m'; -- CYAN
+END IF;
+
+/* ✅ KEEP '#' BUT ADD COLOR */
+v_bar := v_color || RPAD('#',ROUND(v_percentage/2),'#') || CHR(27)||'[0m';
 
 DBMS_OUTPUT.PUT_LINE(
 RPAD(r.spending_rank,6)||
@@ -201,17 +184,18 @@ LPAD(r.vouchers_used,12)||
 LPAD(TO_CHAR(r.total_spending,'999,999.99'),15)||
 LPAD(TO_CHAR(r.total_discount,'999,999.99'),15)||
 LPAD(TO_CHAR(r.total_spending-r.total_discount,'999,999.99'),12)||
-LPAD(TO_CHAR(ROUND(r.total_spending/r.total_orders,2),'999,999.99'),12)
+LPAD(TO_CHAR(ROUND(r.total_spending/r.total_orders,2),'999,999.99'),12)||
+'   ' || v_bar
 );
 
 END LOOP;
 
 ------------------------------------------------------------
--- EXECUTIVE SUMMARY
+-- EXECUTIVE SUMMARY 
 ------------------------------------------------------------
 
 DBMS_OUTPUT.PUT_LINE(' ');
-DBMS_OUTPUT.PUT_LINE('================================================ EXECUTIVE SUMMARY ================================================');
+DBMS_OUTPUT.PUT_LINE('====================================================== EXECUTIVE SUMMARY ======================================================');
 
 DBMS_OUTPUT.PUT_LINE('Top Spending Member : '||v_top_member||
 ' (RM '||TO_CHAR(v_top_spending,'999,999.99')||')');
@@ -228,15 +212,20 @@ ROUND((v_total_discount/v_total_spending)*100,2)||'%');
 ------------------------------------------------------------
 
 DBMS_OUTPUT.PUT_LINE(' ');
-DBMS_OUTPUT.PUT_LINE('============================================ VOUCHER TYPE PERFORMANCE =============================================');
+DBMS_OUTPUT.PUT_LINE('================================================== VOUCHER TYPE PERFORMANCE ===================================================');
+
+v_counter := 1; -- reset counter
 
 FOR r IN c_voucher_type LOOP
 
 DBMS_OUTPUT.PUT_LINE(
+LPAD(v_counter || '.',4) || ' ' || 
 RPAD(r.TypeName,30)||
 LPAD(r.total_orders,10)||' orders  '||
 LPAD('RM '||TO_CHAR(r.revenue,'999,999.99'),15)||
 ' revenue');
+
+v_counter := v_counter + 1;
 
 END LOOP;
 
@@ -245,7 +234,7 @@ END LOOP;
 ------------------------------------------------------------
 
 DBMS_OUTPUT.PUT_LINE(' ');
-DBMS_OUTPUT.PUT_LINE('============================================== VOUCHER ROI ANALYSIS ===============================================');
+DBMS_OUTPUT.PUT_LINE('==================================================== VOUCHER ROI ANALYSIS =====================================================');
 
 DBMS_OUTPUT.PUT_LINE('Revenue Generated : RM '||TO_CHAR(v_total_spending,'999,999.99'));
 DBMS_OUTPUT.PUT_LINE('Total Discount Cost : RM '||TO_CHAR(v_total_discount,'999,999.99'));
@@ -253,7 +242,7 @@ DBMS_OUTPUT.PUT_LINE('Total Discount Cost : RM '||TO_CHAR(v_total_discount,'999,
 DBMS_OUTPUT.PUT_LINE('Voucher ROI : '||
 ROUND((v_total_spending-v_total_discount)/v_total_discount*100,2)||'% return');
 
-DBMS_OUTPUT.PUT_LINE('===================================================================================================================');
+DBMS_OUTPUT.PUT_LINE('===============================================================================================================================');
 DBMS_OUTPUT.PUT_LINE('End of Report');
 
 ------------------------------------------------------------

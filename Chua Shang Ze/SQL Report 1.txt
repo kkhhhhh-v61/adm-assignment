@@ -1,6 +1,3 @@
-CL SCR
-SET SERVEROUTPUT ON FORMAT WRAPPED;
-
 CREATE OR REPLACE PROCEDURE generate_deliverytype_report (
     p_start_date IN DATE,
     p_end_date   IN DATE
@@ -50,14 +47,31 @@ CREATE OR REPLACE PROCEDURE generate_deliverytype_report (
     v_top_orders_delivery VARCHAR2(100) := 'N/A';
     v_top_orders NUMBER := -1;
 
-    -- Ranking
-    v_rank NUMBER;
-
     -- Exceptions
     e_invalid_date EXCEPTION;
     e_no_data EXCEPTION;
 
     v_data_exists BOOLEAN := FALSE;
+
+    -- Helper function to create colored bar graph
+    FUNCTION create_bar(value NUMBER, max_value NUMBER, max_length NUMBER, color_code VARCHAR2) RETURN VARCHAR2 IS
+        bar_length NUMBER;
+        bar VARCHAR2(200) := '';
+    BEGIN
+        IF max_value = 0 THEN
+            RETURN '';
+        END IF;
+
+        bar_length := ROUND((value / max_value) * max_length);
+
+        FOR i IN 1 .. bar_length LOOP
+            bar := bar || '#';
+        END LOOP;
+
+        -- ANSI color format: \033[<code>m for start, \033[0m to reset
+        -- Using CHR(27) for ESC (\033)
+        RETURN CHR(27) || '[' || color_code || 'm' || bar || CHR(27) || '[0m';
+    END;
 
 BEGIN
 
@@ -102,16 +116,16 @@ BEGIN
     END IF;
 
     -- Report Header
-    DBMS_OUTPUT.PUT_LINE('===============================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                  DELIVERY TYPE REVENUE AND ORDER PERFORMANCE REPORT');
-    DBMS_OUTPUT.PUT_LINE('===============================================================================================');
+    DBMS_OUTPUT.PUT_LINE('=============================================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                                 DELIVERY TYPE REVENUE AND ORDER PERFORMANCE REPORT');
+    DBMS_OUTPUT.PUT_LINE('=============================================================================================================================');
 
     DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date,'DD-MON-YYYY') ||
                          ' to ' || TO_CHAR(p_end_date,'DD-MON-YYYY'));
 
     DBMS_OUTPUT.PUT_LINE('Generated : ' || TO_CHAR(SYSDATE,'DD-MON-YYYY HH24:MI:SS'));
 
-    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------------------------------');
 
     DBMS_OUTPUT.PUT_LINE(
         RPAD('DELIVERY TYPE',25) ||
@@ -119,39 +133,52 @@ BEGIN
         LPAD('ORDER (%)',12) ||
         LPAD('REVENUE (RM)',15) ||
         LPAD('REVENUE (%)',15) ||
-        LPAD('AVG ORDER (RM)',18)
+        LPAD('AVG ORDER (RM)',18) ||
+        '   BAR GRAPH FOR REVENUE SHARE'
     );
 
-    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------------------------------');
 
-    -- Print each row
+    -- Print each row with colored bar graph
     FOR i IN 1..v_index LOOP
 
-        DBMS_OUTPUT.PUT_LINE(
+        DECLARE
+            v_color VARCHAR2(5);
+            v_bar VARCHAR2(200);
+            v_max_bar_length CONSTANT NUMBER := 30;
+            v_revenue_pct NUMBER := 0;
+        BEGIN
+            IF v_grand_revenue = 0 THEN
+                v_revenue_pct := 0;
+            ELSE
+                v_revenue_pct := v_data(i).revenue / v_grand_revenue;
+            END IF;
 
-            RPAD(v_data(i).delivery_name,25) ||
+            -- Set color based on revenue percentage
+            IF v_revenue_pct >= 0.4 THEN
+                v_color := '32'; -- Green
+            ELSIF v_revenue_pct >= 0.25 THEN
+                v_color := '33'; -- Yellow
+            ELSE
+                v_color := '31'; -- Red
+            END IF;
 
-            LPAD(v_data(i).order_volume,10) ||
+            v_bar := create_bar(v_data(i).revenue, v_grand_revenue, v_max_bar_length, v_color);
 
-            LPAD(ROUND((v_data(i).order_volume / NULLIF(v_grand_orders,0))*100,2)||'%',12) ||
-
-            LPAD(TO_CHAR(v_data(i).revenue,'999,999,990.99'),15) ||
-
-            LPAD(ROUND((v_data(i).revenue / NULLIF(v_grand_revenue,0))*100,2)||'%',15) ||
-
-            LPAD(
-                TO_CHAR(
-                    v_data(i).revenue / NULLIF(v_data(i).order_volume,0),
-                    '999,999,990.99'
-                ),18
-            )
-
-        );
-
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(v_data(i).delivery_name,25) ||
+                LPAD(v_data(i).order_volume,10) ||
+                LPAD(ROUND((v_data(i).order_volume / NULLIF(v_grand_orders,0))*100,2)||'%',12) ||
+                LPAD(TO_CHAR(v_data(i).revenue,'999,999,990.99'),15) ||
+                LPAD(ROUND((v_data(i).revenue / NULLIF(v_grand_revenue,0))*100,2)||'%',15) ||
+                LPAD(TO_CHAR(v_data(i).revenue / NULLIF(v_data(i).order_volume,1), '999,999,990.99'),18) ||
+                '   ' || v_bar
+            );
+        END;
     END LOOP;
 
     -- Grand total
-    DBMS_OUTPUT.PUT_LINE('===============================================================================================');
+    DBMS_OUTPUT.PUT_LINE('=============================================================================================================================');
 
     DBMS_OUTPUT.PUT_LINE(
         RPAD('GRAND TOTAL',25) ||
@@ -161,11 +188,11 @@ BEGIN
         LPAD('100%',15)
     );
 
-    DBMS_OUTPUT.PUT_LINE('===============================================================================================');
+    DBMS_OUTPUT.PUT_LINE('=============================================================================================================================');
 
     -- Executive summary
     DBMS_OUTPUT.PUT_LINE(' ');
-    DBMS_OUTPUT.PUT_LINE('===================================== EXECUTIVE SUMMARY =======================================');
+    DBMS_OUTPUT.PUT_LINE('==================================================== EXECUTIVE SUMMARY ======================================================');
 
     DBMS_OUTPUT.PUT_LINE('>> TOP DELIVERY TYPE BY REVENUE : ' ||
                          UPPER(v_top_deliverytype) ||
@@ -175,8 +202,7 @@ BEGIN
                          UPPER(v_top_orders_delivery) ||
                          ' (' || v_top_orders || ' ORDERS)');
 
-
-    DBMS_OUTPUT.PUT_LINE('===============================================================================================');
+    DBMS_OUTPUT.PUT_LINE('=============================================================================================================================');
     DBMS_OUTPUT.PUT_LINE('End of Report.');
 
 EXCEPTION

@@ -2,6 +2,41 @@ CL SCR
 SET SERVEROUTPUT ON FORMAT WRAPPED;
 
 PROMPT ==========================================
+PROMPT CLEANUP 77777 DATASET
+PROMPT ==========================================
+
+-- Child tables first
+
+DELETE FROM ITEMPROMOTION 
+WHERE ItemID = 'I77777';
+
+DELETE FROM PROMOTION 
+WHERE PromotionID LIKE 'P777%';
+
+DELETE FROM ITEM 
+WHERE ItemID = 'I77777'
+   OR RestaurantID = 'R77777';
+
+-- If your procedure inserted new items (Chicken Burger etc.)
+DELETE FROM ITEM 
+WHERE RestaurantID = 'R77777';
+
+-- Parent tables
+
+DELETE FROM RESTAURANT 
+WHERE RestaurantID = 'R77777';
+
+DELETE FROM CATEGORY 
+WHERE CategoryID IN ('C77777','C77778');
+
+DELETE FROM ADDRESS 
+WHERE AddressID = 'A77777';
+
+COMMIT;
+
+PROMPT ===== CLEANUP COMPLETE =====
+
+PROMPT ==========================================
 PROMPT        DEMO DATASET (77777 SERIES)
 PROMPT ==========================================
 

@@ -1,6 +1,3 @@
-CL SCR
-SET SERVEROUTPUT ON FORMAT WRAPPED;
-
 CREATE OR REPLACE PROCEDURE generate_item_sales_report(
     p_start_date IN DATE,
     p_end_date   IN DATE
@@ -34,12 +31,36 @@ AS
     v_top_qty NUMBER := -1;
 
     v_percentage NUMBER;
-    v_bar VARCHAR2(100);
+    v_bar VARCHAR2(200);
+    v_color VARCHAR2(10);
 
     e_invalid_date EXCEPTION;
     e_no_data EXCEPTION;
 
     v_has_data BOOLEAN := FALSE;
+
+    -- 🔥 FUNCTION: CREATE COLORED BAR
+    FUNCTION create_color_bar(p_pct NUMBER) RETURN VARCHAR2 IS
+        v_len NUMBER;
+        v_result VARCHAR2(200) := '';
+    BEGIN
+        v_len := ROUND(p_pct / 2); -- scale
+
+        FOR i IN 1..v_len LOOP
+            v_result := v_result || '#';
+        END LOOP;
+
+        -- 🎨 Color logic
+        IF p_pct >= 20 THEN
+            v_color := '32'; -- GREEN
+        ELSIF p_pct >= 10 THEN
+            v_color := '33'; -- YELLOW
+        ELSE
+            v_color := '31'; -- RED
+        END IF;
+
+        RETURN CHR(27)||'['||v_color||'m'||v_result||CHR(27)||'[0m';
+    END;
 
 BEGIN
 
@@ -100,8 +121,8 @@ BEGIN
 
         v_percentage := ROUND((r.revenue / v_grand_revenue) * 100, 2);
 
-        -- Oracle-friendly bar (1 block ≈ 2%)
-        v_bar := RPAD('#', ROUND(v_percentage/2), '#');
+        -- 🎯 COLORED BAR
+        v_bar := create_color_bar(v_percentage);
 
         DBMS_OUTPUT.PUT_LINE(
             RPAD(r.rank_no,6) ||

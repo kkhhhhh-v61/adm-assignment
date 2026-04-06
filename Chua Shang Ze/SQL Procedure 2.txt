@@ -1,4 +1,3 @@
-```sql
 CL SCR
 SET SERVEROUTPUT ON FORMAT WRAPPED;
 
@@ -119,7 +118,7 @@ BEGIN
 EXCEPTION
 
     WHEN NO_DATA_FOUND THEN
-        DBMS_OUTPUT.PUT_LINE('ERROR: Order or Voucher not found.');
+        DBMS_OUTPUT.PUT_LINE('ERROR: Voucher not found.');
 
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
