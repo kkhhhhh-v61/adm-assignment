@@ -38,15 +38,16 @@ SET LINESIZE 110
 SET PAGESIZE 100
 SET SQLBLANKLINES ON
 SET SERVEROUTPUT ON
+SET COLSEP ' | '
 
 COLUMN CompositionType FORMAT A25 HEADING 'COMPOSITION TYPE'
 COLUMN TOTAL_UNITS FORMAT 999,990 HEADING 'TOTAL UNITS SOLD'
 COLUMN TOTAL_REVENUE FORMAT $99,999,990.99 HEADING 'TOTAL REVENUE (RM)'
 COLUMN REVENUE_SHARE FORMAT 990.00 HEADING 'CONTRIBUTION (%)'
 
-TTITLE LEFT '==============================================================================' SKIP 1 -
-       LEFT '                      ORDER COMPOSITION REVENUE ANALYSIS                      ' SKIP 1 -
-       LEFT '==============================================================================' SKIP 2
+TTITLE LEFT '====================================================================================' SKIP 1 -
+       LEFT '                         ORDER COMPOSITION REVENUE ANALYSIS                         ' SKIP 1 -
+       LEFT '====================================================================================' SKIP 1
 
 BREAK ON REPORT
 COMPUTE SUM LABEL 'GRAND TOTAL :' OF TOTAL_UNITS TOTAL_REVENUE REVENUE_SHARE ON REPORT
@@ -85,17 +86,17 @@ BEGIN
     )
     WHERE ROWNUM = 1;
 
-    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------');
     DBMS_OUTPUT.PUT_LINE(' [ ORDER COMPOSITION SUMMARY ]');
-    DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> TOP COMPOSITION TYPE : ' || v_compType);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL UNITS SOLD     : ' || v_units);
-    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || v_revenue);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.99'));
     DBMS_OUTPUT.PUT_LINE(' >> REVENUE CONTRIBUTION : ' || v_contrib || '%');
-    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------');
 END;
 /
 
 SET HEADING ON
 SET FEEDBACK ON
 CLEAR COLUMNS
+SET COLSEP ' '

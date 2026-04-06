@@ -31,15 +31,16 @@ SET LINESIZE 110
 SET PAGESIZE 100
 SET SQLBLANKLINES ON
 SET SERVEROUTPUT ON
+SET COLSEP ' | '
 
 COLUMN RestaurantName FORMAT A36 HEADING 'RESTAURANT NAME'
 COLUMN CANCELLED_ORDERS FORMAT 999,990 HEADING 'CANCELLED ORDERS'
 COLUMN LOST_REVENUE FORMAT $99,999,990.99 HEADING 'LOST REVENUE (RM)'
 COLUMN IMPACT_SHARE FORMAT 990.00 HEADING 'IMPACT (%)'
 
-TTITLE LEFT '==================================================================================' SKIP 1 -
-       LEFT '              LOST REVENUE FROM INCOMPLETE ORDERS BY RESTAURANT                   ' SKIP 1 -
-       LEFT '==================================================================================' SKIP 2
+TTITLE LEFT '========================================================================================' SKIP 1 -
+       LEFT '                 LOST REVENUE FROM INCOMPLETE ORDERS BY RESTAURANT                      ' SKIP 1 -
+       LEFT '========================================================================================' SKIP 1
 
 BREAK ON REPORT
 COMPUTE SUM LABEL 'GRAND TOTAL :' OF CANCELLED_ORDERS LOST_REVENUE IMPACT_SHARE ON REPORT
@@ -78,17 +79,17 @@ BEGIN
     )
     WHERE ROWNUM = 1;
 
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
     DBMS_OUTPUT.PUT_LINE(' [ LOST REVENUE SUMMARY ]');
-    DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> MOST AFFECTED RESTAURANT : ' || v_restaurant);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL CANCELLED ORDERS   : ' || v_orders);
-    DBMS_OUTPUT.PUT_LINE(' >> TOTAL POTENTIAL LOSS     : RM ' || v_revenue);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL POTENTIAL LOSS     : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.90'));
     DBMS_OUTPUT.PUT_LINE(' >> OVERALL IMPACT SHARE     : ' || v_impact || '%');
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
 END;
 /
 
 SET HEADING ON
 SET FEEDBACK ON
 CLEAR COLUMNS
+SET COLSEP ' '

@@ -1,0 +1,183 @@
+CL SCR;
+
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET DEFINE OFF;
+
+CREATE OR REPLACE PROCEDURE prc_assign_rider (
+    p_order_id IN CHAR,
+    p_rider_id IN CHAR
+)
+AS
+    v_pickup_type       ORDERS.PickupType%TYPE;
+    v_delivery_id_chk   ORDERS.DeliveryID%TYPE;
+    v_order_status      ORDERS.OrderStatus%TYPE;
+    v_member_id         ORDERS.MemberID%TYPE;
+    v_order_total       ORDERS.TotalAmount%TYPE;
+    
+    v_rider_name        DELIVERYRIDER.RiderName%TYPE;
+    v_rider_rating      DELIVERYRIDER.AverageRating%TYPE;
+    
+    v_bonus_tier        RIDERBONUS.BonusTier%TYPE;
+    v_bonus_rate        RIDERBONUS.BonusRate%TYPE;
+    
+    v_address_id        ADDRESS.AddressID%TYPE;
+    v_address_line      ADDRESS.AddressLine%TYPE;
+    v_city              ADDRESS.City%TYPE;
+    v_state             ADDRESS.State%TYPE;
+    v_postcode          ADDRESS.Postcode%TYPE;
+    
+    v_delivery_type_id  DELIVERYTYPE.DeliveryTypeID%TYPE;
+    v_base_delivery_fee DELIVERYTYPE.DeliveryFee%TYPE;
+    v_new_delivery_id   CHAR(6);
+    v_distance          NUMBER(5,2); 
+    
+    v_bonus_earned      NUMBER(8,2) := 0;
+    v_total_earned      NUMBER(8,2) := 0;
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('PARSED PARAMETERS');
+    DBMS_OUTPUT.PUT_LINE('>> Order ID : ' || p_order_id);
+    DBMS_OUTPUT.PUT_LINE('>> Rider ID : ' || p_rider_id);
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+
+    BEGIN
+        SELECT PickupType, DeliveryID, OrderStatus, MemberID, TotalAmount
+        INTO v_pickup_type, v_delivery_id_chk, v_order_status, v_member_id, v_order_total
+        FROM ORDERS 
+        WHERE OrderID = p_order_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Validation Failed: Order ID (' || p_order_id || ') does not exist.');
+    END;
+
+    IF v_pickup_type != 'Delivery' THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Validation Failed: Order (' || p_order_id || ') is registered as ' || v_pickup_type || '. Rider cannot be assigned.');
+    END IF;
+
+    IF v_delivery_id_chk IS NOT NULL THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Validation Failed: Order (' || p_order_id || ') already has Delivery ID (' || v_delivery_id_chk || ') assigned.');
+    END IF;
+
+    IF v_order_status != 'Pending' THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Validation Failed: Order (' || p_order_id || ') is not Pending. Current Status: ' || v_order_status);
+    END IF;
+
+    BEGIN
+        SELECT RiderName 
+        INTO v_rider_name 
+        FROM DELIVERYRIDER 
+        WHERE DeliveryRiderID = p_rider_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20005, 'Validation Failed: Rider ID (' || p_rider_id || ') does not exist.');
+    END;
+
+    SELECT NVL(ROUND(AVG(DF.Rating), 1), 0)
+    INTO v_rider_rating
+    FROM DELIVERYFEEDBACK DF
+    JOIN DELIVERY D ON DF.DeliveryID = D.DeliveryID
+    WHERE D.DeliveryRiderID = p_rider_id;
+
+    UPDATE DELIVERYRIDER 
+    SET AverageRating = v_rider_rating 
+    WHERE DeliveryRiderID = p_rider_id;
+
+    BEGIN
+        SELECT BonusTier, BonusRate
+        INTO v_bonus_tier, v_bonus_rate
+        FROM RIDERBONUS
+        WHERE v_rider_rating BETWEEN MinRating AND MaxRating;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            v_bonus_tier := 'Unrated/No Tier';
+            v_bonus_rate := 0;
+    END;
+
+    BEGIN
+        SELECT A.AddressID, A.AddressLine, A.City, A.State, A.Postcode
+        INTO v_address_id, v_address_line, v_city, v_state, v_postcode
+        FROM MEMBERADDRESS MA
+        JOIN ADDRESS A ON MA.AddressID = A.AddressID
+        WHERE MA.MemberID = v_member_id AND ROWNUM = 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20006, 'Validation Failed: Member (' || v_member_id || ') lacks a registered address.');
+    END;
+
+    BEGIN
+        SELECT DeliveryTypeID 
+        INTO v_delivery_type_id
+        FROM DELIVERYTYPE 
+        WHERE ROWNUM = 1;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20007, 'System Error: Delivery Types configuration missing.');
+    END;
+
+    SELECT 'D' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(DeliveryID, 2))), 0) + 1, 5, '0')
+    INTO v_new_delivery_id
+    FROM DELIVERY;
+
+    v_distance := ROUND(DBMS_RANDOM.VALUE(1.00, 15.00), 2);
+    v_base_delivery_fee := v_distance * 2.00;
+
+    v_bonus_earned := v_base_delivery_fee * v_bonus_rate;
+    v_total_earned := v_base_delivery_fee + v_bonus_earned;
+
+    INSERT INTO DELIVERY (
+        DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, 
+        DistanceInKm, DeliveryDate, DeliveryTime, 
+        OriginalDeliveryPrice, DiscountedDeliveryPrice
+    ) VALUES (
+        v_new_delivery_id, v_delivery_type_id, p_rider_id, v_address_id, 
+        v_distance, SYSDATE, TO_CHAR(SYSDATE, 'HH24:MI'), 
+        v_base_delivery_fee, v_base_delivery_fee
+    );
+
+    UPDATE ORDERS
+    SET DeliveryID = v_new_delivery_id,
+        OrderStatus = 'Delivering'
+    WHERE OrderID = p_order_id;
+
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE(' TARGET ORDER INFO ');
+    DBMS_OUTPUT.PUT_LINE('  * Order ID     : ' || p_order_id);
+    DBMS_OUTPUT.PUT_LINE('  * Member ID    : ' || v_member_id);
+    DBMS_OUTPUT.PUT_LINE('  * Order Total  : RM ' || TO_CHAR(v_order_total, 'FM99,990.90'));
+    DBMS_OUTPUT.PUT_LINE(' ');
+
+    DBMS_OUTPUT.PUT_LINE(' RIDER INFO & BONUS PROFILE ');
+    DBMS_OUTPUT.PUT_LINE('  * Rider Name   : ' || v_rider_name);
+    DBMS_OUTPUT.PUT_LINE('  * Avg Rating   : ' || TO_CHAR(v_rider_rating, 'FM9.0') || ' / 5.0');
+    DBMS_OUTPUT.PUT_LINE('  * Bonus Tier   : ' || v_bonus_tier || ' (' || (v_bonus_rate * 100) || '% Bonus Rate)');
+    DBMS_OUTPUT.PUT_LINE(' ');
+
+    DBMS_OUTPUT.PUT_LINE(' DELIVERY ALLOCATION INFO ');
+    DBMS_OUTPUT.PUT_LINE('  * Delivery ID  : ' || v_new_delivery_id);
+    DBMS_OUTPUT.PUT_LINE('  * Destination  : ' || v_address_line || ', ' || v_postcode || ' ' || v_city || ', ' || v_state || ', Malaysia');
+    DBMS_OUTPUT.PUT_LINE('  * Distance     : ' || v_distance || ' km');
+    DBMS_OUTPUT.PUT_LINE('  * Base Fee     : RM ' || TO_CHAR(v_base_delivery_fee, 'FM99,990.90'));
+    DBMS_OUTPUT.PUT_LINE(' ');
+
+    DBMS_OUTPUT.PUT_LINE(' EARNINGS CALCULATION ');
+    DBMS_OUTPUT.PUT_LINE(RPAD('  * Base Delivery Earnings (RM 2.00/km)', 40) || ': RM ' || TO_CHAR(v_base_delivery_fee, 'FM99,990.90'));
+    DBMS_OUTPUT.PUT_LINE(RPAD('  * Performance Bonus Earned', 40) || ': RM ' || TO_CHAR(v_bonus_earned, 'FM99,990.90'));
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD(' >> TOTAL PROJECTED EARNINGS', 40) || ': RM ' || TO_CHAR(v_total_earned, 'FM99,990.90'));
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('* SUCCESS: Rider assigned successfully. OrderStatus is now ''Delivering''. *');
+    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        DBMS_OUTPUT.PUT_LINE('EXECUTION TERMINATED WITH EXCEPTION');
+        DBMS_OUTPUT.PUT_LINE('ERROR at procedure execution:');
+        DBMS_OUTPUT.PUT_LINE(SQLERRM);
+        DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+END;
+/
+
+SET DEFINE ON;

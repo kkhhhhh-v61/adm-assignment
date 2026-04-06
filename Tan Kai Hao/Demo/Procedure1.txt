@@ -1,0 +1,75 @@
+CL SCR;
+
+SET FEEDBACK OFF;
+SET PAGESIZE 100;
+SET LINESIZE 100;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 1: INVALID ORDER ID
+PROMPT Description: Passing an Order ID that does not exist in the database.
+EXEC prc_assign_rider('O99999', 'DR00001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2: ORDER IS REGISTERED AS PICKUP
+PROMPT Description: Passing a valid Order ID, but its PickupType is 'Pickup'.
+EXEC prc_assign_rider('O00002', 'DR00001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 3: ORDER ALREADY HAS A DELIVERY ID
+PROMPT Description: Passing an Order ID that already has a DeliveryID assigned.
+EXEC prc_assign_rider('O00001', 'DR00001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 4: ORDER IS CANCELLED / NOT PENDING
+PROMPT Description: Passing an Order ID (Delivery, no DeliveryID) that is not Pending.
+EXEC prc_assign_rider('O00591', 'DR00001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 5: INVALID RIDER ID
+PROMPT Description: Uses a completely valid, unassigned order, but a fake Rider ID.
+EXEC prc_assign_rider('O00596', 'DR99999');
+
+COLUMN OrderID FORMAT A7
+COLUMN DeliveryID FORMAT A10
+COLUMN DeliveryRiderID FORMAT A15
+COLUMN OrderStatus FORMAT A11
+COLUMN MAX(DeliveryID) FORMAT A15
+
+SELECT MAX(DELIVERYID) FROM DELIVERY;
+
+SELECT OrderID, DeliveryID, OrderStatus
+FROM ORDERS
+WHERE OrderID = 'O00596';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 6: VALID ASSIGNMENT (Standard / Tier 1 Rider)
+PROMPT Description: A perfect match. Order is Pending, Delivery, unassigned.
+EXEC prc_assign_rider('O00596', 'DR00001');
+
+SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
+FROM ORDERS O
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+WHERE O.OrderID = 'O00596';
+
+SELECT OrderID, DeliveryID, OrderStatus
+FROM ORDERS
+WHERE OrderID = 'O00600';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 7: VALID ASSIGNMENT (Alternative Rider Tier)
+PROMPT Description: Another perfect match to show different bonus calculations.
+EXEC prc_assign_rider('O00600', 'DR00002');
+
+SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
+FROM ORDERS O
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+WHERE O.OrderID = 'O00600';
+
+SET FEEDBACK ON;

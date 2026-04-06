@@ -1,0 +1,68 @@
+CL SCR;
+
+SET FEEDBACK OFF;
+SET PAGESIZE 100;
+SET LINESIZE 100;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 1: INVALID DISCOUNT FORMAT
+PROMPT Description: Passing a discount value > 1 or <= 0 (e.g., 1.5 for 150%).
+EXEC prc_create_package('I00001', 1, 'I00002', 2, 1.50);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2: INVALID QUANTITY (Zero/Negative)
+PROMPT Description: Assigning a quantity of 0 to one of the items.
+EXEC prc_create_package('I00001', 0, 'I00002', 1, 0.15);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 3: DUPLICATE ITEMS DETECTED
+PROMPT Description: Passing the exact same Item ID twice in the procedure parameters.
+EXEC prc_create_package('I00001', 1, 'I00001', 2, 0.10);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 4: ITEMS FROM DIFFERENT RESTAURANTS
+PROMPT Description: Parsing two valid items that belong to entirely different Restaurant IDs.
+EXEC prc_create_package('I00001', 1, 'I00011', 1, 0.20);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 5: ITEM NOT FOUND / UNAVAILABLE
+PROMPT Description: Parsing a fake Item ID that does not exist in the database.
+EXEC prc_create_package('I99999', 1, 'I00001', 1, 0.10);
+
+COLUMN MAX(PackageID) FORMAT A14
+SELECT MAX(PackageID) FROM PACKAGE;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 6: VALID PACKAGE CREATION (2 ITEMS)
+PROMPT Description: Successfully creating a 15% discount package with 2 valid items from the same restaurant.
+EXEC prc_create_package('I00001', 2, 'I00002', 1, 0.15);
+
+COLUMN PackageID FORMAT A10
+COLUMN ItemID FORMAT A7
+COLUMN Quantity FORMAT 9999
+COLUMN OriginalPrice FORMAT 9999.99
+COLUMN Discount FORMAT 0.99
+
+SELECT P.PackageID, PI.ItemID, PI.Quantity, P.OriginalPrice, P.Discount
+FROM PACKAGE P
+JOIN PACKAGEITEM PI ON P.PackageID = PI.PackageID
+WHERE P.PackageID = (SELECT MAX(PackageID) FROM PACKAGE);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 7: VALID PACKAGE CREATION (3 ITEMS)
+PROMPT Description: Successfully creating a 20% discount package with 3 valid items from the same restaurant.
+EXEC prc_create_package('I00011', 1, 'I00012', 1, 0.20, 'I00013', 2);
+
+SELECT P.PackageID, PI.ItemID, PI.Quantity, P.OriginalPrice, P.Discount
+FROM PACKAGE P
+JOIN PACKAGEITEM PI ON P.PackageID = PI.PackageID
+WHERE P.PackageID = (SELECT MAX(PackageID) FROM PACKAGE);
+
+SET FEEDBACK ON;
