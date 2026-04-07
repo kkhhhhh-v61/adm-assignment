@@ -3,6 +3,48 @@ CLEAR SCREEN;
 SET LINESIZE 150;
 SET PAGESIZE 50000;
 
+-- =====================================================================
+-- 1. IMPLEMENTING INDEXES FOR OPTIMIZATION (Section 5.2.2)
+-- =====================================================================
+PROMPT >>> Creating Indexes for Query Optimization...
+CREATE INDEX idx_item_restaurant ON ITEM(RestaurantID);
+CREATE INDEX idx_orderitem_item ON ORDERITEM(ItemID);
+
+-- =====================================================================
+-- 2. CREATING THE VIEW (Section 5.2.1)
+-- =====================================================================
+PROMPT >>> Creating View VW_MENU_ITEM_PERFORMANCE...
+CREATE OR REPLACE VIEW VW_MENU_ITEM_PERFORMANCE AS
+SELECT 
+    r.RestaurantName AS "Restaurant",
+    i.ItemID AS "Item ID",
+    i.ItemName AS "Item Name",
+    i.Price AS "Price(RM)",
+    NVL(SUM(oi.Quantity), 0) AS "Total Qty Sold",
+    NVL(SUM(oi.Quantity * i.Price), 0) AS "Total Revenue(RM)",
+    CASE 
+        WHEN NVL(SUM(oi.Quantity), 0) = 0 THEN 'DEAD STOCK (Never Ordered)'
+        ELSE 'CRITICAL LOW (Under RM 20)'
+    END AS "Performance Status"
+FROM 
+    ITEM i
+JOIN 
+    RESTAURANT r ON i.RestaurantID = r.RestaurantID
+LEFT JOIN 
+    ORDERITEM oi ON i.ItemID = oi.ItemID
+LEFT JOIN 
+    ORDERS o ON oi.OrderID = o.OrderID AND o.OrderStatus = 'Completed'
+GROUP BY 
+    r.RestaurantName, i.ItemID, i.ItemName, i.Price
+HAVING 
+    NVL(SUM(oi.Quantity * i.Price), 0) < 20;
+
+-- =====================================================================
+-- 3. FORMATTING AND DISPLAYING THE VIEW (Section 5.2.5)
+-- =====================================================================
+PROMPT >>> Generating Report...
+CLEAR SCREEN;
+
 TTITLE CENTER '========================================================================' SKIP 1 -
        CENTER 'MENU ITEM DEAD STOCK AND UNDERPERFORMANCE SUMMARY BY RESTAURANT' SKIP 1 -
        CENTER '========================================================================' SKIP 2
@@ -17,39 +59,4 @@ COLUMN "Performance Status" FORMAT A32;
 
 BREAK ON "Restaurant" SKIP 1;
 
-SELECT 
-    r.RestaurantName AS "Restaurant",
-    i.ItemID AS "Item ID",
-    i.ItemName AS "Item Name",
-    i.Price AS "Price(RM)",
-    NVL(SUM(oi.Quantity), 0) AS "Total Qty Sold",
-    NVL(SUM(oi.Quantity * i.Price), 0) AS "Total Revenue(RM)",
-    CASE 
-        WHEN NVL(SUM(oi.Quantity), 0) = 0 THEN '🚨 DEAD STOCK (Never Ordered)'
-        ELSE '⚠️ CRITICAL LOW (Under RM 20)'
-    END AS "Performance Status"
-FROM 
-    ITEM i
-JOIN 
-    RESTAURANT r ON i.RestaurantID = r.RestaurantID
-LEFT JOIN 
-    ORDERITEM oi ON i.ItemID = oi.ItemID
-LEFT JOIN 
-    ORDERS o ON oi.OrderID = o.OrderID AND o.OrderStatus != 'Cancelled'
-WHERE 
-    i.IsAvailable = 'Y' 
-GROUP BY 
-    r.RestaurantName,
-    i.ItemID,
-    i.ItemName,
-    i.Price
-HAVING 
-    NVL(SUM(oi.Quantity), 0) = 0 
-    OR NVL(SUM(oi.Quantity * i.Price), 0) < 0.00
-ORDER BY 
-    "Restaurant" ASC,
-    "Total Revenue(RM)" ASC, 
-    "Total Qty Sold" ASC;
-
-TTITLE OFF;
-CLEAR BREAKS;
+SELECT * FROM VW_MENU_ITEM_PERFORMANCE ORDER BY "Restaurant", "Total Revenue(RM)" ASC;

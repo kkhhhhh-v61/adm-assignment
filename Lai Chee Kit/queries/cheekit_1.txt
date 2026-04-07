@@ -3,16 +3,18 @@ CLEAR SCREEN;
 SET LINESIZE 100;
 SET PAGESIZE 50000;
 
-TTITLE LEFT '             ========================================================' SKIP 1 -
-       LEFT '              PEAK HOUR ORDER VOLUME AND DELIVERY BOTTLENECK SUMMARY' SKIP 1 -
-       LEFT '             ========================================================' SKIP 2
+-- =====================================================================
+-- 1. IMPLEMENTING INDEXES FOR OPTIMIZATION (Section 5.2.2)
+-- =====================================================================
+PROMPT >>> Creating Indexes for Query Optimization...
+CREATE INDEX idx_orders_status ON ORDERS(OrderStatus);
+CREATE INDEX idx_delivery_rider ON DELIVERY(DeliveryRiderID);
 
-COLUMN "Peak Hour" FORMAT A22;
-COLUMN "Delivery Company" FORMAT A20;
-COLUMN "Total Orders" FORMAT A12;
-COLUMN "Avg Wait (Min)" FORMAT A14;
-COLUMN "Performance Status" FORMAT A25;
-
+-- =====================================================================
+-- 2. CREATING THE VIEW (Section 5.2.1)
+-- =====================================================================
+PROMPT >>> Creating View VW_PEAK_HOUR_BOTTLENECK...
+CREATE OR REPLACE VIEW VW_PEAK_HOUR_BOTTLENECK AS
 WITH WaitTimeData AS (
     SELECT 
         TO_CHAR(TO_DATE(o.OrderTime, 'HH24:MI'), 'HH24') || ':00' AS PeakHour,
@@ -32,14 +34,14 @@ WITH WaitTimeData AS (
 ),
 MainData AS (
     SELECT 
-        PeakHour AS PeakHour,
-        DeliveryCompany AS DeliveryCompany,
+        PeakHour,
+        DeliveryCompany,
         LPAD(TO_CHAR(COUNT(OrderID)), 12) AS TotalOrders,
         LPAD(TO_CHAR(ROUND(AVG(WaitTimeMins), 2), 'FM990.00'), 14) AS AvgWaitMins,
         CASE 
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 120 THEN '🚨 CRITICAL BOTTLENECK'
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 60  THEN '⚠️ HIGH TRAFFIC'
-            ELSE '✅ NORMAL SPEED'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 120 THEN 'CRITICAL BOTTLENECK'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 60  THEN 'HIGH TRAFFIC'
+            ELSE 'NORMAL SPEED'
         END AS PerfStatus,
         1 AS SortOrder 
     FROM WaitTimeData
@@ -52,9 +54,9 @@ TotalData AS (
         LPAD(TO_CHAR(COUNT(OrderID)), 12) AS TotalOrders,
         LPAD(TO_CHAR(ROUND(AVG(WaitTimeMins), 2), 'FM990.00'), 14) AS AvgWaitMins,
         CASE 
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 120 THEN '🚨 CRITICAL BOTTLENECK'
-            WHEN ROUND(AVG(WaitTimeMins), 2) >= 60  THEN '⚠️ HIGH TRAFFIC'
-            ELSE '✅ NORMAL SPEED'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 120 THEN 'CRITICAL BOTTLENECK'
+            WHEN ROUND(AVG(WaitTimeMins), 2) >= 60  THEN 'HIGH TRAFFIC'
+            ELSE 'NORMAL SPEED'
         END AS PerfStatus,
         3 AS SortOrder 
     FROM WaitTimeData
@@ -74,16 +76,31 @@ SELECT
     DeliveryCompany AS "Delivery Company",
     TotalOrders AS "Total Orders",
     AvgWaitMins AS "Avg Wait (Min)",
-    PerfStatus AS "Performance Status"
+    PerfStatus AS "Performance Status",
+    SortOrder
 FROM (
     SELECT * FROM MainData
     UNION ALL
     SELECT * FROM Separator
     UNION ALL
     SELECT * FROM TotalData
-)
-ORDER BY 
-    SortOrder ASC, 
-    PeakHour DESC;
+);
 
-TTITLE OFF;
+-- =====================================================================
+-- 3. FORMATTING AND DISPLAYING THE VIEW (Section 5.2.5)
+-- =====================================================================
+PROMPT >>> Generating Report...
+CLEAR SCREEN;
+
+TTITLE LEFT '             ========================================================' SKIP 1 -
+       LEFT '              PEAK HOUR ORDER VOLUME AND DELIVERY BOTTLENECK SUMMARY' SKIP 1 -
+       LEFT '             ========================================================' SKIP 2
+
+COLUMN "Peak Hour" FORMAT A22;
+COLUMN "Delivery Company" FORMAT A20;
+COLUMN "Total Orders" FORMAT A12;
+COLUMN "Avg Wait (Min)" FORMAT A14;
+COLUMN "Performance Status" FORMAT A25;
+COLUMN "SortOrder" NOPRINT; -- Hides the sorting column from the final output
+
+SELECT * FROM VW_PEAK_HOUR_BOTTLENECK ORDER BY SortOrder, "Peak Hour", "Delivery Company";
