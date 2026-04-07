@@ -371,3 +371,7 @@ CREATE TABLE ORDERFEEDBACK (
   CONSTRAINT chk_of_orderfeedbackid CHECK (REGEXP_LIKE(OrderFeedbackID, '^OF[0-9]{5}$')),
   CONSTRAINT chk_of_rating CHECK (Rating >= 1 AND Rating <= 5)
 );
+
+CREATE SEQUENCE seq_payment_id START WITH 10000 INCREMENT BY 1;
+CREATE INDEX idx_orders_status ON ORDERS(OrderStatus);
+CREATE INDEX idx_item_category ON ITEM(CategoryID);

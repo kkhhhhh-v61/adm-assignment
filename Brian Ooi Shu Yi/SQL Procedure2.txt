@@ -56,8 +56,7 @@ BEGIN
     SELECT 'S' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(SubscriptionID, 2))), 0) + 1, 5, '0')
     INTO v_new_sub_id FROM SUBSCRIPTION;
 
-    SELECT 'PM' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(PaymentID, 3))), 0) + 1, 5, '0')
-    INTO v_new_pay_id FROM PAYMENT;
+    v_new_pay_id := 'PM' || seq_payment_id.NEXTVAL;
 
     SELECT 'MV' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(MemberVoucherID, 3))), 0) + 1, 5, '0')
     INTO v_new_mv_id FROM MEMBERVOUCHER;

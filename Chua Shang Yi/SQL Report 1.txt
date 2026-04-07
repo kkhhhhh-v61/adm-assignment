@@ -3,175 +3,180 @@ CREATE OR REPLACE PROCEDURE generate_item_sales_report(
     p_end_date   IN DATE
 )
 AS
-
-    CURSOR c_restaurant_sales IS
-        SELECT
-            DENSE_RANK() OVER (ORDER BY SUM(OI.Quantity * OI.PriceEach) DESC) AS rank_no,
+    -- Nested Cursor: Parent fetches Restaurants, Child fetches Stats
+    CURSOR c_restaurant_data IS
+        SELECT 
             R.RestaurantName,
-            COUNT(DISTINCT O.OrderID) AS total_orders,
-            SUM(OI.Quantity) AS total_qty,
-            SUM(OI.Quantity * OI.PriceEach) AS revenue
+            CURSOR(
+                SELECT 
+                    COUNT(DISTINCT O.OrderID) AS total_orders,
+                    SUM(OI.Quantity) AS total_qty,
+                    SUM(OI.Quantity * OI.PriceEach) AS revenue
+                FROM ITEM I
+                JOIN ORDERITEM OI ON I.ItemID = OI.ItemID
+                JOIN ORDERS O ON OI.OrderID = O.OrderID
+                WHERE I.RestaurantID = R.RestaurantID
+                AND O.OrderStatus = 'Completed'
+                AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+            ) AS stats_cursor
         FROM RESTAURANT R
-        JOIN ITEM I ON R.RestaurantID = I.RestaurantID
-        JOIN ORDERITEM OI ON I.ItemID = OI.ItemID
-        JOIN ORDERS O ON OI.OrderID = O.OrderID
-        WHERE O.OrderStatus = 'Completed'
-        AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
-        GROUP BY R.RestaurantName
-        ORDER BY revenue DESC;
+        WHERE EXISTS (
+            SELECT 1 FROM ITEM I 
+            JOIN ORDERITEM OI ON I.ItemID = OI.ItemID
+            JOIN ORDERS O ON OI.OrderID = O.OrderID
+            WHERE I.RestaurantID = R.RestaurantID
+            AND O.OrderStatus = 'Completed'
+            AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        );
+
+    -- Variables for Nested Cursor handling
+    v_nested_cv      SYS_REFCURSOR;
+    v_curr_name      RESTAURANT.RestaurantName%TYPE;
+    v_curr_orders    NUMBER;
+    v_curr_qty       NUMBER;
+    v_curr_rev       NUMBER;
+
+    -- Collection to store results for ranking and totals
+    TYPE t_report_rec IS RECORD (
+        rank_no        NUMBER,
+        RestaurantName VARCHAR2(120),
+        total_orders   NUMBER,
+        total_qty      NUMBER,
+        revenue        NUMBER
+    );
+    TYPE t_report_tab IS TABLE OF t_report_rec INDEX BY PLS_INTEGER;
+    v_report_data t_report_tab;
 
     v_grand_orders NUMBER := 0;
     v_grand_qty NUMBER := 0;
     v_grand_revenue NUMBER := 0;
-
     v_top_revenue_restaurant VARCHAR2(120) := 'N/A';
     v_top_qty_restaurant VARCHAR2(120) := 'N/A';
-
     v_top_revenue NUMBER := -1;
     v_top_qty NUMBER := -1;
-
     v_percentage NUMBER;
     v_bar VARCHAR2(200);
     v_color VARCHAR2(10);
 
+    v_has_data BOOLEAN := FALSE;
+    v_idx NUMBER := 0;
+
     e_invalid_date EXCEPTION;
     e_no_data EXCEPTION;
 
-    v_has_data BOOLEAN := FALSE;
-
-    -- 🔥 FUNCTION: CREATE COLORED BAR
     FUNCTION create_color_bar(p_pct NUMBER) RETURN VARCHAR2 IS
         v_len NUMBER;
         v_result VARCHAR2(200) := '';
+        v_local_color VARCHAR2(10);
     BEGIN
-        v_len := ROUND(p_pct / 2); -- scale
-
-        FOR i IN 1..v_len LOOP
-            v_result := v_result || '#';
-        END LOOP;
-
-        -- 🎨 Color logic
-        IF p_pct >= 20 THEN
-            v_color := '32'; -- GREEN
-        ELSIF p_pct >= 10 THEN
-            v_color := '33'; -- YELLOW
-        ELSE
-            v_color := '31'; -- RED
-        END IF;
-
-        RETURN CHR(27)||'['||v_color||'m'||v_result||CHR(27)||'[0m';
+        v_len := ROUND(p_pct / 2);
+        FOR i IN 1..v_len LOOP v_result := v_result || '#'; END LOOP;
+        IF p_pct >= 20 THEN v_local_color := '32';
+        ELSIF p_pct >= 10 THEN v_local_color := '33';
+        ELSE v_local_color := '31'; END IF;
+        RETURN CHR(27)||'['||v_local_color||'m'||v_result||CHR(27)||'[0m';
     END;
 
 BEGIN
-
     IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
         RAISE e_invalid_date;
     END IF;
 
-    -- Calculate totals
-    FOR r IN c_restaurant_sales LOOP
+    -- Fetch Data into Collection using Nested Cursor
+    OPEN c_restaurant_data;
+    LOOP
+        FETCH c_restaurant_data INTO v_curr_name, v_nested_cv;
+        EXIT WHEN c_restaurant_data%NOTFOUND;
 
-        v_has_data := TRUE;
+        FETCH v_nested_cv INTO v_curr_orders, v_curr_qty, v_curr_rev;
+        CLOSE v_nested_cv;
 
-        v_grand_orders := v_grand_orders + r.total_orders;
-        v_grand_qty := v_grand_qty + r.total_qty;
-        v_grand_revenue := v_grand_revenue + r.revenue;
+        IF v_curr_orders > 0 THEN
+            v_has_data := TRUE;
+            v_idx := v_idx + 1;
+            v_report_data(v_idx).RestaurantName := v_curr_name;
+            v_report_data(v_idx).total_orders := v_curr_orders;
+            v_report_data(v_idx).total_qty := v_curr_qty;
+            v_report_data(v_idx).revenue := v_curr_rev;
 
-        IF r.revenue > v_top_revenue THEN
-            v_top_revenue := r.revenue;
-            v_top_revenue_restaurant := r.RestaurantName;
+            v_grand_orders := v_grand_orders + v_curr_orders;
+            v_grand_qty := v_grand_qty + v_curr_qty;
+            v_grand_revenue := v_grand_revenue + v_curr_rev;
         END IF;
-
-        IF r.total_qty > v_top_qty THEN
-            v_top_qty := r.total_qty;
-            v_top_qty_restaurant := r.RestaurantName;
-        END IF;
-
     END LOOP;
+    CLOSE c_restaurant_data;
 
     IF NOT v_has_data THEN
         RAISE e_no_data;
     END IF;
 
-    DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                                       RESTAURANT ITEM SALES COMPARISON REPORT');
-    DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
+    -- Simple Bubble Sort for Ranking (descending revenue) as we can't use DENSE_RANK on PL/SQL tables easily
+    DECLARE
+        v_temp t_report_rec;
+    BEGIN
+        FOR i IN 1..v_report_data.COUNT-1 LOOP
+            FOR j IN i+1..v_report_data.COUNT LOOP
+                IF v_report_data(i).revenue < v_report_data(j).revenue THEN
+                    v_temp := v_report_data(i);
+                    v_report_data(i) := v_report_data(j);
+                    v_report_data(j) := v_temp;
+                END IF;
+            END LOOP;
+        END LOOP;
+    END;
 
-    DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date,'DD-MON-YYYY') ||
-                         ' to ' || TO_CHAR(p_end_date,'DD-MON-YYYY'));
-
+    -- Original Output Logic
+    DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                                        RESTAURANT ITEM SALES COMPARISON REPORT');
+    DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date,'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date,'DD-MON-YYYY'));
     DBMS_OUTPUT.PUT_LINE('Generated : ' || TO_CHAR(SYSDATE,'DD-MON-YYYY HH24:MI:SS'));
-
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('RANK',6) || RPAD('RESTAURANT',25) || LPAD('ORDERS',10) || LPAD('QTY SOLD',12) || LPAD('AVG ITEM PRICE',18) || LPAD('REVENUE (RM)',18) || LPAD('REVENUE (%)',14) || '   REVENUE SHARE');
     DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------------------------------------------------------------');
 
-    DBMS_OUTPUT.PUT_LINE(
-        RPAD('RANK',6) ||
-        RPAD('RESTAURANT',25) ||
-        LPAD('ORDERS',10) ||
-        LPAD('QTY SOLD',12) ||
-        LPAD('AVG ITEM PRICE',18) ||
-        LPAD('REVENUE (RM)',18) ||
-        LPAD('REVENUE (%)',14) ||
-        '   REVENUE SHARE'
-    );
-
-    DBMS_OUTPUT.PUT_LINE('---------------------------------------------------------------------------------------------------------------------------');
-
-    FOR r IN c_restaurant_sales LOOP
-
-        v_percentage := ROUND((r.revenue / v_grand_revenue) * 100, 2);
-
-        -- 🎯 COLORED BAR
+    FOR i IN 1..v_report_data.COUNT LOOP
+        v_percentage := ROUND((v_report_data(i).revenue / v_grand_revenue) * 100, 2);
         v_bar := create_color_bar(v_percentage);
 
+        IF v_report_data(i).revenue > v_top_revenue THEN
+            v_top_revenue := v_report_data(i).revenue;
+            v_top_revenue_restaurant := v_report_data(i).RestaurantName;
+        END IF;
+
+        IF v_report_data(i).total_qty > v_top_qty THEN
+            v_top_qty := v_report_data(i).total_qty;
+            v_top_qty_restaurant := v_report_data(i).RestaurantName;
+        END IF;
+
         DBMS_OUTPUT.PUT_LINE(
-            RPAD(r.rank_no,6) ||
-            RPAD(r.RestaurantName,25) ||
-            LPAD(r.total_orders,10) ||
-            LPAD(r.total_qty,12) ||
-            LPAD(ROUND(r.revenue / NULLIF(r.total_qty,0),2),18) ||
-            LPAD(TO_CHAR(r.revenue,'999,999,990.99'),18) ||
+            RPAD(i,6) ||
+            RPAD(v_report_data(i).RestaurantName,25) ||
+            LPAD(v_report_data(i).total_orders,10) ||
+            LPAD(v_report_data(i).total_qty,12) ||
+            LPAD(ROUND(v_report_data(i).revenue / NULLIF(v_report_data(i).total_qty,0),2),18) ||
+            LPAD(TO_CHAR(v_report_data(i).revenue,'999,999,990.99'),18) ||
             LPAD(TO_CHAR(v_percentage,'990.00') || '%',14) ||
             '   ' || v_bar
         );
-
     END LOOP;
 
     DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
-
-    DBMS_OUTPUT.PUT_LINE(
-        RPAD('GRAND TOTAL',31) ||
-        LPAD(v_grand_orders,10) ||
-        LPAD(v_grand_qty,12) ||
-        LPAD('-',18) ||
-        LPAD(TO_CHAR(v_grand_revenue,'999,999,990.99'),18) ||
-        LPAD('100.00%',14)
-    );
-
+    DBMS_OUTPUT.PUT_LINE(RPAD('GRAND TOTAL',31) || LPAD(v_grand_orders,10) || LPAD(v_grand_qty,12) || LPAD('-',18) || LPAD(TO_CHAR(v_grand_revenue,'999,999,990.99'),18) || LPAD('100.00%',14));
     DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
-
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE('=================================================== EXECUTIVE SUMMARY =====================================================');
-
-    DBMS_OUTPUT.PUT_LINE('>> TOP RESTAURANT BY REVENUE : ' || v_top_revenue_restaurant ||
-                         ' (RM ' || TO_CHAR(v_top_revenue,'999,999,990.99') || ')');
-
-    DBMS_OUTPUT.PUT_LINE('>> TOP RESTAURANT BY QUANTITY SOLD : ' || v_top_qty_restaurant ||
-                         ' (' || v_top_qty || ' ITEMS SOLD)');
-
+    DBMS_OUTPUT.PUT_LINE('>> TOP RESTAURANT BY REVENUE : ' || v_top_revenue_restaurant || ' (RM ' || TO_CHAR(v_top_revenue,'999,999,990.99') || ')');
+    DBMS_OUTPUT.PUT_LINE('>> TOP RESTAURANT BY QUANTITY SOLD : ' || v_top_qty_restaurant || ' (' || v_top_qty || ' ITEMS SOLD)');
     DBMS_OUTPUT.PUT_LINE('===========================================================================================================================');
     DBMS_OUTPUT.PUT_LINE('End of Report.');
 
 EXCEPTION
-
     WHEN e_invalid_date THEN
         RAISE_APPLICATION_ERROR(-20001,'INVALID DATE RANGE: Start date cannot be later than end date.');
-
     WHEN e_no_data THEN
         DBMS_OUTPUT.PUT_LINE('>>> NO ITEM SALES DATA FOUND FOR THE GIVEN DATE RANGE <<<');
-
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
-
 END;
 /
