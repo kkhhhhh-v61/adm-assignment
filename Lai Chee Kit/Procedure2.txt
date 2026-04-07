@@ -1,25 +1,26 @@
--- Create 3 Fake Deliveries for testing
-INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
-VALUES ('D99991', 'DT00001', 'DR00001', 'A00001', 5.0, SYSDATE, '12:30', 5.00, 5.00);
-
-INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
-VALUES ('D99992', 'DT00001', 'DR00001', 'A00001', 10.0, SYSDATE, '14:00', 8.00, 8.00);
-
-INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
-VALUES ('D99993', 'DT00001', 'DR00001', 'A00001', 2.0, SYSDATE, '18:30', 3.00, 3.00);
-
--- Create 3 Fake Orders for the 3 Scenarios
--- Scenario 1: 'Pending' order
-INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O99991', 'M00001', 'D99991', NULL, 'Delivery', SYSDATE, '12:00', 45.00, 'Pending');
-
--- Scenario 2: 'Delivering' order with a 2-Hour Delay (12:00 to 14:00)
-INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O99992', 'M00002', 'D99992', NULL, 'Delivery', SYSDATE, '12:00', 85.00, 'Delivering');
-
--- Scenario 3: 'Completed' order (To test the blocking mechanism)
-INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O99993', 'M00003', 'D99993', NULL, 'Delivery', SYSDATE, '18:00', 25.00, 'Completed');
-
+-- RESET DATA FOR PERFECT SCREENSHOT
+UPDATE ITEM SET IsAvailable = 'Y' WHERE RestaurantID = 'R99999';
+DELETE FROM ORDERITEM WHERE ItemID = 'I99992';
 COMMIT;
-PROMPT >>> DUMMY DATA INSERTED SUCCESSFULLY <<<
+
+-- RUN PROCEDURE
+CLEAR SCREEN;
+SET SERVEROUTPUT ON;
+SET LINESIZE 200;
+SET PAGESIZE 100;
+
+COLUMN ItemID FORMAT A10;
+COLUMN ItemName FORMAT A25;
+COLUMN Price FORMAT 99.99;
+COLUMN IsAvailable FORMAT A15;
+
+PROMPT [BEFORE AUDIT] Menu Items for R99999:
+SELECT ItemID, ItemName, Price, IsAvailable FROM ITEM WHERE RestaurantID = 'R99999' ORDER BY ItemID;
+
+PROMPT 
+PROMPT >>> EXECUTING DYNAMIC PROFITABILITY AUDIT <<<
+EXEC PR_AUDIT_MENU_PROFITABILITY('R99999');
+
+PROMPT 
+PROMPT [AFTER AUDIT] Menu Items for R99999:
+SELECT ItemID, ItemName, Price, IsAvailable FROM ITEM WHERE RestaurantID = 'R99999' ORDER BY ItemID;

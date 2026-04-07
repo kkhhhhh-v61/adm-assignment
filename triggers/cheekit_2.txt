@@ -1,31 +1,62 @@
-CREATE OR REPLACE TRIGGER TRG_FEEDBACK_VALIDITY
-BEFORE INSERT OR UPDATE ON ORDERFEEDBACK
+CREATE OR REPLACE TRIGGER TRG_MASTER_FINANCE_GATEWAY
+BEFORE INSERT OR UPDATE ON PAYMENT
 FOR EACH ROW
 DECLARE
     v_order_status ORDERS.OrderStatus%TYPE;
-    v_order_date   ORDERS.OrderDate%TYPE;
+    v_order_total  ORDERS.TotalAmount%TYPE;
+    v_pickup_type  ORDERS.PickupType%TYPE;
 BEGIN
-    -- Fetch the exact status and date of the order being reviewed
-    SELECT OrderStatus, OrderDate
-    INTO v_order_status, v_order_date
-    FROM ORDERS
-    WHERE OrderID = :NEW.OrderID;
-
-    -- RULE 1: Block reviews for un-delivered food
-    IF v_order_status != 'Completed' THEN
-        RAISE_APPLICATION_ERROR(-20002, 'FEEDBACK BLOCKED: You can only leave a review for completed orders. Current status: ' || v_order_status);
+    -- ========================================================================
+    -- RULE 1: IMMUTABILITY OF COMPLETED FINANCIAL TRANSACTIONS
+    -- Prevent tampering with successful transactions.
+    -- ========================================================================
+    IF UPDATING AND :OLD.PaymentStatus = 'Completed' AND :NEW.PaymentStatus != 'Completed' THEN
+        RAISE_APPLICATION_ERROR(-20020, 'Audit Error: A Completed payment is locked and cannot be reverted to ' || :NEW.PaymentStatus || '.');
     END IF;
 
-    -- RULE 2: Restrict reviews to a 7-day window
-    -- (We subtract the dates. In Oracle, subtracting two DATEs gives the difference in days)
-    IF (:NEW.FeedbackDate - v_order_date) > 7 THEN
-        RAISE_APPLICATION_ERROR(-20003, 'FEEDBACK BLOCKED: Reviews are only allowed within 7 days of the order date.');
+    -- ========================================================================
+    -- RULE 2: SUBSCRIPTION PAYMENT LOGIC
+    -- ========================================================================
+    IF :NEW.SubscriptionID IS NOT NULL THEN
+        IF :NEW.PaymentMethod = 'Cash on Delivery' THEN
+            RAISE_APPLICATION_ERROR(-20021, 'Payment Error: Digital Subscriptions do not support Cash on Delivery. Please use Card or E-Wallet.');
+        END IF;
     END IF;
 
-    -- RULE 3: Force a comment if the rating is 1 or 2 stars
-    IF :NEW.Rating IN (1, 2) AND :NEW.FeedbackComment IS NULL THEN
-        RAISE_APPLICATION_ERROR(-20004, 'FEEDBACK BLOCKED: A comment is required when giving a 1 or 2-star rating to help us improve.');
-    END IF;
+    -- ========================================================================
+    -- RULES 3, 4, and 5: ORDER PAYMENT LOGIC (Cross-Table Validations)
+    -- ========================================================================
+    IF :NEW.OrderID IS NOT NULL THEN
+        -- Fetch real-time order details
+        SELECT OrderStatus, TotalAmount, PickupType
+        INTO v_order_status, v_order_total, v_pickup_type
+        FROM ORDERS
+        WHERE OrderID = :NEW.OrderID;
 
+        -- RULE 5: Prevent paying for Cancelled orders
+        IF v_order_status = 'Cancelled' AND :NEW.PaymentStatus IN ('Pending', 'Completed') THEN
+            RAISE_APPLICATION_ERROR(-20022, 'Payment Error: Cannot process payments for an order that has been Cancelled.');
+        END IF;
+
+        -- RULES 3 and 4: Cash on Delivery Specific Security Limits
+        IF :NEW.PaymentMethod = 'Cash on Delivery' THEN
+            
+            -- Prevent COD for Pickups (Must pay online via app)
+            IF v_pickup_type = 'Pickup' THEN
+                RAISE_APPLICATION_ERROR(-20023, 'Payment Error: Cash on Delivery is strictly for Deliveries. Please use E-Wallet or Card for Pickups.');
+            END IF;
+
+            -- RULE 3: Rider Safety limit (Do not allow COD for massive orders)
+            IF v_order_total > 200.00 THEN
+                RAISE_APPLICATION_ERROR(-20024, 'Security Error: Cash on Delivery is disabled for orders exceeding RM 200.00 for rider safety. Please use a digital payment method.');
+            END IF;
+
+            -- RULE 4: Logical chronology check (You can't collect cash if the food hasn't left the kitchen)
+            IF :NEW.PaymentStatus = 'Completed' AND v_order_status = 'Pending' THEN
+                RAISE_APPLICATION_ERROR(-20025, 'Process Error: Cash on Delivery cannot be marked Completed while the OrderStatus is still Pending.');
+            END IF;
+            
+        END IF;
+    END IF;
 END;
 /

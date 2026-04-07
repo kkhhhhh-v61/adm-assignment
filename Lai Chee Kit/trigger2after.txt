@@ -1,0 +1,39 @@
+PROMPT =====================================================================
+PROMPT [ AFTER TRIGGER ] SYSTEM IS NOW PROTECTED
+PROMPT Attempting to run the exact same illegal transactions...
+PROMPT =====================================================================
+
+PROMPT 
+PROMPT Test 1: Modifying a completed transaction (Rule 1)
+-- Expected: ORA-20020
+UPDATE PAYMENT SET PaymentStatus = 'Failed' WHERE PaymentID = 'PM00001';
+
+PROMPT 
+PROMPT Test 2: Paying for a Subscription with Cash (Rule 2)
+-- Expected: ORA-20021
+INSERT INTO PAYMENT VALUES ('PM99901', NULL, 'S00001', 'Cash on Delivery', 'Pending');
+
+PROMPT 
+PROMPT Test 3: Paying for a Cancelled Order (Rule 5)
+-- Expected: ORA-20022
+INSERT INTO PAYMENT VALUES ('PM99902', 'O00005', NULL, 'Credit Card', 'Completed');
+
+PROMPT 
+PROMPT Test 4: Using Cash on Delivery for a Pickup (Rule 4)
+-- Expected: ORA-20023
+INSERT INTO PAYMENT VALUES ('PM99903', 'O00002', NULL, 'Cash on Delivery', 'Pending');
+
+PROMPT 
+PROMPT Test 5: Rider Safety - COD on order > RM200 (Rule 3)
+-- Expected: ORA-20024
+INSERT INTO PAYMENT VALUES ('PM99904', 'O00003', NULL, 'Cash on Delivery', 'Pending');
+
+PROMPT 
+PROMPT Test 6: Logical Error - Completing COD when food is still Pending (Rule 4)
+-- Expected: ORA-20025
+INSERT INTO PAYMENT VALUES ('PM99905', 'O00093', NULL, 'Cash on Delivery', 'Completed');
+
+PROMPT 
+PROMPT =====================================================================
+PROMPT DEMONSTRATION COMPLETE: ALL VULNERABILITIES SUCCESSFULLY BLOCKED.
+PROMPT =====================================================================
