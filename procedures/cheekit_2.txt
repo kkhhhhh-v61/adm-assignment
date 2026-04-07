@@ -1,111 +1,109 @@
-CREATE OR REPLACE PROCEDURE PR_PROCESS_DELIVERY_HANDOVER (
-    p_order_id IN ORDERS.OrderID%TYPE
+CREATE OR REPLACE PROCEDURE PR_AUDIT_MENU_PROFITABILITY (
+    p_restaurant_id IN VARCHAR2
 ) AS
-    v_order_rec      ORDERS%ROWTYPE;
-    v_delivery_rec   DELIVERY%ROWTYPE;
-    
-    v_order_count    NUMBER;
-    v_time_diff_mins NUMBER;
-    v_new_voucher_id VOUCHER.VoucherID%TYPE;
-    v_new_mv_id      MEMBERVOUCHER.MemberVoucherID%TYPE;
-    
-    e_invalid_order  EXCEPTION;
+    -- Cursor to fetch all active items and their current price
+    CURSOR c_active_items IS
+        SELECT ItemID, ItemName, Price 
+        FROM ITEM 
+        WHERE RestaurantID = p_restaurant_id 
+        AND IsAvailable = 'Y';
 
+    v_total_qty          NUMBER;
+    v_total_revenue      NUMBER(8,2);
+    v_archived_qty       NUMBER := 0;
+    v_promo_flag_qty     NUMBER := 0;
+    v_rest_exists        NUMBER;
+    
+    -- Variables for Dynamic Math Extension
+    v_rest_total_rev     NUMBER(8,2) := 0;
+    v_active_item_count  NUMBER := 0;
+    v_dynamic_avg_rev    NUMBER(8,2) := 0;
+    
+    e_invalid_rest       EXCEPTION;
 BEGIN
-    SAVEPOINT start_handover;
+    SAVEPOINT start_audit;
 
-    -- 1. Validate if the Order actually exists
-    SELECT COUNT(*) INTO v_order_count FROM ORDERS WHERE OrderID = p_order_id;
-    IF v_order_count = 0 THEN
-        RAISE e_invalid_order;
+    -- Validate if the Restaurant actually exists
+    SELECT COUNT(*) INTO v_rest_exists FROM RESTAURANT WHERE RestaurantID = p_restaurant_id;
+    IF v_rest_exists = 0 THEN
+        RAISE e_invalid_rest;
     END IF;
 
-    -- 2. Lock tables to prevent concurrency conflicts with triggers
-    LOCK TABLE ORDERS, VOUCHER, MEMBERVOUCHER IN EXCLUSIVE MODE;
+    -- 🌟 DYNAMIC MATH EXTENSION: Calculate Restaurant Average Revenue 🌟
+    -- 1. Count total active items
+    SELECT COUNT(*) INTO v_active_item_count 
+    FROM ITEM 
+    WHERE RestaurantID = p_restaurant_id AND IsAvailable = 'Y';
+    
+    -- 2. Calculate total restaurant revenue from completed orders in last 6 months
+    SELECT NVL(SUM(oi.Quantity * oi.PriceEach), 0)
+    INTO v_rest_total_rev
+    FROM ORDERITEM oi
+    JOIN ORDERS o ON oi.OrderID = o.OrderID
+    JOIN ITEM i ON oi.ItemID = i.ItemID
+    WHERE i.RestaurantID = p_restaurant_id
+    AND o.OrderStatus = 'Completed'
+    AND o.OrderDate >= ADD_MONTHS(SYSDATE, -6);
+    
+    -- 3. Calculate dynamic average (Safeguard against division by zero)
+    IF v_active_item_count > 0 THEN
+        v_dynamic_avg_rev := ROUND(v_rest_total_rev / v_active_item_count, 2);
+    END IF;
 
-    -- 3. Fetch the Order record
-    SELECT * INTO v_order_rec FROM ORDERS WHERE OrderID = p_order_id;
-
+    -- Print Header
     DBMS_OUTPUT.PUT_LINE('==================================================');
-    DBMS_OUTPUT.PUT_LINE('[DELIVERY STATE MACHINE] Target Order: ' || p_order_id);
-    DBMS_OUTPUT.PUT_LINE('Current Order Status : ' || v_order_rec.OrderStatus);
+    DBMS_OUTPUT.PUT_LINE('📋 DYNAMIC MENU PROFITABILITY and LIFECYCLE AUDIT');
+    DBMS_OUTPUT.PUT_LINE('Target Restaurant : ' || p_restaurant_id);
+    DBMS_OUTPUT.PUT_LINE('Total Rest. Rev   : RM ' || v_rest_total_rev);
+    DBMS_OUTPUT.PUT_LINE('Dynamic Avg Rev   : RM ' || v_dynamic_avg_rev || ' (Threshold)');
+    DBMS_OUTPUT.PUT_LINE('Analysis Period   : Last 6 Months (Completed Orders)');
     DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
 
-    -- ==========================================
-    -- STATE 1: PENDING -> DELIVERING
-    -- ==========================================
-    IF v_order_rec.OrderStatus = 'Pending' THEN
+    -- Loop through every active item
+    FOR item_rec IN c_active_items LOOP
         
-        UPDATE ORDERS SET OrderStatus = 'Delivering' WHERE OrderID = p_order_id;
+        -- Calculate Total Quantity Sold and Total Revenue for THIS specific item
+        SELECT NVL(SUM(oi.Quantity), 0), NVL(SUM(oi.Quantity * oi.PriceEach), 0)
+        INTO v_total_qty, v_total_revenue
+        FROM ORDERITEM oi
+        JOIN ORDERS o ON oi.OrderID = o.OrderID
+        WHERE oi.ItemID = item_rec.ItemID
+        AND o.OrderStatus = 'Completed'
+        AND o.OrderDate >= ADD_MONTHS(SYSDATE, -6);
 
-        DBMS_OUTPUT.PUT_LINE('Action  : Food Picked Up by Rider.');
-        DBMS_OUTPUT.PUT_LINE('Result  : Order Status changed to "Delivering".');
-
-    -- ==========================================
-    -- STATE 2: DELIVERING -> COMPLETED (With Apology Check)
-    -- ==========================================
-    ELSIF v_order_rec.OrderStatus = 'Delivering' THEN
-        
-        UPDATE ORDERS SET OrderStatus = 'Completed' WHERE OrderID = p_order_id;
-
-        DBMS_OUTPUT.PUT_LINE('Action  : Food Delivered to Customer.');
-        DBMS_OUTPUT.PUT_LINE('Result  : Order Status changed to "Completed".');
-
-        -- Check if this order actually has a Delivery attached (not a Pickup)
-        IF v_order_rec.DeliveryID IS NOT NULL THEN
-            SELECT * INTO v_delivery_rec FROM DELIVERY WHERE DeliveryID = v_order_rec.DeliveryID;
-
-            BEGIN
-                -- Calculate wait time using the exact MOD logic from your analytical query
-                v_time_diff_mins := MOD((TO_DATE(v_delivery_rec.DeliveryTime, 'HH24:MI') - TO_DATE(v_order_rec.OrderTime, 'HH24:MI')) * 24 * 60 + 1440, 1440);
-                DBMS_OUTPUT.PUT_LINE('Metrics : Wait Time = ' || v_time_diff_mins || ' mins.');
-
-                -- Auto-Apology Logic
-                IF v_time_diff_mins > 60 THEN
-                    -- Generate new VoucherID safely
-                    SELECT 'V' || TO_CHAR(NVL(MAX(TO_NUMBER(SUBSTR(VoucherID, 2))), 0) + 1, 'FM00000') 
-                    INTO v_new_voucher_id FROM VOUCHER;
-
-                    -- Insert the new apology voucher
-                    INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, DiscountAmount, MinSpendAmount, MaxDiscountAmount, ExpiryDate)
-                    VALUES (v_new_voucher_id, 'VT00001', 'Apology Voucher - Delay', 'SRY' || v_new_voucher_id, NULL, 10.00, 0, 10.00, SYSDATE + 30);
-
-                    -- Generate new MemberVoucherID
-                    SELECT 'MV' || TO_CHAR(NVL(MAX(TO_NUMBER(SUBSTR(MemberVoucherID, 3))), 0) + 1, 'FM00000') 
-                    INTO v_new_mv_id FROM MEMBERVOUCHER;
-
-                    -- Link the apology voucher to the Member who suffered the delay
-                    INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed)
-                    VALUES (v_new_mv_id, v_order_rec.MemberID, v_new_voucher_id, SYSDATE, 'N');
-
-                    DBMS_OUTPUT.PUT_LINE('🚨 ALERT : SEVERE BOTTLENECK DETECTED (> 60 MINS)!');
-                    DBMS_OUTPUT.PUT_LINE('Action  : Auto-Apology Triggered.');
-                    DBMS_OUTPUT.PUT_LINE('Result  : Voucher ' || v_new_voucher_id || ' deposited to Member ' || v_order_rec.MemberID);
-                ELSE
-                    DBMS_OUTPUT.PUT_LINE('✅ SUCCESS: Delivery completed within acceptable timeframe.');
-                END IF;
-            EXCEPTION
-                WHEN OTHERS THEN
-                    DBMS_OUTPUT.PUT_LINE('Note    : Could not calculate time (String format mismatch).');
-            END;
+        -- LIFECYCLE DECISION TREE LOGIC
+        IF v_total_qty = 0 THEN
+            -- Condition 1: End of Lifecycle (0 Sales) -> Archive it
+            UPDATE ITEM SET IsAvailable = 'N' WHERE ItemID = item_rec.ItemID;
+            v_archived_qty := v_archived_qty + 1;
+            
+            DBMS_OUTPUT.PUT_LINE('❌ DEAD STOCK   : ' || item_rec.ItemName || ' -> ARCHIVED');
+            
+        ELSIF v_total_revenue < v_dynamic_avg_rev THEN
+            -- Condition 2: Underperforming (Below the dynamically calculated average)
+            v_promo_flag_qty := v_promo_flag_qty + 1;
+            
+            DBMS_OUTPUT.PUT_LINE('⚠️ BELOW AVG    : ' || item_rec.ItemName || ' -> PROMO RECOMMENDED (Rev: RM ' || v_total_revenue || ')');
+            
+        ELSE
+            -- Condition 3: Healthy Lifecycle (Above or equal to average)
+            DBMS_OUTPUT.PUT_LINE('✅ PROFITABLE   : ' || item_rec.ItemName || ' -> STATUS OK (Rev: RM ' || v_total_revenue || ')');
         END IF;
 
-    -- ==========================================
-    -- STATE 3: ALREADY COMPLETED OR CANCELLED
-    -- ==========================================
-    ELSIF v_order_rec.OrderStatus IN ('Completed', 'Cancelled') THEN
-        DBMS_OUTPUT.PUT_LINE('Action  : Blocked. Order is already ' || v_order_rec.OrderStatus || '.');
-    END IF;
+    END LOOP;
 
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('Items Archived (End of Life) : ' || v_archived_qty);
+    DBMS_OUTPUT.PUT_LINE('Items Flagged for Promotion  : ' || v_promo_flag_qty);
     DBMS_OUTPUT.PUT_LINE('==================================================');
+    
     COMMIT;
 
 EXCEPTION
-    WHEN e_invalid_order THEN
-        ROLLBACK TO start_handover;
-        DBMS_OUTPUT.PUT_LINE('ERROR: Order ID (' || p_order_id || ') does not exist in the database.');
+    WHEN e_invalid_rest THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Restaurant ID (' || p_restaurant_id || ') does not exist.');
     WHEN OTHERS THEN
-        ROLLBACK TO start_handover;
-        DBMS_OUTPUT.PUT_LINE('CRITICAL ERROR: ' || SQLERRM);
+        ROLLBACK TO start_audit;
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
 END;
 /

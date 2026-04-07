@@ -1,4 +1,61 @@
-SELECT SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status 
-FROM SUBSCRIPTION 
-WHERE MemberID = 'M00002' 
-ORDER BY SubscriptionID DESC;
+-- 1. RESET THE DATA (Wipe John Doe's old test data)
+DELETE FROM PAYMENT WHERE SubscriptionID IN (SELECT SubscriptionID FROM SUBSCRIPTION WHERE MemberID = 'M88888');
+DELETE FROM SUBSCRIPTION WHERE MemberID = 'M88888';
+COMMIT;
+
+-- 2. SETUP FORMATTING
+SET DEFINE OFF;
+CLEAR SCREEN;
+SET SERVEROUTPUT ON;
+SET LINESIZE 150;
+SET PAGESIZE 100;
+
+COLUMN SubscriptionID FORMAT A15;
+COLUMN Status FORMAT A15;
+COLUMN StartDate FORMAT A15;
+COLUMN EndDate FORMAT A15;
+
+PROMPT ==================================================
+PROMPT 🟢 SCENARIO 1: STANDARD RENEWAL (NEW VIP - 1 MONTH)
+PROMPT ==================================================
+-- Buying the 1 Month Plan
+EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M88888', 'SP00001');
+
+PROMPT
+PROMPT [DATABASE VERIFICATION - SCENARIO 1]
+SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE MemberID = 'M88888' ORDER BY SubscriptionID;
+
+
+PROMPT 
+PROMPT ==================================================
+PROMPT 🟡 SCENARIO 2: EARLY RENEWAL (6 MONTH PLAN - 5% DISCOUNT)
+PROMPT ==================================================
+-- Upgrading to the 6 Month Plan early!
+EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M88888', 'SP00002');
+
+PROMPT
+PROMPT [DATABASE VERIFICATION - SCENARIO 2]
+SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE MemberID = 'M88888' ORDER BY SubscriptionID;
+
+
+PROMPT 
+PROMPT ==================================================
+PROMPT 🔴 SCENARIO 3: CANCELLATION (CURRENT AND FUTURE PLANS)
+PROMPT ==================================================
+EXEC PR_MANAGE_SUBSCRIPTION('CANCEL', 'M88888');
+
+PROMPT
+PROMPT [DATABASE VERIFICATION - SCENARIO 3]
+SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE MemberID = 'M88888' ORDER BY SubscriptionID;
+
+
+PROMPT 
+PROMPT ==================================================
+PROMPT 🔵 SCENARIO 4: RETURNING VIP RENEWAL (SHOWS EXPIRED DATE)
+PROMPT ==================================================
+-- John decides he misses VIP and buys a 1 Year Plan!
+EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M88888', 'SP00003');
+
+PROMPT
+PROMPT [DATABASE VERIFICATION - SCENARIO 4]
+SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE MemberID = 'M88888' ORDER BY SubscriptionID;
