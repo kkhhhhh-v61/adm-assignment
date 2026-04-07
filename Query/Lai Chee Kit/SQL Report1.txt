@@ -5,12 +5,21 @@ CREATE OR REPLACE PROCEDURE pr_rider_bonus_roi_analysis (
     p_period_val  IN VARCHAR2
 )
 IS
-    v_roi_status       VARCHAR2(30);
+    v_roi_status       VARCHAR2(50); -- Increased size slightly to hold the hidden color codes
     v_data_found       BOOLEAN := FALSE;
     v_tier_has_data    BOOLEAN;
     
     v_total_deliveries NUMBER := 0;
     v_total_bonus      NUMBER := 0;
+
+    -- ==========================================
+    -- ANSI COLOR CODES DECLARATION
+    -- ==========================================
+    c_reset  CONSTANT VARCHAR2(10) := CHR(27) || '[0m';
+    c_red    CONSTANT VARCHAR2(10) := CHR(27) || '[31m';
+    c_green  CONSTANT VARCHAR2(10) := CHR(27) || '[32m';
+    c_yellow CONSTANT VARCHAR2(10) := CHR(27) || '[33m';
+    c_cyan   CONSTANT VARCHAR2(10) := CHR(27) || '[36m';
 
     CURSOR c_bonus_tiers IS
         SELECT BonusTier, MinRating, MaxRating, BonusRate
@@ -40,52 +49,53 @@ IS
 
 BEGIN
     DBMS_OUTPUT.PUT_LINE('=================================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                 Rider BONUS ROI AND SERVICE QUALITY IMPACT AUDIT');
+    DBMS_OUTPUT.PUT_LINE('                 RIDER BONUS ROI AND SERVICE QUALITY IMPACT AUDIT');
     DBMS_OUTPUT.PUT_LINE('                 REGION: ' || UPPER(p_state) || ' | PERIOD: ' || UPPER(p_period_type) || ' (' || p_period_val || ') ' || p_year);
     DBMS_OUTPUT.PUT_LINE('=================================================================================================');
 
     FOR rec_tier IN c_bonus_tiers LOOP
         v_tier_has_data := FALSE;
-        
         FOR rec_rider IN c_rider_performance(rec_tier.MinRating, rec_tier.MaxRating, rec_tier.BonusRate) LOOP
             v_data_found := TRUE;
-            
             IF NOT v_tier_has_data THEN
                 DBMS_OUTPUT.PUT_LINE(' ');
-                DBMS_OUTPUT.PUT_LINE(' [ TIER: ' || UPPER(rec_tier.BonusTier) || ' ]  -->  Payout Rate: ' || (rec_tier.BonusRate * 100) || '% of Delivery Fees');
+                -- Wrapped the percentage in CYAN color here
+                DBMS_OUTPUT.PUT_LINE(' [ TIER: ' || UPPER(rec_tier.BonusTier) || ' ]  -->  Payout Rate: ' || c_cyan || (rec_tier.BonusRate * 100) || '%' || c_reset || ' of Delivery Fees');
                 DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------');
                 DBMS_OUTPUT.PUT_LINE(
                     RPAD(' RIDER NAME', 22) || 
                     LPAD('DELIVERIES', 12) || 
                     LPAD('PERIOD RATING', 18) || 
                     LPAD('BONUS PAYOUT', 18) || 
-                    '      ' || 'ROI EVALUATION'  -- Added wide spacing here
+                    '      ' || 'ROI EVALUATION'  
                 );
                 DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------');
                 v_tier_has_data := TRUE;
             END IF;
 
+            -- Your exact logic, just injecting colors into the strings
             IF rec_rider.PeriodAvgRating = 0 THEN
-                v_roi_status := 'NO FEEDBACK YET';
+                v_roi_status := c_yellow || 'NO FEEDBACK YET' || c_reset;
             ELSIF rec_rider.PeriodAvgRating < 3.5 AND rec_tier.BonusRate >= 0.10 THEN
-                v_roi_status := 'POOR ROI (SLACKING)'; 
+                v_roi_status := c_red || 'POOR ROI (SLACKING)' || c_reset;
             ELSIF rec_rider.PeriodAvgRating >= 4.5 THEN
-                v_roi_status := 'EXCELLENT ROI';
+                v_roi_status := c_green || 'EXCELLENT ROI' || c_reset;
             ELSIF rec_rider.PeriodAvgRating < 3.5 THEN
-                v_roi_status := 'UNDERPERFORMING';
+                v_roi_status := c_yellow || 'UNDERPERFORMING' || c_reset;
             ELSE
-                v_roi_status := 'ACCEPTABLE';
+                v_roi_status := 'ACCEPTABLE'; -- Left plain text
             END IF;
 
             v_total_deliveries := v_total_deliveries + rec_rider.DeliveryCount;
             v_total_bonus      := v_total_bonus + rec_rider.TotalPeriodBonus;
-
+            
+            -- Printing with the colored status at the end
             DBMS_OUTPUT.PUT_LINE(
                 RPAD(' ' || rec_rider.RiderName, 22) || 
                 LPAD(TO_CHAR(rec_rider.DeliveryCount), 12) || 
                 LPAD(TO_CHAR(rec_rider.PeriodAvgRating, 'FM9.00') || ' / 5.0', 18) || 
                 LPAD('RM ' || TO_CHAR(rec_rider.TotalPeriodBonus, 'FM9990.00'), 18) || 
-                '      ' || v_roi_status -- Added explicit wide gap here!
+                '      ' || v_roi_status 
             );
         END LOOP; 
     END LOOP; 
@@ -102,7 +112,8 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE(' Total Deliveries Analyzed : ' || v_total_deliveries);
         DBMS_OUTPUT.PUT_LINE(' Total Bonus Payout Issued : RM ' || TO_CHAR(v_total_bonus, 'FM99990.00'));
         DBMS_OUTPUT.PUT_LINE('=================================================================================================');
-        DBMS_OUTPUT.PUT_LINE('* POOR ROI (SLACKING) indicates high-tier riders providing below-average service in this period.');
+        -- Making the bottom warning red for emphasis
+        DBMS_OUTPUT.PUT_LINE(c_red || '* POOR ROI (SLACKING)' || c_reset || ' indicates high-tier riders providing below-average service in this period.');
         DBMS_OUTPUT.PUT_LINE('=================================================================================================');
     END IF;
 END;
