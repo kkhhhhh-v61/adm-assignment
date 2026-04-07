@@ -76,17 +76,17 @@ BEGIN
             UPDATE ITEM SET IsAvailable = 'N' WHERE ItemID = item_rec.ItemID;
             v_archived_qty := v_archived_qty + 1;
             
-            DBMS_OUTPUT.PUT_LINE('❌ DEAD STOCK   : ' || item_rec.ItemName || ' -> ARCHIVED');
+            DBMS_OUTPUT.PUT_LINE('DEAD STOCK   : ' || item_rec.ItemName || ' -> ARCHIVED');
             
         ELSIF v_total_revenue < v_dynamic_avg_rev THEN
             -- Condition 2: Underperforming (Below the dynamically calculated average)
             v_promo_flag_qty := v_promo_flag_qty + 1;
             
-            DBMS_OUTPUT.PUT_LINE('⚠️ BELOW AVG    : ' || item_rec.ItemName || ' -> PROMO RECOMMENDED (Rev: RM ' || v_total_revenue || ')');
+            DBMS_OUTPUT.PUT_LINE('BELOW AVG    : ' || item_rec.ItemName || ' -> PROMO RECOMMENDED (Rev: RM ' || v_total_revenue || ')');
             
         ELSE
             -- Condition 3: Healthy Lifecycle (Above or equal to average)
-            DBMS_OUTPUT.PUT_LINE('✅ PROFITABLE   : ' || item_rec.ItemName || ' -> STATUS OK (Rev: RM ' || v_total_revenue || ')');
+            DBMS_OUTPUT.PUT_LINE('PROFITABLE   : ' || item_rec.ItemName || ' -> STATUS OK (Rev: RM ' || v_total_revenue || ')');
         END IF;
 
     END LOOP;

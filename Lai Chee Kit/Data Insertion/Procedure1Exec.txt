@@ -6,9 +6,14 @@ COMMIT;
 -- 2. SETUP FORMATTING
 SET DEFINE OFF;
 CLEAR SCREEN;
-SET SERVEROUTPUT ON;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
 SET LINESIZE 150;
 SET PAGESIZE 100;
+
+-- FIX: Turn off any lingering titles or breaks from previous scripts!
+TTITLE OFF;
+CLEAR COLUMNS;
+CLEAR BREAKS;
 
 COLUMN SubscriptionID FORMAT A15;
 COLUMN Status FORMAT A15;
@@ -16,7 +21,7 @@ COLUMN StartDate FORMAT A15;
 COLUMN EndDate FORMAT A15;
 
 PROMPT ==================================================
-PROMPT 🟢 SCENARIO 1: STANDARD RENEWAL (NEW VIP - 1 MONTH)
+PROMPT  SCENARIO 1: STANDARD RENEWAL (NEW VIP - 1 MONTH)
 PROMPT ==================================================
 -- Buying the 1 Month Plan
 EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M82001', 'SP82001');
@@ -28,7 +33,7 @@ SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE Member
 
 PROMPT 
 PROMPT ==================================================
-PROMPT 🟡 SCENARIO 2: EARLY RENEWAL (6 MONTH PLAN - 5% DISCOUNT)
+PROMPT  SCENARIO 2: EARLY RENEWAL (6 MONTH PLAN - 5% DISCOUNT)
 PROMPT ==================================================
 -- Upgrading to the 6 Month Plan early!
 EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M82001', 'SP82002');
@@ -40,7 +45,7 @@ SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE Member
 
 PROMPT 
 PROMPT ==================================================
-PROMPT 🔴 SCENARIO 3: CANCELLATION (CURRENT AND FUTURE PLANS)
+PROMPT  SCENARIO 3: CANCELLATION (CURRENT AND FUTURE PLANS)
 PROMPT ==================================================
 EXEC PR_MANAGE_SUBSCRIPTION('CANCEL', 'M82001');
 
@@ -51,7 +56,7 @@ SELECT SubscriptionID, Status, StartDate, EndDate FROM SUBSCRIPTION WHERE Member
 
 PROMPT 
 PROMPT ==================================================
-PROMPT 🔵 SCENARIO 4: RETURNING VIP RENEWAL (SHOWS EXPIRED DATE)
+PROMPT  SCENARIO 4: RETURNING VIP RENEWAL (SHOWS EXPIRED DATE)
 PROMPT ==================================================
 -- John decides he misses VIP and buys a 1 Year Plan!
 EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M82001', 'SP82003');

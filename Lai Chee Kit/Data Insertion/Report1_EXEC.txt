@@ -1,0 +1,25 @@
+CLEAR SCREEN;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 150;
+SET PAGESIZE 200;
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 1: MONTHLY VULNERABILITY AUDIT (MAY 2024)
+PROMPT ================================================================================
+EXEC PR_DOUBLE_STACK_REPORT('2024', 'MONTHLY', '05');
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 2: QUARTERLY VULNERABILITY AUDIT (Q3 2024)
+PROMPT ================================================================================
+EXEC PR_DOUBLE_STACK_REPORT('2024', 'QUARTERLY', 'Q3');
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 3: YEARLY VULNERABILITY AUDIT (ENTIRE YEAR 2024)
+PROMPT ================================================================================
+EXEC PR_DOUBLE_STACK_REPORT('2024', 'YEARLY', 'ALL');
+
+PROMPT
+PROMPT >>> ALL DOUBLE-STACKING AUDIT TESTS COMPLETED SUCCESSFULLY.
