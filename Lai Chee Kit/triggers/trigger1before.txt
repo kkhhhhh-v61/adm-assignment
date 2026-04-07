@@ -1,0 +1,18 @@
+-- =====================================================================
+-- 0. SETUP: CREATE THE MEMBER (Assuming no data exists yet)
+-- =====================================================================
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
+VALUES ('M85001', 'Barah LeeE', 'Barah.leeE@email.com', '012-1234587', 'hashed_pw_018', SYSDATE);
+COMMIT;
+
+
+-- =====================================================================
+-- TEST 1: SUCCESSFUL INSERT (User has no debts yet)
+-- =====================================================================
+PROMPT >>> TEST 1: Placing the first order. This should SUCCEED. <<<
+
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O85001', 'M85001', NULL, NULL, 'Pickup', SYSDATE - 1, '12:00', 30.00, 'Completed');
+COMMIT;
+
+

@@ -1,3 +1,0 @@
--- Finalize the Order
--- EXPECTED: SUCCESS (1 row updated)
-UPDATE ORDERS SET OrderStatus = 'Completed' WHERE OrderID = 'O00001';

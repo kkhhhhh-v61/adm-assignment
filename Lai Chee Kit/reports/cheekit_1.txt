@@ -1,0 +1,109 @@
+CREATE OR REPLACE PROCEDURE pr_rider_bonus_roi_analysis (
+    p_state       IN VARCHAR2,
+    p_year        IN CHAR,
+    p_period_type IN VARCHAR2,
+    p_period_val  IN VARCHAR2
+)
+IS
+    v_roi_status       VARCHAR2(30);
+    v_data_found       BOOLEAN := FALSE;
+    v_tier_has_data    BOOLEAN;
+    
+    v_total_deliveries NUMBER := 0;
+    v_total_bonus      NUMBER := 0;
+
+    CURSOR c_bonus_tiers IS
+        SELECT BonusTier, MinRating, MaxRating, BonusRate
+        FROM RIDERBONUS
+        ORDER BY BonusRate DESC;
+
+    CURSOR c_rider_performance (p_min_rating NUMBER, p_max_rating NUMBER, p_bonus_rate NUMBER) IS
+        SELECT 
+            dr.RiderName,
+            dr.AverageRating AS AllTimeRating,
+            COUNT(d.DeliveryID) AS DeliveryCount,
+            NVL(AVG(df.Rating), 0) AS PeriodAvgRating,
+            (SUM(d.DiscountedDeliveryPrice) * p_bonus_rate) AS TotalPeriodBonus
+        FROM DELIVERYRIDER dr
+        JOIN DELIVERY d ON dr.DeliveryRiderID = d.DeliveryRiderID
+        JOIN ADDRESS a ON d.AddressID = a.AddressID
+        LEFT JOIN DELIVERYFEEDBACK df ON d.DeliveryID = df.DeliveryID
+        WHERE dr.AverageRating BETWEEN p_min_rating AND p_max_rating
+          AND UPPER(a.State) = UPPER(p_state)
+          AND TO_CHAR(d.DeliveryDate, 'YYYY') = p_year
+          AND (
+              (UPPER(p_period_type) = 'MONTHLY'   AND TO_CHAR(d.DeliveryDate, 'MM') = p_period_val) OR
+              (UPPER(p_period_type) = 'QUARTERLY' AND TO_CHAR(d.DeliveryDate, '"Q"Q') = p_period_val) OR
+              (UPPER(p_period_type) = 'YEARLY')
+          )
+        GROUP BY dr.RiderName, dr.AverageRating;
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                 FLEET BONUS ROI & SERVICE QUALITY IMPACT AUDIT');
+    DBMS_OUTPUT.PUT_LINE('                 REGION: ' || UPPER(p_state) || ' | PERIOD: ' || UPPER(p_period_type) || ' (' || p_period_val || ') ' || p_year);
+    DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+
+    FOR rec_tier IN c_bonus_tiers LOOP
+        v_tier_has_data := FALSE;
+        
+        FOR rec_rider IN c_rider_performance(rec_tier.MinRating, rec_tier.MaxRating, rec_tier.BonusRate) LOOP
+            v_data_found := TRUE;
+            
+            IF NOT v_tier_has_data THEN
+                DBMS_OUTPUT.PUT_LINE(' ');
+                DBMS_OUTPUT.PUT_LINE(' [ TIER: ' || UPPER(rec_tier.BonusTier) || ' ]  -->  Payout Rate: ' || (rec_tier.BonusRate * 100) || '% of Delivery Fees');
+                DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------');
+                DBMS_OUTPUT.PUT_LINE(
+                    RPAD(' RIDER NAME', 22) || 
+                    LPAD('DELIVERIES', 12) || 
+                    LPAD('PERIOD RATING', 18) || 
+                    LPAD('BONUS PAYOUT', 18) || 
+                    '      ' || 'ROI EVALUATION'  -- Added wide spacing here
+                );
+                DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------------------------');
+                v_tier_has_data := TRUE;
+            END IF;
+
+            IF rec_rider.PeriodAvgRating = 0 THEN
+                v_roi_status := 'NO FEEDBACK YET';
+            ELSIF rec_rider.PeriodAvgRating < 3.5 AND rec_tier.BonusRate >= 0.10 THEN
+                v_roi_status := 'POOR ROI (SLACKING)'; 
+            ELSIF rec_rider.PeriodAvgRating >= 4.5 THEN
+                v_roi_status := 'EXCELLENT ROI';
+            ELSIF rec_rider.PeriodAvgRating < 3.5 THEN
+                v_roi_status := 'UNDERPERFORMING';
+            ELSE
+                v_roi_status := 'ACCEPTABLE';
+            END IF;
+
+            v_total_deliveries := v_total_deliveries + rec_rider.DeliveryCount;
+            v_total_bonus      := v_total_bonus + rec_rider.TotalPeriodBonus;
+
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(' ' || rec_rider.RiderName, 22) || 
+                LPAD(TO_CHAR(rec_rider.DeliveryCount), 12) || 
+                LPAD(TO_CHAR(rec_rider.PeriodAvgRating, 'FM9.00') || ' / 5.0', 18) || 
+                LPAD('RM ' || TO_CHAR(rec_rider.TotalPeriodBonus, 'FM9990.00'), 18) || 
+                '      ' || v_roi_status -- Added explicit wide gap here!
+            );
+        END LOOP; 
+    END LOOP; 
+
+    IF NOT v_data_found THEN
+        DBMS_OUTPUT.PUT_LINE(' ');
+        DBMS_OUTPUT.PUT_LINE(' >> No delivery data found for the selected Region and Time Period.');
+        DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE(' ');
+        DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+        DBMS_OUTPUT.PUT_LINE('                                      AUDIT SUMMARY');
+        DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+        DBMS_OUTPUT.PUT_LINE(' Total Deliveries Analyzed : ' || v_total_deliveries);
+        DBMS_OUTPUT.PUT_LINE(' Total Bonus Payout Issued : RM ' || TO_CHAR(v_total_bonus, 'FM99990.00'));
+        DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+        DBMS_OUTPUT.PUT_LINE('* POOR ROI (SLACKING) indicates high-tier riders providing below-average service in this period.');
+        DBMS_OUTPUT.PUT_LINE('=================================================================================================');
+    END IF;
+END;
+/

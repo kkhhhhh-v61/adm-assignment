@@ -1,0 +1,31 @@
+CLEAR SCREEN;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 150;
+SET PAGESIZE 200;
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 1: MONTHLY ROI ANALYSIS (MAY 2024)
+PROMPT ================================================================================
+EXEC pr_rider_bonus_roi_analysis('KL', '2024', 'MONTHLY', '05');
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 2: QUARTERLY ROI ANALYSIS (Q3 2024)
+PROMPT ================================================================================
+EXEC pr_rider_bonus_roi_analysis('KL', '2024', 'QUARTERLY', 'Q3');
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 3: YEARLY ROI ANALYSIS (ENTIRE YEAR 2024)
+PROMPT ================================================================================
+EXEC pr_rider_bonus_roi_analysis('KL', '2024', 'YEARLY', 'ALL');
+
+PROMPT 
+PROMPT ================================================================================
+PROMPT >>> INITIATING TEST 4: CHECK NO FOUND (PENANG)
+PROMPT ================================================================================
+EXEC pr_rider_bonus_roi_analysis('Penang', '2024', 'MONTHLY', '05');
+
+PROMPT
+PROMPT >>> ALL FLEET BONUS ROI AUDIT TESTS COMPLETED SUCCESSFULLY.

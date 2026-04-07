@@ -1,0 +1,43 @@
+-- ==================================================
+-- INSERT SAMPLE DATA FOR PROCEDURE 2 (IDs 8400X)
+-- ==================================================
+
+-- 1. Create Dependencies
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) 
+VALUES ('A84001', '123 Audit St', 'Kuala Lumpur', 'WP', '50000');
+
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, AverageRating, IsHalal) 
+VALUES ('R84001', 'A84001', 'Burger Hub 84k', '0198765432', 4.5, 'Y');
+
+INSERT INTO CATEGORY (CategoryID, CategoryName, Description) 
+VALUES ('C84001', 'Western 84k', 'Western Food Category');
+
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
+VALUES ('M84001', 'Bob Audit', 'bob.audit@email.com', '0112233445', 'hashedpwd', SYSDATE);
+
+-- 2. Create Items (3 Items for 3 different lifecycle outcomes)
+-- I84001 will be PROFITABLE
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I84001', 'R84001', 'C84001', 'Deluxe Burger', 'High Sales', 15.00, 'Y');
+
+-- I84002 will be BELOW AVERAGE (Promo Recommended)
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I84002', 'R84001', 'C84001', 'Cheese Fries', 'Low Sales', 5.00, 'Y');
+
+-- I84003 will be DEAD STOCK (0 Sales -> Archived)
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I84003', 'R84001', 'C84001', 'Garden Salad', 'No Sales', 8.00, 'Y');
+
+-- 3. Create Order & Order Items (To simulate the Revenue)
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O84001', 'M84001', NULL, NULL, 'Pickup', SYSDATE, '12:00', 160.00, 'Completed');
+
+-- Buy 10 Burgers (RM 150 Revenue)
+INSERT INTO ORDERITEM (OrderID, ItemID, ItemSetID, Quantity, PriceEach) 
+VALUES ('O84001', 'I84001', NULL, 10, 15.00);
+
+-- Buy 2 Fries (RM 10 Revenue)
+INSERT INTO ORDERITEM (OrderID, ItemID, ItemSetID, Quantity, PriceEach) 
+VALUES ('O84001', 'I84002', NULL, 2, 5.00);
+
+COMMIT;
