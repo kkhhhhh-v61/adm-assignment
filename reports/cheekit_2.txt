@@ -1,0 +1,89 @@
+CLEAR SCREEN;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 120;
+SET DEFINE OFF; 
+
+CREATE OR REPLACE PROCEDURE PR_DOUBLE_STACK_REPORT (
+    p_year  IN NUMBER,
+    p_month IN NUMBER
+) AS
+    -- Outer Cursor: Finds Orders that used a voucher AND contain active promo items
+    CURSOR c_vulnerable_orders IS
+        SELECT DISTINCT o.OrderID, o.OrderDate, m.FullName, v.VoucherCode, v.VoucherName
+        FROM ORDERS o
+        JOIN MEMBER m ON o.MemberID = m.MemberID
+        JOIN MEMBERVOUCHER mv ON o.MemberVoucherID = mv.MemberVoucherID
+        JOIN VOUCHER v ON mv.VoucherID = v.VoucherID
+        JOIN ORDERITEM oi ON o.OrderID = oi.OrderID
+        JOIN ITEMPROMOTION ip ON oi.ItemID = ip.ItemID
+        JOIN PROMOTION p ON ip.PromotionID = p.PromotionID
+        WHERE o.MemberVoucherID IS NOT NULL
+          AND EXTRACT(YEAR FROM o.OrderDate) = p_year
+          AND EXTRACT(MONTH FROM o.OrderDate) = p_month
+          AND o.OrderDate BETWEEN p.StartDate AND p.EndDate;
+
+    -- Inner Cursor: Now includes i.Price (Original Price)
+    CURSOR c_stacked_items (p_order_id CHAR) IS
+        SELECT i.ItemName, p.PromoName, i.Price AS OriPrice, oi.PriceEach, oi.Quantity
+        FROM ORDERITEM oi
+        JOIN ITEM i ON oi.ItemID = i.ItemID
+        JOIN ITEMPROMOTION ip ON oi.ItemID = ip.ItemID
+        JOIN PROMOTION p ON ip.PromotionID = p.PromotionID
+        JOIN ORDERS o ON oi.OrderID = o.OrderID
+        WHERE oi.OrderID = p_order_id
+          AND o.OrderDate BETWEEN p.StartDate AND p.EndDate;
+
+    -- Summary Trackers
+    v_total_vulnerable_orders NUMBER := 0;
+    v_total_stacked_items     NUMBER := 0;
+    v_total_revenue_lost      NUMBER(10,2) := 0; -- Optional bonus: track total lost!
+    
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('             VOUCHER & PROMOTION DOUBLE-STACKING VULNERABILITY REPORT           ');
+    DBMS_OUTPUT.PUT_LINE('                             PERIOD: ' || LPAD(p_month, 2, '0') || '/' || p_year);
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+
+    FOR rec_order IN c_vulnerable_orders LOOP
+        v_total_vulnerable_orders := v_total_vulnerable_orders + 1;
+        
+        DBMS_OUTPUT.PUT_LINE('🚨 VULNERABILITY DETECTED IN ORDER: ' || rec_order.OrderID);
+        DBMS_OUTPUT.PUT_LINE('Customer    : ' || rec_order.FullName);
+        DBMS_OUTPUT.PUT_LINE('Date        : ' || TO_CHAR(rec_order.OrderDate, 'DD-MON-YYYY'));
+        DBMS_OUTPUT.PUT_LINE('Voucher Used: ' || rec_order.VoucherName || ' (' || rec_order.VoucherCode || ')');
+        DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+        -- Added ORI(RM) and adjusted spacing
+        DBMS_OUTPUT.PUT_LINE(RPAD('ITEM NAME', 20) || RPAD('PROMO APPLIED', 20) || RPAD('QTY', 5) || RPAD('ORI(RM)', 10) || 'PAID(RM)');
+        DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+
+        -- Loop through the specific items in this order
+        FOR rec_item IN c_stacked_items(rec_order.OrderID) LOOP
+            v_total_stacked_items := v_total_stacked_items + rec_item.Quantity;
+            
+            -- Calculate a rough estimate of how much was "lost" due to double stacking per item
+            v_total_revenue_lost := v_total_revenue_lost + ((rec_item.OriPrice - rec_item.PriceEach) * rec_item.Quantity);
+            
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(rec_item.ItemName, 20) || 
+                RPAD(rec_item.PromoName, 20) || 
+                RPAD(rec_item.Quantity, 5) || 
+                RPAD(TO_CHAR(rec_item.OriPrice, '990.00'), 10) || -- Shows Original Price
+                TO_CHAR(rec_item.PriceEach, '990.00')             -- Shows Paid Price
+            );
+        END LOOP;
+        DBMS_OUTPUT.PUT_LINE(' ');
+    END LOOP;
+
+    IF v_total_vulnerable_orders = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('✅ No double-stacking vulnerabilities detected for this period.');
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                                REPORT SUMMARY                                  ');
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Orders with Double-Stacking', 40) || ': ' || v_total_vulnerable_orders);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Menu Items Double-Discounted', 40) || ': ' || v_total_stacked_items);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Est. Total Discount Variance', 40) || ': RM ' || TO_CHAR(v_total_revenue_lost, '990.00'));
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+END;
+/
