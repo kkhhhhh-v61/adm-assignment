@@ -5,6 +5,7 @@ SET FEEDBACK OFF
 SET LINESIZE 88
 SET PAGESIZE 100
 
+-- View to combine Orders with 'Cancelled' status from Package, Set, and Item
 CREATE OR REPLACE VIEW vw_cancelled_revenue AS
 SELECT 
     O.OrderID,
@@ -31,16 +32,19 @@ JOIN RESTAURANT R ON PR.RestaurantID = R.RestaurantID
 WHERE O.OrderStatus = 'Cancelled';
 
 DECLARE
+    -- Cursor to sum total cancelled orders and lost revenue by restaurant
     CURSOR c_cancel IS
         SELECT
             RestaurantName,
             COUNT(DISTINCT OrderID) AS CANCELLED_ORDERS,
             SUM(LostRevenue) AS LOST_REVENUE,
+            -- calculate lost revenue share percentage
             ROUND(RATIO_TO_REPORT(SUM(LostRevenue)) OVER () * 100, 2) AS IMPACT_SHARE
         FROM vw_cancelled_revenue
         GROUP BY RestaurantName
         ORDER BY LOST_REVENUE DESC;
         
+    -- variable declaration and initialization
     v_grand_orders  NUMBER := 0;
     v_grand_revenue NUMBER := 0;
     v_grand_share   NUMBER := 0;
@@ -51,6 +55,7 @@ DECLARE
     v_top_impact     NUMBER;
     v_is_first       BOOLEAN := TRUE;
 BEGIN
+    -- print title and header
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
     DBMS_OUTPUT.PUT_LINE(LPAD(' ', 20, ' ') || 'LOST REVENUE FROM INCOMPLETE ORDERS BY RESTAURANT');
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
@@ -68,6 +73,7 @@ BEGIN
     );
 
     FOR r IN c_cancel LOOP
+        -- assign first row of data as top
         IF v_is_first THEN
             v_top_restaurant := r.RestaurantName;
             v_top_orders     := r.CANCELLED_ORDERS;
@@ -76,10 +82,12 @@ BEGIN
             v_is_first       := FALSE;
         END IF;
         
+        -- calculate grand total
         v_grand_orders  := v_grand_orders + r.CANCELLED_ORDERS;
         v_grand_revenue := v_grand_revenue + r.LOST_REVENUE;
         v_grand_share   := v_grand_share + r.IMPACT_SHARE;
         
+        -- print column values
         DBMS_OUTPUT.PUT_LINE(
             RPAD(r.RestaurantName, 36, ' ') || ' | ' ||
             LPAD(TO_CHAR(r.CANCELLED_ORDERS, '999,990'), 16, ' ') || ' | ' ||
@@ -88,6 +96,7 @@ BEGIN
         );
     END LOOP;
 
+    -- print separator
     DBMS_OUTPUT.PUT_LINE(
         RPAD('-', 36, '-') || '-+-' ||
         RPAD('-', 16, '-') || '-+-' ||
@@ -95,6 +104,7 @@ BEGIN
         RPAD('-', 10, '-')
     );
     
+    -- print grand total values
     DBMS_OUTPUT.PUT_LINE(
         RPAD('GRAND TOTAL :', 36, ' ') || ' | ' ||
         LPAD(TO_CHAR(v_grand_orders, '999,990'), 16, ' ') || ' | ' ||
@@ -102,6 +112,7 @@ BEGIN
         LPAD(TO_CHAR(v_grand_share, '990.00'), 10, ' ')
     );
     
+    -- print summary
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
     DBMS_OUTPUT.PUT_LINE(' [ LOST REVENUE SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' >> MOST AFFECTED RESTAURANT : ' || v_top_restaurant);
