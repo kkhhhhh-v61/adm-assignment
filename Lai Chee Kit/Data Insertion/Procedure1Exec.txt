@@ -23,7 +23,6 @@ COLUMN EndDate FORMAT A15;
 PROMPT ==================================================
 PROMPT  SCENARIO 1: STANDARD RENEWAL (NEW VIP - 1 MONTH)
 PROMPT ==================================================
--- Buying the 1 Month Plan
 EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M82001', 'SP82001');
 
 PROMPT
@@ -35,7 +34,6 @@ PROMPT
 PROMPT ==================================================
 PROMPT  SCENARIO 2: EARLY RENEWAL (6 MONTH PLAN - 5% DISCOUNT)
 PROMPT ==================================================
--- Upgrading to the 6 Month Plan early!
 EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M82001', 'SP82002');
 
 PROMPT
@@ -58,7 +56,6 @@ PROMPT
 PROMPT ==================================================
 PROMPT  SCENARIO 4: RETURNING VIP RENEWAL (SHOWS EXPIRED DATE)
 PROMPT ==================================================
--- John decides he misses VIP and buys a 1 Year Plan!
 EXEC PR_MANAGE_SUBSCRIPTION('EXTEND', 'M82001', 'SP82003');
 
 PROMPT
