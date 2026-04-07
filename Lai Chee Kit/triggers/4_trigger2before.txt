@@ -1,10 +1,15 @@
+CLEAR SCREEN;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 150;
 
+-- Turn ECHO ON so you can see every row being created!
+SET ECHO ON;
 
-PROMPT >>> INSERTING MEMBER <<<
+PROMPT >>> SETUP: INSERTING MEMBER <<<
 INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
 VALUES ('M86001', 'Finance Tester', 'finance86k@email.com', '016-8600000', 'pwd', SYSDATE);
 
-PROMPT >>> INSERTING ADDRESS AND DELIVERY LOGISTICS <<<
+PROMPT >>> SETUP: INSERTING ADDRESS AND DELIVERY LOGISTICS <<<
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) 
 VALUES ('A86001', '86 Finance Ave', 'KL', 'WP', '50000');
 
@@ -20,14 +25,14 @@ VALUES ('DT86001', 'Standard', 5.00);
 INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
 VALUES ('D86001', 'DT86001', 'DR86001', 'A86001', 3.0, SYSDATE, '14:00', 5.00, 5.00);
 
-PROMPT >>> INSERTING SUBSCRIPTIONS <<<
+PROMPT >>> SETUP: INSERTING SUBSCRIPTIONS <<<
 INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) 
 VALUES ('SP86001', 'Finance VIP', 30, 20.00);
 
 INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status) 
 VALUES ('S86001', 'M86001', 'SP86001', SYSDATE, SYSDATE+30, 'Active');
 
-PROMPT >>> INSERTING 5 TEST ORDERS <<<
+PROMPT >>> SETUP: INSERTING 5 TEST ORDERS <<<
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
 VALUES ('O86001', 'M86001', 'D86001', 'Delivery', SYSDATE, '12:00', 50.00, 'Completed');
 
@@ -35,14 +40,15 @@ INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, PickupType, OrderDate, OrderT
 VALUES ('O86002', 'M86001', 'D86001', 'Delivery', SYSDATE, '12:00', 50.00, 'Cancelled');
 
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O86003', 'M86001', NULL, 'Pickup', SYSDATE, '12:00', 50.00, 'Pending');
+VALUES ('O86003', 'M86001', NULL, 'Pickup', SYSDATE, '12:00', 30.00, 'Completed');
 
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O86004', 'M86001', 'D86001', 'Delivery', SYSDATE, '12:00', 250.00, 'Pending');
+VALUES ('O86004', 'M86001', 'D86001', 'Delivery', SYSDATE, '12:00', 250.00, 'Completed');
 
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O86005', 'M86001', 'D86001', 'Delivery', SYSDATE, '12:00', 50.00, 'Pending');
+VALUES ('O86005', 'M86001', 'D86001', 'Delivery', SYSDATE, '12:00', 40.00, 'Pending');
 
 COMMIT;
-PROMPT >>> SETUP COMPLETE! YOU SHOULD SEE 13 ROWS CREATED. <<<
+PROMPT >>> SETUP COMPLETE FOR TRIGGER 2 TESTS <<<
+
 SET ECHO OFF;

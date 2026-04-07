@@ -1,17 +1,27 @@
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 150;
+
 -- =====================================================================
 -- SIMULATE DEBT: The payment for the first order FAILS
 -- =====================================================================
+PROMPT 
 PROMPT >>> SIMULATING DEBT: Inserting a FAILED payment for Order O85001 <<<
+SET ECHO ON;
 
 INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
 VALUES ('PM85001', 'O85001', NULL, 'Credit Card', 'Failed');
-COMMIT;
 
+COMMIT;
+SET ECHO OFF;
 
 -- =====================================================================
 -- TEST 2: BLOCKED INSERT (Trigger catches the failed payment)
 -- =====================================================================
-PROMPT >>> TEST 2: Placing a new order. This should be BLOCKED. <<<
+PROMPT 
+PROMPT >>> TEST 2: Placing a new order. This should be BLOCKED (ORA-20001). <<<
+SET ECHO ON;
 
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
 VALUES ('O85002', 'M85001', NULL, NULL, 'Pickup', SYSDATE, '13:30', 55.00, 'Pending');
+
+SET ECHO OFF;
