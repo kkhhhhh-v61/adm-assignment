@@ -1,7 +1,7 @@
 CREATE OR REPLACE PROCEDURE PR_AUDIT_MENU_PROFITABILITY (
     p_restaurant_id IN VARCHAR2
 ) AS
-    -- Cursor to fetch all active items and their current price
+   
     CURSOR c_active_items IS
         SELECT ItemID, ItemName, Price 
         FROM ITEM 
@@ -12,15 +12,10 @@ CREATE OR REPLACE PROCEDURE PR_AUDIT_MENU_PROFITABILITY (
     v_total_revenue      NUMBER(8,2);
     v_archived_qty       NUMBER := 0;
     v_promo_flag_qty     NUMBER := 0;
-    
-    -- Added variable for Restaurant Name
     v_rest_name          RESTAURANT.RestaurantName%TYPE;
-    
-    -- Variables for Dynamic Math Extension
     v_rest_total_rev     NUMBER(8,2) := 0;
     v_active_item_count  NUMBER := 0;
     v_dynamic_avg_rev    NUMBER(8,2) := 0;
-    
     e_invalid_rest       EXCEPTION;
 BEGIN
     SAVEPOINT start_audit;
@@ -35,7 +30,7 @@ BEGIN
             RAISE e_invalid_rest;
     END;
 
-    -- 🌟 DYNAMIC MATH EXTENSION: Calculate Restaurant Average Revenue 🌟
+    -- DYNAMIC MATH EXTENSION: Calculate Restaurant Average Revenue 
     -- 1. Count total active items
     SELECT COUNT(*) INTO v_active_item_count 
     FROM ITEM 
@@ -56,10 +51,8 @@ BEGIN
         v_dynamic_avg_rev := ROUND(v_rest_total_rev / v_active_item_count, 2);
     END IF;
 
-    -- Print Header
     DBMS_OUTPUT.PUT_LINE('==================================================');
     DBMS_OUTPUT.PUT_LINE('📋 DYNAMIC MENU PROFITABILITY and LIFECYCLE AUDIT');
-    -- Displaying BOTH Name and ID here:
     DBMS_OUTPUT.PUT_LINE('Target Restaurant : ' || v_rest_name || ' (' || p_restaurant_id || ')');
     DBMS_OUTPUT.PUT_LINE('Total Rest. Rev   : RM ' || v_rest_total_rev);
     DBMS_OUTPUT.PUT_LINE('Dynamic Avg Rev   : RM ' || v_dynamic_avg_rev || ' (Threshold)');
@@ -78,7 +71,6 @@ BEGIN
         AND o.OrderStatus = 'Completed'
         AND o.OrderDate >= ADD_MONTHS(SYSDATE, -6);
 
-        -- LIFECYCLE DECISION TREE LOGIC
         IF v_total_qty = 0 THEN
             -- Condition 1: End of Lifecycle (0 Sales) -> Archive it
             UPDATE ITEM SET IsAvailable = 'N' WHERE ItemID = item_rec.ItemID;

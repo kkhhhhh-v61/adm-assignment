@@ -43,13 +43,11 @@ CREATE OR REPLACE PROCEDURE PR_DOUBLE_STACK_REPORT (
     v_total_revenue_lost      NUMBER(10,2) := 0;
     
 BEGIN
-    -- We widen the separator lines to 118 characters to fit the new table columns perfectly
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
     DBMS_OUTPUT.PUT_LINE('                              VOUCHER AND PROMOTION DOUBLE-STACKING VULNERABILITY REPORT                              ');
     DBMS_OUTPUT.PUT_LINE('                                              PERIOD: ' || UPPER(p_period_type) || ' (' || UPPER(p_period_val) || ') ' || p_year);
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
     
-    -- ONE MASTER HEADER FOR THE ENTIRE REPORT
     DBMS_OUTPUT.PUT_LINE(RPAD('ORDER ID', 10) || RPAD('CUSTOMER', 18) || RPAD('DATE', 12) || RPAD('VOUCHER CODE', 15) || RPAD('ITEM PROMO APPLIED', 25) || RPAD('QTY', 5) || RPAD('ORI(RM)', 10) || 'PAID(RM)');
     DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------------------------');
 

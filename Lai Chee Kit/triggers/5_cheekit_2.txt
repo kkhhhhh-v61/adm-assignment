@@ -28,8 +28,7 @@ BEGIN
     -- ========================================================================
     IF :NEW.OrderID IS NOT NULL THEN
         
-        -- FIX: Use a dedicated block with TRIM() to prevent CHAR/VARCHAR2 padding errors
-        BEGIN
+               BEGIN
             SELECT OrderStatus, TotalAmount, PickupType
             INTO v_order_status, v_order_total, v_pickup_type
             FROM ORDERS
@@ -39,25 +38,20 @@ BEGIN
                 RAISE_APPLICATION_ERROR(-20026, 'System Error: Order ID [' || :NEW.OrderID || '] does not exist in the ORDERS table.');
         END;
 
-        -- RULE 5: Prevent paying for Cancelled orders
         IF v_order_status = 'Cancelled' AND :NEW.PaymentStatus IN ('Pending', 'Completed') THEN
             RAISE_APPLICATION_ERROR(-20022, 'Payment Error: Cannot process payments for an order that has been Cancelled.');
         END IF;
 
-        -- RULES 3 and 4: Cash on Delivery Specific Security Limits
         IF :NEW.PaymentMethod = 'Cash on Delivery' THEN
             
-            -- Prevent COD for Pickups (Must pay online via app)
             IF v_pickup_type = 'Pickup' THEN
                 RAISE_APPLICATION_ERROR(-20023, 'Payment Error: Cash on Delivery is strictly for Deliveries. Please use E-Wallet or Card for Pickups.');
             END IF;
 
-            -- RULE 3: Rider Safety limit (Do not allow COD for massive orders)
             IF v_order_total > 200.00 THEN
                 RAISE_APPLICATION_ERROR(-20024, 'Security Error: Cash on Delivery is disabled for orders exceeding RM 200.00 for rider safety. Please use a digital payment method.');
             END IF;
 
-            -- RULE 4: Logical chronology check (You can't collect cash if the food hasn't left the kitchen)
             IF :NEW.PaymentStatus = 'Completed' AND v_order_status = 'Pending' THEN
                 RAISE_APPLICATION_ERROR(-20025, 'Process Error: Cash on Delivery cannot be marked Completed while the OrderStatus is still Pending.');
             END IF;

@@ -2,26 +2,22 @@ CREATE OR REPLACE TRIGGER TRG_ENFORCE_DEBT_LOCK
 BEFORE INSERT ON ORDERS
 FOR EACH ROW
 DECLARE
-    -- This special command prevents the "Mutating Table" error when querying the ORDERS table!
-    PRAGMA AUTONOMOUS_TRANSACTION;
+       PRAGMA AUTONOMOUS_TRANSACTION;
     v_debt_count NUMBER;
 BEGIN
-    -- Query past orders for this specific member to see if any payments failed or are pending
-    SELECT COUNT(*)
+        SELECT COUNT(*)
     INTO v_debt_count
     FROM ORDERS o
     JOIN PAYMENT p ON o.OrderID = p.OrderID
     WHERE o.MemberID = :NEW.MemberID
     AND p.PaymentStatus IN ('Pending', 'Failed');
 
-    -- If we found any unpaid debts, block the new order!
-    IF v_debt_count > 0 THEN
+       IF v_debt_count > 0 THEN
         -- We must commit the autonomous transaction before raising an error
         COMMIT; 
         RAISE_APPLICATION_ERROR(-20001, 'ORDER BLOCKED: You have an outstanding or failed payment. Please settle your debt before placing a new order.');
     END IF;
 
-    -- If no debt is found, silently commit the read and let the order proceed
-    COMMIT; 
+        COMMIT; 
 END;
 /
