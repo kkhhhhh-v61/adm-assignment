@@ -6,75 +6,32 @@ SET FEEDBACK OFF
 CREATE OR REPLACE VIEW vw_order_composition AS
 SELECT
     'Package' AS CompositionType,
-    P.PackageName AS EntityName,
     OP.Quantity,
     (OP.Quantity * OP.PriceEach) AS RevenueGenerated
 FROM ORDERPACKAGE OP
-JOIN PACKAGE P ON OP.PackageID = P.PackageID
 JOIN ORDERS O ON OP.OrderID = O.OrderID
 WHERE O.OrderStatus = 'Completed'
 UNION ALL
 SELECT
     'Set' AS CompositionType,
-    S.SetName AS EntityName,
     OI.Quantity,
     (OI.Quantity * OI.PriceEach) AS RevenueGenerated
 FROM ORDERITEM OI
-JOIN ITEMSET S ON OI.ItemSetID = S.ItemSetID
 JOIN ORDERS O ON OI.OrderID = O.OrderID
 WHERE O.OrderStatus = 'Completed'
+  AND OI.ItemSetID IS NOT NULL
 UNION ALL
 SELECT
     'Individual Item' AS CompositionType,
-    I.ItemName AS EntityName,
     OI.Quantity,
     (OI.Quantity * OI.PriceEach) AS RevenueGenerated
 FROM ORDERITEM OI
-JOIN ITEM I ON OI.ItemID = I.ItemID
 JOIN ORDERS O ON OI.OrderID = O.OrderID
-WHERE OI.ItemSetID IS NULL 
-AND O.OrderStatus = 'Completed';
-
-SET LINESIZE 110
-SET PAGESIZE 100
-SET SQLBLANKLINES ON
-SET COLSEP ' | '
-
-COLUMN CompositionType FORMAT A25 HEADING 'COMPOSITION TYPE'
-COLUMN TOTAL_UNITS FORMAT 999,990 HEADING 'TOTAL UNITS SOLD'
-COLUMN TOTAL_REVENUE FORMAT $99,999,990.99 HEADING 'TOTAL REVENUE (RM)'
-COLUMN REVENUE_SHARE FORMAT 990.00 HEADING 'CONTRIBUTION (%)'
-
-TTITLE LEFT '====================================================================================' SKIP 1 -
-       LEFT '                         ORDER COMPOSITION REVENUE ANALYSIS                         ' SKIP 1 -
-       LEFT '====================================================================================' SKIP 1
-
-BREAK ON REPORT
-COMPUTE SUM LABEL 'GRAND TOTAL :' OF TOTAL_UNITS TOTAL_REVENUE REVENUE_SHARE ON REPORT
-
-SELECT
-    CompositionType,
-    SUM(Quantity) AS TOTAL_UNITS,
-    SUM(RevenueGenerated) AS TOTAL_REVENUE,
-    ROUND(RATIO_TO_REPORT(SUM(RevenueGenerated)) OVER () * 100, 2) AS REVENUE_SHARE
-FROM vw_order_composition
-GROUP BY CompositionType
-ORDER BY TOTAL_REVENUE DESC;
-
-TTITLE OFF
-CLEAR BREAKS
-CLEAR COMPUTES
-SET HEADING OFF
+WHERE O.OrderStatus = 'Completed'
+  AND OI.ItemSetID IS NULL;
 
 DECLARE
-    v_compType VARCHAR2(25);
-    v_units NUMBER;
-    v_revenue NUMBER;
-    v_contrib NUMBER;
-BEGIN
-    SELECT CompositionType, TOTAL_UNITS, TOTAL_REVENUE, REVENUE_SHARE
-    INTO v_compType, v_units, v_revenue, v_contrib
-    FROM (
+    CURSOR c_comp IS
         SELECT
             CompositionType,
             SUM(Quantity) AS TOTAL_UNITS,
@@ -82,21 +39,77 @@ BEGIN
             ROUND(RATIO_TO_REPORT(SUM(RevenueGenerated)) OVER () * 100, 2) AS REVENUE_SHARE
         FROM vw_order_composition
         GROUP BY CompositionType
-        ORDER BY TOTAL_REVENUE DESC
-    )
-    WHERE ROWNUM = 1;
+        ORDER BY TOTAL_REVENUE DESC;
+        
+    v_grand_units   NUMBER := 0;
+    v_grand_revenue NUMBER := 0;
+    v_grand_share   NUMBER := 0;
+    
+    v_top_compType  VARCHAR2(25);
+    v_top_units     NUMBER;
+    v_top_revenue   NUMBER;
+    v_top_contrib   NUMBER;
+    v_is_first      BOOLEAN := TRUE;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 84, '='));
+    DBMS_OUTPUT.PUT_LINE(LPAD(' ', 25, ' ') || 'ORDER COMPOSITION REVENUE ANALYSIS');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 84, '='));
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('COMPOSITION TYPE', 25, ' ') || ' | ' ||
+        LPAD('TOTAL UNITS SOLD', 16, ' ') || ' | ' ||
+        LPAD('TOTAL REVENUE (RM)', 18, ' ') || ' | ' ||
+        LPAD('CONTRIBUTION (%)', 16, ' ')
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 25, '-') || '-+-' ||
+        RPAD('-', 16, '-') || '-+-' ||
+        RPAD('-', 18, '-') || '-+-' ||
+        RPAD('-', 16, '-')
+    );
 
-    DBMS_OUTPUT.PUT_LINE('====================================================================================');
+    FOR r IN c_comp LOOP
+        IF v_is_first THEN
+            v_top_compType := r.CompositionType;
+            v_top_units    := r.TOTAL_UNITS;
+            v_top_revenue  := r.TOTAL_REVENUE;
+            v_top_contrib  := r.REVENUE_SHARE;
+            v_is_first     := FALSE;
+        END IF;
+        
+        v_grand_units   := v_grand_units + r.TOTAL_UNITS;
+        v_grand_revenue := v_grand_revenue + r.TOTAL_REVENUE;
+        v_grand_share   := v_grand_share + r.REVENUE_SHARE;
+        
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(r.CompositionType, 25, ' ') || ' | ' ||
+            LPAD(TO_CHAR(r.TOTAL_UNITS, '999,990'), 16, ' ') || ' | ' ||
+            LPAD(TO_CHAR(r.TOTAL_REVENUE, '$99,999,990.99'), 18, ' ') || ' | ' ||
+            LPAD(TO_CHAR(r.REVENUE_SHARE, '990.00'), 16, ' ')
+        );
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 25, '-') || '-+-' ||
+        RPAD('-', 16, '-') || '-+-' ||
+        RPAD('-', 18, '-') || '-+-' ||
+        RPAD('-', 16, '-')
+    );
+    
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('GRAND TOTAL :', 25, ' ') || ' | ' ||
+        LPAD(TO_CHAR(v_grand_units, '999,990'), 16, ' ') || ' | ' ||
+        LPAD(TO_CHAR(v_grand_revenue, '$99,999,990.99'), 18, ' ') || ' | ' ||
+        LPAD(TO_CHAR(v_grand_share, '990.00'), 16, ' ')
+    );
+    
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 84, '='));
     DBMS_OUTPUT.PUT_LINE(' [ ORDER COMPOSITION SUMMARY ]');
-    DBMS_OUTPUT.PUT_LINE(' >> TOP COMPOSITION TYPE : ' || v_compType);
-    DBMS_OUTPUT.PUT_LINE(' >> TOTAL UNITS SOLD     : ' || v_units);
-    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.99'));
-    DBMS_OUTPUT.PUT_LINE(' >> REVENUE CONTRIBUTION : ' || v_contrib || '%');
-    DBMS_OUTPUT.PUT_LINE('====================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP COMPOSITION TYPE : ' || v_top_compType);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL UNITS SOLD     : ' || v_top_units);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || TO_CHAR(v_top_revenue, 'FM99,999,990.99'));
+    DBMS_OUTPUT.PUT_LINE(' >> REVENUE CONTRIBUTION : ' || v_top_contrib || '%');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 84, '='));
 END;
 /
 
-SET HEADING ON
 SET FEEDBACK ON
-CLEAR COLUMNS
-SET COLSEP ' '

@@ -1,4 +1,4 @@
-CL SCR;
+CL SCR
 
 CREATE OR REPLACE TRIGGER trg_limit_rider_workload
 BEFORE INSERT ON DELIVERY
@@ -6,7 +6,10 @@ FOR EACH ROW
 DECLARE
     PRAGMA AUTONOMOUS_TRANSACTION;
     v_active_count NUMBER;
+    v_rider_rating DELIVERYRIDER.AverageRating%TYPE;
+    v_max_limit    NUMBER;
 BEGIN
+    -- 1. Get current active deliveries
     SELECT COUNT(O.OrderID)
     INTO v_active_count
     FROM ORDERS O
@@ -14,9 +17,25 @@ BEGIN
     WHERE D.DeliveryRiderID = :NEW.DeliveryRiderID
     AND O.OrderStatus = 'Delivering';
 
-    IF v_active_count >= 3 THEN
+    -- 2. Get Rider's Rating
+    SELECT AverageRating 
+    INTO v_rider_rating 
+    FROM DELIVERYRIDER 
+    WHERE DeliveryRiderID = :NEW.DeliveryRiderID;
+
+    -- 3. Determine Dynamic Limit
+    IF v_rider_rating >= 4.5 THEN
+        v_max_limit := 5;
+    ELSIF v_rider_rating >= 3.0 THEN
+        v_max_limit := 3;
+    ELSE
+        v_max_limit := 1;
+    END IF;
+
+    -- 4. Validate
+    IF v_active_count >= v_max_limit THEN
         ROLLBACK;
-        RAISE_APPLICATION_ERROR(-20010, 'Workload Limit Exceeded: Rider is currently handling the maximum of 3 active deliveries.');
+        RAISE_APPLICATION_ERROR(-20010, 'Workload Limit Exceeded: Rider rating is ' || v_rider_rating || ' (Max allowed: ' || v_max_limit || ' deliveries).');
     END IF;
     
     COMMIT;

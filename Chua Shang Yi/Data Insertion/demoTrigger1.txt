@@ -1,268 +1,35 @@
 CL SCR
 SET SERVEROUTPUT ON
+SET DEFINE OFF
 
 COLUMN MEMBERVOUCHERID FORMAT A15
 COLUMN VOUCHERID FORMAT A10
 COLUMN ISUSED FORMAT A6
 
-PROMPT ========================================
+PROMPT ==================================================
 PROMPT CLEAN OLD DEMO DATA
-PROMPT ========================================
+PROMPT ==================================================
 
-DELETE FROM MEMBERVOUCHER WHERE MemberID = 'M44444';
+DELETE FROM MEMBERVOUCHER WHERE MemberID LIKE 'M4444%';
 DELETE FROM PAYMENT WHERE OrderID LIKE 'O4444%';
 DELETE FROM ORDERS WHERE OrderID LIKE 'O4444%';
-DELETE FROM VOUCHER WHERE VoucherID = 'V44444';
-DELETE FROM MEMBER WHERE MemberID = 'M44444';
+DELETE FROM VOUCHER WHERE VoucherID LIKE 'V4444%';
+DELETE FROM MEMBER WHERE MemberID LIKE 'M4444%';
 
 COMMIT;
 
-
-PROMPT ========================================
+PROMPT ==================================================
 PROMPT CREATE DEMO MEMBER
-PROMPT ========================================
+PROMPT ==================================================
 
 INSERT INTO MEMBER VALUES
-(
-'M44444',
-'Demo Member',
-'demo44444@email.com',
-'0124444444',
-'password',
-SYSDATE
-);
-
-
-PROMPT ========================================
-PROMPT CREATE WELCOME VOUCHER
-PROMPT ========================================
-
-INSERT INTO VOUCHER
-VALUES
-(
-'V44444',
-'VT00001',
-'WELCOME REWARD',
-'WELCOME44444',
-0.10,
-NULL,
-0,
-20,
-SYSDATE + 30
-);
-
-
-PROMPT ========================================
-PROMPT SUCCESS CASE
-PROMPT First order completed + payment completed
-PROMPT ========================================
-
-INSERT INTO ORDERS VALUES
-(
-'O44444',
-'M44444',
-NULL,
-NULL,
-'Pickup',
-SYSDATE,
-'12:00 PM',
-50,
-'Pending'
-);
-
-INSERT INTO PAYMENT VALUES
-(
-'PM44444',
-'O44444',
-NULL,
-'E-Wallet',
-'Completed'
-);
+('M44444','Demo Member','demorehesrh@email.com','0124444444','pass',SYSDATE);
 
 COMMIT;
 
-
-PROMPT -------- BEFORE TRIGGER --------
-
-SELECT *
-FROM MEMBERVOUCHER
-WHERE MemberID = 'M44444';
-
-
-PROMPT Updating order to Completed...
-
-UPDATE ORDERS
-SET OrderStatus = 'Completed'
-WHERE OrderID = 'O44444';
-
-COMMIT;
-
-
-PROMPT -------- AFTER TRIGGER --------
-
-SELECT *
-FROM MEMBERVOUCHER
-WHERE MemberID = 'M44444';
-
-
-
-PROMPT ========================================
-PROMPT FAIL CASE 1
-PROMPT Payment NOT completed
-PROMPT ========================================
-
-DELETE FROM PAYMENT WHERE OrderID = 'O44444';
-DELETE FROM ORDERS WHERE OrderID = 'O44444';
-COMMIT;
-
-INSERT INTO ORDERS VALUES
-(
-'O44444',
-'M44444',
-NULL,
-NULL,
-'Pickup',
-SYSDATE,
-'1:00 PM',
-30,
-'Pending'
-);
-
-INSERT INTO PAYMENT VALUES
-(
-'PM44444',
-'O44444',
-NULL,
-'E-Wallet',
-'Pending'
-);
-
-COMMIT;
-
-
-UPDATE ORDERS
-SET OrderStatus = 'Completed'
-WHERE OrderID = 'O44444';
-
-
-
-PROMPT ========================================
-PROMPT FAIL CASE 2
-PROMPT Welcome voucher not configured
-PROMPT ========================================
-
-DELETE FROM MEMBERVOUCHER WHERE MemberID = 'M44444';
-DELETE FROM PAYMENT WHERE OrderID = 'O44444';
-DELETE FROM ORDERS WHERE OrderID = 'O44444';
-DELETE FROM VOUCHER WHERE VoucherID = 'V44444';
-
-INSERT INTO ORDERS VALUES
-(
-'O44444',
-'M44444',
-NULL,
-NULL,
-'Pickup',
-SYSDATE,
-'12:00 PM',
-50,
-'Pending'
-);
-
-INSERT INTO PAYMENT VALUES
-(
-'PM44444',
-'O44444',
-NULL,
-'E-Wallet',
-'Completed'
-);
-
-
-COMMIT;
-
-UPDATE ORDERS
-SET OrderStatus = 'Completed'
-WHERE OrderID = 'O44444';
-
-
-
-
-PROMPT ========================================
-PROMPT FAIL CASE 3
-PROMPT Reward already issued
-PROMPT ========================================
-
-INSERT INTO VOUCHER
-VALUES
-(
-'V44444',
-'VT00001',
-'WELCOME REWARD',
-'WELCOME44444',
-0.10,
-NULL,
-0,
-20,
-SYSDATE + 30
-);
-
-DELETE FROM MEMBERVOUCHER WHERE MemberID = 'M44444';
-COMMIT;
-
-INSERT INTO MEMBERVOUCHER VALUES
-(
-'MV44444',
-'M44444',
-'V44444',
-SYSDATE,
-'N'
-);
-
-COMMIT;
-
-DELETE FROM PAYMENT WHERE OrderID = 'O44444';
-DELETE FROM ORDERS WHERE OrderID = 'O44444';
-COMMIT;
-
-INSERT INTO ORDERS VALUES
-(
-'O44444',
-'M44444',
-NULL,
-NULL,
-'Pickup',
-SYSDATE,
-'3:00 PM',
-20,
-'Pending'
-);
-
-INSERT INTO PAYMENT VALUES
-(
-'PM44444',
-'O44444',
-NULL,
-'E-Wallet',
-'Completed'
-);
-
-COMMIT;
-
-
-UPDATE ORDERS
-SET OrderStatus = 'Completed'
-WHERE OrderID = 'O44444';
-
-
-
-PROMPT ========================================
-PROMPT FAIL CASE 4
-PROMPT Voucher expired
-PROMPT ========================================
-
-DELETE FROM MEMBERVOUCHER WHERE VoucherID='V44444';
-DELETE FROM VOUCHER WHERE VoucherID='V44444';
+PROMPT ==================================================
+PROMPT CREATE VALID VOUCHER
+PROMPT ==================================================
 
 INSERT INTO VOUCHER VALUES
 (
@@ -274,73 +41,178 @@ INSERT INTO VOUCHER VALUES
 NULL,
 0,
 20,
-SYSDATE - 1
+SYSDATE+30
 );
 
 COMMIT;
 
-DELETE FROM PAYMENT WHERE OrderID = 'O44444';
-DELETE FROM ORDERS WHERE OrderID = 'O44444';
-DELETE FROM MEMBERVOUCHER WHERE MemberID = 'M44444';
-COMMIT;
+---------------------------------------------------------
+-- SUCCESS CASE
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT SUCCESS CASE : FIRST ORDER REWARD
+PROMPT ==================================================
 
 INSERT INTO ORDERS VALUES
-(
-'O44444',
-'M44444',
-NULL,
-NULL,
-'Pickup',
-SYSDATE,
-'4:00 PM',
-60,
-'Pending'
-);
+('O44441','M44444',NULL,NULL,'Pickup',SYSDATE,'12:00 PM',50,'Pending');
 
 INSERT INTO PAYMENT VALUES
-(
-'PM44444',
-'O44444',
-NULL,
-'E-Wallet',
-'Completed'
-);
+('PM44441','O44441',NULL,'E-Wallet','Completed');
 
 COMMIT;
 
+PROMPT BEFORE TRIGGER
+SELECT * FROM MEMBERVOUCHER WHERE MemberID='M44444';
+
+PROMPT AFTER TRIGGER
+UPDATE ORDERS
+SET OrderStatus='Completed'
+WHERE OrderID='O44441';
+
+COMMIT;
+
+SELECT * FROM MEMBERVOUCHER WHERE MemberID='M44444';
+
+
+---------------------------------------------------------
+-- FAIL CASE 1
+-- PAYMENT RECORD MISSING
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT FAIL CASE 1 : PAYMENT RECORD MISSING
+PROMPT ==================================================
+
+INSERT INTO ORDERS VALUES
+('O44444','M44444',NULL,NULL,'Pickup',SYSDATE,'3:00 PM',30,'Pending');
+
+COMMIT;
 
 UPDATE ORDERS
-SET OrderStatus = 'Completed'
-WHERE OrderID = 'O44444';
+SET OrderStatus='Completed'
+WHERE OrderID='O44444';
 
 
+---------------------------------------------------------
+-- FAIL CASE 2
+-- PAYMENT NOT COMPLETED
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT FAIL CASE 2 : PAYMENT NOT COMPLETED
+PROMPT ==================================================
 
-PROMPT ========================================
-PROMPT FAIL CASE 5
-PROMPT Missing payment record
-PROMPT ========================================
+INSERT INTO ORDERS VALUES
+('O44445','M44444',NULL,NULL,'Pickup',SYSDATE,'4:00 PM',30,'Pending');
 
-DELETE FROM PAYMENT WHERE OrderID = 'O44444';
-DELETE FROM ORDERS WHERE OrderID = 'O44444';
-DELETE FROM MEMBERVOUCHER WHERE MemberID = 'M44444';
+INSERT INTO PAYMENT VALUES
+('PM44445','O44445',NULL,'E-Wallet','Pending');
+
+COMMIT;
+
+UPDATE ORDERS
+SET OrderStatus='Completed'
+WHERE OrderID='O44445';
+
+
+---------------------------------------------------------
+-- FAIL CASE 3
+-- ORDER DATE IN FUTURE
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT FAIL CASE 3 : ORDER DATE IN FUTURE
+PROMPT ==================================================
+
+INSERT INTO ORDERS VALUES
+('O44446','M44444',NULL,NULL,'Pickup',SYSDATE+5,'5:00 PM',30,'Pending');
+
+INSERT INTO PAYMENT VALUES
+('PM44446','O44446',NULL,'E-Wallet','Completed');
+
+COMMIT;
+
+UPDATE ORDERS
+SET OrderStatus='Completed'
+WHERE OrderID='O44446';
+
+
+---------------------------------------------------------
+-- FAIL CASE 4
+-- VOUCHER NOT CONFIGURED
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT FAIL CASE 4 : VOUCHER NOT CONFIGURED
+PROMPT ==================================================
+
+DELETE FROM MEMBERVOUCHER WHERE MemberID LIKE 'M4444%';
+DELETE FROM VOUCHER WHERE VoucherName='WELCOME REWARD';
 COMMIT;
 
 INSERT INTO ORDERS VALUES
-(
-'O44444',
-'M44444',
-NULL,
-NULL,
-'Pickup',
-SYSDATE,
-'5:00 PM',
-25,
-'Pending'
-);
+('O44447','M44444',NULL,NULL,'Pickup',SYSDATE,'6:00 PM',30,'Pending');
+
+INSERT INTO PAYMENT VALUES
+('PM44447','O44447',NULL,'E-Wallet','Completed');
 
 COMMIT;
 
+UPDATE ORDERS
+SET OrderStatus='Completed'
+WHERE OrderID='O44447';
+
+
+---------------------------------------------------------
+-- FAIL CASE 5
+-- VOUCHER EXPIRED
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT FAIL CASE 5 : VOUCHER EXPIRED
+PROMPT ==================================================
+
+INSERT INTO VOUCHER VALUES
+('V44445','VT00001','WELCOME REWARD','WELCOMEEXP',0.10,NULL,0,20,SYSDATE-1);
+
+COMMIT;
+
+INSERT INTO ORDERS VALUES
+('O44448','M44444',NULL,NULL,'Pickup',SYSDATE,'7:00 PM',30,'Pending');
+
+INSERT INTO PAYMENT VALUES
+('PM44448','O44448',NULL,'E-Wallet','Completed');
+
+COMMIT;
 
 UPDATE ORDERS
-SET OrderStatus = 'Completed'
-WHERE OrderID = 'O44444';
+SET OrderStatus='Completed'
+WHERE OrderID='O44448';
+
+
+---------------------------------------------------------
+-- FAIL CASE 6
+-- REWARD ALREADY ISSUED
+---------------------------------------------------------
+PROMPT
+PROMPT ==================================================
+PROMPT FAIL CASE 6 : REWARD ALREADY ISSUED
+PROMPT ==================================================
+
+INSERT INTO MEMBERVOUCHER VALUES
+('MV44444','M44444','V44445',SYSDATE,'N');
+
+COMMIT;
+
+INSERT INTO ORDERS VALUES
+('O44449','M44444',NULL,NULL,'Pickup',SYSDATE,'8:00 PM',30,'Pending');
+
+INSERT INTO PAYMENT VALUES
+('PM44449','O44449',NULL,'E-Wallet','Completed');
+
+COMMIT;
+
+UPDATE ORDERS
+SET OrderStatus='Completed'
+WHERE OrderID='O44449';

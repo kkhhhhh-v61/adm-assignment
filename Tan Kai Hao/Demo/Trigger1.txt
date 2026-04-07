@@ -7,10 +7,25 @@ SET LINESIZE 100;
 PROMPT
 PROMPT ====================================================================================================
 PROMPT CASE 1: ASSIGN DELIVERY WITHIN WORKLOAD LIMIT
-PROMPT Description: Assigning deliveries to a rider who has not yet reached the maximum active workload (3).
-EXEC prc_assign_rider('O10007', 'DR10002');
+PROMPT Description: Assigning deliveries to a rider who has not yet reached the maximum active workload.
+PROMPT ====================================================================================================
+PROMPT CASE 1.1: BRONZE RIDER
+PROMPT Description: Assigning up to 3 deliveries for rider with AverageRating between 3.0 and 4.49.
+EXEC prc_assign_rider('O10007', 'DR10001');
 PROMPT
-EXEC prc_assign_rider('O10008', 'DR10002');
+EXEC prc_assign_rider('O10008', 'DR10001');
+PROMPT 
+PROMPT ====================================================================================================
+PROMPT CASE 1.2: DIAMOND RIDER
+PROMPT Description: Assigning up to 5 deliveries for rider with AverageRating above 4.5.
+EXEC prc_assign_rider('O10009', 'DR10002');
+PROMPT
+EXEC prc_assign_rider('O10010', 'DR10002');
+PROMPT
+EXEC prc_assign_rider('O10011', 'DR10002');
+PROMPT
+EXEC prc_assign_rider('O10012', 'DR10002');
+PROMPT
 
 COLUMN OrderID FORMAT A7
 COLUMN DeliveryID FORMAT A10
@@ -20,12 +35,26 @@ COLUMN OrderStatus FORMAT A11
 SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
 FROM ORDERS O
 JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+WHERE D.DeliveryRiderID = 'DR10001' AND O.OrderStatus = 'Delivering';
+
+SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
+FROM ORDERS O
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
 WHERE D.DeliveryRiderID = 'DR10002' AND O.OrderStatus = 'Delivering';
 
 PROMPT
 PROMPT ====================================================================================================
 PROMPT CASE 2: RIDER WORKLOAD LIMIT EXCEEDED
-PROMPT Description: Attempting to assign a delivery to a rider who already has 3 active deliveries.
-EXEC prc_assign_rider('O10009', 'DR10002');
+PROMPT Description: Assign a delivery to a rider who already has the maximum active deliveries.
+PROMPT ====================================================================================================
+PROMPT CASE 2.1: BRONZE RIDER
+PROMPT Description: Assign a deliveyr to a rider who already has the maximum of 3 active deliveries.
+EXEC prc_assign_rider('O10013', 'DR10001');
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2.2: DIAMOND RIDER
+PROMPT Description: Assign a deliveyr to a rider who already has the maximum of 5 active deliveries.
+EXEC prc_assign_rider('O10013', 'DR10002');
+PROMPT
 
 SET FEEDBACK ON;

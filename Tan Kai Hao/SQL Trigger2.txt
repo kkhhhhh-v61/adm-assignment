@@ -1,4 +1,4 @@
-CL SCR;
+CL SCR
 
 CREATE OR REPLACE TRIGGER trg_auto_cancel_failed_payment
 BEFORE UPDATE OF PaymentStatus ON PAYMENT

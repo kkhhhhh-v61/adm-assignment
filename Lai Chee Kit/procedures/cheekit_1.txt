@@ -1,5 +1,5 @@
 CREATE OR REPLACE PROCEDURE PR_MANAGE_SUBSCRIPTION (
-    p_action      IN VARCHAR2, -- Accepts 'EXTEND' or 'CANCEL'
+    p_action      IN VARCHAR2, 
     p_member_id   IN MEMBER.MemberID%TYPE,
     p_plan_id     IN SUBSCRIPTIONPLAN.SubscriptionPlanID%TYPE DEFAULT NULL
 ) AS
@@ -71,11 +71,11 @@ BEGIN
         v_new_start := v_old_end_date;
         v_new_end := v_new_start + v_plan_rec.DurationInDays;
 
-        -- Generate Auto-IDs
-        SELECT 'S' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(SubscriptionID, 2))), 0) + 1, 5, '0') 
+        -- Generate Auto-IDs (Starting from 82000)
+        SELECT 'S' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(SubscriptionID, 2))), 82000) + 1, 5, '0') 
         INTO v_new_sub_id FROM SUBSCRIPTION;
 
-        SELECT 'PM' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(PaymentID, 3))), 0) + 1, 5, '0') 
+        SELECT 'PM' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(PaymentID, 3))), 82000) + 1, 5, '0') 
         INTO v_new_pay_id FROM PAYMENT;
 
         -- Insert Records

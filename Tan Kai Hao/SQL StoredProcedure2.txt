@@ -50,7 +50,7 @@ AS
     v_disc_price NUMBER(8,2) := 0;
 
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
     DBMS_OUTPUT.PUT_LINE('PARSED PACKAGE PARAMETERS');
     DBMS_OUTPUT.PUT_LINE('>> Item 1   : ' || p_item1_id || ' (Qty: ' || p_qty1 || ')');
     DBMS_OUTPUT.PUT_LINE('>> Item 2   : ' || p_item2_id || ' (Qty: ' || p_qty2 || ')');
@@ -146,7 +146,7 @@ BEGIN
 
     COMMIT;
 
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
     DBMS_OUTPUT.PUT_LINE(' PACKAGE PROFILE ');
     DBMS_OUTPUT.PUT_LINE('  * Package ID   : ' || v_pkg_id);
     DBMS_OUTPUT.PUT_LINE('  * Package Name : ' || v_pkg_name);
@@ -165,20 +165,20 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(' PACKAGE PRICING CALCULATION ');
     DBMS_OUTPUT.PUT_LINE(RPAD('  * Original Accumulated Price', 40) || ': RM ' || TO_CHAR(v_orig_price, 'FM99,990.90'));
     DBMS_OUTPUT.PUT_LINE(RPAD('  * Discount Applied', 40) || ': ' || (p_discount * 100) || '%');
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
     DBMS_OUTPUT.PUT_LINE(RPAD(' >> FINAL DISCOUNTED PACKAGE PRICE', 40) || ': RM ' || TO_CHAR(v_disc_price, 'FM99,990.90'));
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
     DBMS_OUTPUT.PUT_LINE('* SUCCESS: New Package created and items linked successfully. *');
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
 
 EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
-        DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
         DBMS_OUTPUT.PUT_LINE('EXECUTION TERMINATED WITH EXCEPTION');
         DBMS_OUTPUT.PUT_LINE('ERROR at procedure execution:');
         DBMS_OUTPUT.PUT_LINE(SQLERRM);
-        DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+        DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
 END;
 /
 

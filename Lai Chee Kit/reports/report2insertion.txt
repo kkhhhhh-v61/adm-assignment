@@ -1,0 +1,148 @@
+CLEAR SCREEN;
+SET DEFINE OFF;
+
+-- ====================================================================================
+-- BASE DATA SETUP (Addresses, Restaurants, Items, Promos, Vouchers, Members)
+-- ====================================================================================
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A81000', '1 Stack St', 'KL', 'KL', '50000');
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, AverageRating, IsHalal, OperationHours) VALUES ('R81000', 'A81000', 'Promo Palace', '03-123', 4.5, 'Y', '24 Hrs');
+INSERT INTO CATEGORY (CategoryID, CategoryName, Description) VALUES ('C81000', 'Meals81', 'Sets');
+
+-- 3 Items with different prices
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I81001', 'R81000', 'C81000', 'Burger Combo', 'Yummy', 20.00, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I81002', 'R81000', 'C81000', 'Premium Sushi', 'Fresh', 50.00, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I81003', 'R81000', 'C81000', 'Family Pizza', 'Huge', 80.00, 'Y');
+
+-- 3 Active Promotions
+INSERT INTO PROMOTION (PromotionID, PromoName, Discount, MinSpendAmount, MaxDiscountAmount, MaxRedemptions, StartDate, EndDate, IsActive) VALUES ('P81001', 'YearLong 50%', 0.50, 0, 100, 9999, TO_DATE('2024-01-01', 'YYYY-MM-DD'), TO_DATE('2024-12-31', 'YYYY-MM-DD'), 'Y');
+INSERT INTO PROMOTION (PromotionID, PromoName, Discount, MinSpendAmount, MaxDiscountAmount, MaxRedemptions, StartDate, EndDate, IsActive) VALUES ('P81002', 'Summer Fest 20%', 0.20, 0, 100, 9999, TO_DATE('2024-06-01', 'YYYY-MM-DD'), TO_DATE('2024-09-30', 'YYYY-MM-DD'), 'Y');
+INSERT INTO PROMOTION (PromotionID, PromoName, Discount, MinSpendAmount, MaxDiscountAmount, MaxRedemptions, StartDate, EndDate, IsActive) VALUES ('P81003', 'May Madness 30%', 0.30, 0, 100, 9999, TO_DATE('2024-05-01', 'YYYY-MM-DD'), TO_DATE('2024-05-31', 'YYYY-MM-DD'), 'Y');
+
+INSERT INTO ITEMPROMOTION (ItemID, PromotionID) VALUES ('I81001', 'P81001');
+INSERT INTO ITEMPROMOTION (ItemID, PromotionID) VALUES ('I81002', 'P81002');
+INSERT INTO ITEMPROMOTION (ItemID, PromotionID) VALUES ('I81003', 'P81003');
+
+-- Vouchers Types & 5 Diverse Vouchers
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT81000', 'Discount81', 'Percentage Based');
+INSERT INTO VOUCHERTYPE (VoucherTypeID, TypeName, Description) VALUES ('VT81001', 'FlatRate81', 'Flat Amount Off');
+
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, MinSpendAmount, MaxDiscountAmount, ExpiryDate) VALUES ('V81001', 'VT81000', 'Extra 10% Off', 'STACK81', 0.10, 0, 50, TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, MinSpendAmount, MaxDiscountAmount, ExpiryDate) VALUES ('V81002', 'VT81000', 'VIP 20% Off', 'VIP81', 0.20, 0, 50, TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, MinSpendAmount, MaxDiscountAmount, ExpiryDate) VALUES ('V81003', 'VT81001', 'Flat RM5 Off', 'FIVE81', 0.00, 0, 5, TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, MinSpendAmount, MaxDiscountAmount, ExpiryDate) VALUES ('V81004', 'VT81001', 'Loyalty RM10 Off', 'TEN81', 0.00, 0, 10, TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, MinSpendAmount, MaxDiscountAmount, ExpiryDate) VALUES ('V81005', 'VT81000', 'Crazy 25% Off', 'CRAZY81', 0.25, 0, 50, TO_DATE('2024-12-31', 'YYYY-MM-DD'));
+
+-- 5 Diverse Members
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M81001', 'Stacker Steve', 'steve81@db.com', '011-81001', 'pass123', SYSDATE);
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M81002', 'Bargain Betty', 'betty81@db.com', '011-81002', 'pass123', SYSDATE);
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M81003', 'Coupon Carl', 'carl81@db.com', '011-81003', 'pass123', SYSDATE);
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M81004', 'Discount Dan', 'dan81@db.com', '011-81004', 'pass123', SYSDATE);
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M81005', 'Frugal Fiona', 'fiona81@db.com', '011-81005', 'pass123', SYSDATE);
+
+
+-- ====================================================================================
+-- TEST 1 DATA: MAY 2024
+-- ====================================================================================
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81001', 'M81001', 'V81001', TO_DATE('2024-05-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81001', 'M81001', 'MV81001', 'Delivery', TO_DATE('2024-05-15', 'YYYY-MM-DD'), '12:00', 50.40, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81001', 'I81003', 1, 50.40);
+
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81002', 'M81002', 'V81002', TO_DATE('2024-05-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81002', 'M81002', 'MV81002', 'Delivery', TO_DATE('2024-05-20', 'YYYY-MM-DD'), '13:00', 16.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81002', 'I81001', 2, 8.00);
+
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81003', 'M81003', 'V81003', TO_DATE('2024-05-05','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81003', 'M81003', 'MV81003', 'Pickup', TO_DATE('2024-05-25', 'YYYY-MM-DD'), '14:00', 35.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81003', 'I81002', 1, 35.00);
+
+
+-- ====================================================================================
+-- TEST 2 DATA: Q3 2024 (EXPANDED JULY, AUG, SEP)
+-- ====================================================================================
+
+-- 1. JUL: Fiona makes a NORMAL order (No Voucher applied)
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81004', 'M81005', NULL, 'Delivery', TO_DATE('2024-07-05', 'YYYY-MM-DD'), '12:30', 40.00, 'Completed');
+-- Original 50 -> Promo 20% (40)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81004', 'I81002', 1, 40.00);
+
+-- 2. JUL: Steve stacks a Flat RM5 Off Voucher
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81004', 'M81001', 'V81003', TO_DATE('2024-07-10','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81005', 'M81001', 'MV81004', 'Pickup', TO_DATE('2024-07-15', 'YYYY-MM-DD'), '19:00', 51.00, 'Completed');
+-- Original 80 -> Promo 30% (56) -> Flat RM5 Voucher (51)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81005', 'I81003', 1, 51.00);
+
+-- 3. JUL: Betty uses Crazy 25% Off Voucher on cheap combo
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81005', 'M81002', 'V81005', TO_DATE('2024-07-20','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81006', 'M81002', 'MV81005', 'Delivery', TO_DATE('2024-07-28', 'YYYY-MM-DD'), '21:00', 7.50, 'Completed');
+-- Original 20 -> Promo 50% (10) -> 25% Voucher (7.50)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81006', 'I81001', 1, 7.50);
+
+-- 4. AUG: Carl stacks Loyalty RM10 Off
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81006', 'M81003', 'V81004', TO_DATE('2024-08-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81007', 'M81003', 'MV81006', 'Pickup', TO_DATE('2024-08-02', 'YYYY-MM-DD'), '18:00', 30.00, 'Completed');
+-- Original 50 -> Promo 20% (40) -> Flat RM10 Voucher (30)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81007', 'I81002', 1, 30.00);
+
+-- 5. AUG: Dan makes a NORMAL order (No voucher)
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81008', 'M81004', NULL, 'Delivery', TO_DATE('2024-08-18', 'YYYY-MM-DD'), '13:15', 20.00, 'Completed');
+-- Original 20 -> Promo 50% (10) x2 quantity = 20
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81008', 'I81001', 2, 10.00);
+
+-- 6. AUG: Fiona stacks 10% Extra Off Voucher
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81007', 'M81005', 'V81001', TO_DATE('2024-08-15','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81009', 'M81005', 'MV81007', 'Delivery', TO_DATE('2024-08-25', 'YYYY-MM-DD'), '20:30', 50.40, 'Completed');
+-- Original 80 -> Promo 30% (56) -> Stacked Voucher 10% (50.40)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81009', 'I81003', 1, 50.40);
+
+-- 7. SEP: Steve stacks VIP 20% Off
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81008', 'M81001', 'V81002', TO_DATE('2024-09-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81010', 'M81001', 'MV81008', 'Pickup', TO_DATE('2024-09-09', 'YYYY-MM-DD'), '12:00', 8.00, 'Completed');
+-- Original 20 -> Promo 50% (10) -> VIP Voucher 20% (8.00)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81010', 'I81001', 1, 8.00);
+
+-- 8. SEP: Carl makes a NORMAL order (No voucher)
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81011', 'M81003', NULL, 'Delivery', TO_DATE('2024-09-14', 'YYYY-MM-DD'), '19:45', 56.00, 'Completed');
+-- Original 80 -> Promo 30% (56)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81011', 'I81003', 1, 56.00);
+
+-- 9. SEP: Dan stacks Flat RM5 Off Voucher
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81009', 'M81004', 'V81003', TO_DATE('2024-09-15','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81012', 'M81004', 'MV81009', 'Delivery', TO_DATE('2024-09-30', 'YYYY-MM-DD'), '18:00', 35.00, 'Completed');
+-- Original 50 -> Promo 20% (40) -> Flat RM5 Voucher (35)
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81012', 'I81002', 1, 35.00);
+
+
+-- ====================================================================================
+-- TEST 3 DATA: OTHER MONTHS FOR YEARLY OVERVIEW (Feb, Mar, Apr, Jun, Oct, Dec)
+-- ====================================================================================
+
+-- FEB
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81010', 'M81004', 'V81004', TO_DATE('2024-02-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81013', 'M81004', 'MV81010', 'Delivery', TO_DATE('2024-02-14', 'YYYY-MM-DD'), '19:00', 46.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81013', 'I81003', 1, 46.00);
+
+-- MAR
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81011', 'M81005', 'V81005', TO_DATE('2024-03-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81014', 'M81005', 'MV81011', 'Pickup', TO_DATE('2024-03-10', 'YYYY-MM-DD'), '11:00', 15.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81014', 'I81001', 2, 7.50);
+
+-- APR
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81015', 'M81001', NULL, 'Delivery', TO_DATE('2024-04-12', 'YYYY-MM-DD'), '12:00', 56.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81015', 'I81003', 1, 56.00);
+
+-- JUN
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81012', 'M81002', 'V81003', TO_DATE('2024-06-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81016', 'M81002', 'MV81012', 'Pickup', TO_DATE('2024-06-18', 'YYYY-MM-DD'), '18:30', 5.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81016', 'I81001', 1, 5.00);
+
+-- OCT
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81013', 'M81003', 'V81004', TO_DATE('2024-10-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81017', 'M81003', 'MV81013', 'Delivery', TO_DATE('2024-10-22', 'YYYY-MM-DD'), '20:00', 30.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81017', 'I81002', 1, 30.00);
+
+-- DEC
+INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) VALUES ('MV81014', 'M81004', 'V81005', TO_DATE('2024-12-01','YYYY-MM-DD'), 'Y');
+INSERT INTO ORDERS (OrderID, MemberID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O81018', 'M81004', 'MV81014', 'Pickup', TO_DATE('2024-12-31', 'YYYY-MM-DD'), '23:00', 42.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O81018', 'I81003', 1, 42.00);
+
+COMMIT;

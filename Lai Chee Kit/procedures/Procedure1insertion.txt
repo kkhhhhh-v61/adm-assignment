@@ -1,0 +1,19 @@
+-- ==================================================
+-- INSERT SAMPLE DATA (Starting from 82000)
+-- ==================================================
+
+-- Insert Member (Parent: 1 Alphabet + 5 Digits)
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
+VALUES ('M82001', 'John Doe', 'johndoe@email.com', '0123456789', 'hashedpwd123', SYSDATE);
+
+-- Insert Subscription Plans (Parent/Lookup: 2 Alphabets + 5 Digits based on your DDL)
+INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) 
+VALUES ('SP82001', '1 Month VIP', 30, 15.00);
+
+INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) 
+VALUES ('SP82002', '6 Month VIP', 180, 80.00);
+
+INSERT INTO SUBSCRIPTIONPLAN (SubscriptionPlanID, PlanName, DurationInDays, Price) 
+VALUES ('SP82003', '1 Year VIP', 365, 150.00);
+
+COMMIT;
