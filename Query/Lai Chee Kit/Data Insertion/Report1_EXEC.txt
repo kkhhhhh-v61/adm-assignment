@@ -28,4 +28,4 @@ PROMPT =========================================================================
 EXEC pr_rider_bonus_roi_analysis('Penang', '2024', 'MONTHLY', '05');
 
 PROMPT
-PROMPT >>> ALL FLEET BONUS ROI AUDIT TESTS COMPLETED SUCCESSFULLY.
+PROMPT >>> ALL RIDER BONUS ROI AUDIT TESTS COMPLETED SUCCESSFULLY.
