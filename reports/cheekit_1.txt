@@ -1,0 +1,103 @@
+CLEAR SCREEN;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 120;
+SET DEFINE OFF; 
+
+CREATE OR REPLACE PROCEDURE PR_SERIAL_COMPLAINER_REPORT (
+    p_year  IN NUMBER,
+    p_month IN NUMBER
+) AS
+    -- Outer Cursor: Identifies members with bad reviews (1-2 stars) [cite: 2, 21]
+    CURSOR c_complainers IS
+        SELECT m.MemberID, m.FullName, m.PhoneNo,
+               COUNT(DISTINCT o.OrderID) AS TotalOrders,
+               SUM(CASE WHEN f.Rating <= 2 THEN 1 ELSE 0 END) AS BadReviews
+        FROM MEMBER m
+        JOIN ORDERS o ON m.MemberID = o.MemberID
+        LEFT JOIN ORDERFEEDBACK f ON o.OrderID = f.OrderID
+        WHERE EXTRACT(YEAR FROM o.OrderDate) = p_year
+          AND EXTRACT(MONTH FROM o.OrderDate) = p_month
+          AND o.OrderStatus = 'Completed'
+        GROUP BY m.MemberID, m.FullName, m.PhoneNo
+        HAVING SUM(CASE WHEN f.Rating <= 2 THEN 1 ELSE 0 END) > 0
+        ORDER BY BadReviews DESC;
+
+    -- Inner Cursor: Fetches specific bad reviews [cite: 5, 15]
+    CURSOR c_bad_reviews (p_member_id CHAR) IS
+        SELECT DISTINCT o.OrderID, r.RestaurantName, f.Rating, f.FeedbackComment, f.FeedbackDate
+        FROM ORDERS o
+        JOIN ORDERFEEDBACK f ON o.OrderID = f.OrderID
+        JOIN ORDERITEM oi ON o.OrderID = oi.OrderID
+        JOIN ITEM i ON oi.ItemID = i.ItemID
+        JOIN RESTAURANT r ON i.RestaurantID = r.RestaurantID
+        WHERE o.MemberID = p_member_id
+          AND f.Rating <= 2
+          AND EXTRACT(YEAR FROM o.OrderDate) = p_year
+          AND EXTRACT(MONTH FROM o.OrderDate) = p_month;
+
+    -- Variables for toxicity and fishing detection
+    v_toxicity_rate      NUMBER(5,2);
+    v_total_flagged      NUMBER := 0;
+    v_total_bad_reviews  NUMBER := 0;
+    v_fished_count       NUMBER := 0; -- Count of vouchers "fished"
+    v_risk_status        VARCHAR2(20);
+    v_voucher_name       VOUCHER.VoucherName%TYPE;
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('             SERIAL COMPLAINER and FEEDBACK TOXICITY AUDIT REPORT                 ');
+    DBMS_OUTPUT.PUT_LINE('                             PERIOD: ' || LPAD(p_month, 2, '0') || '/' || p_year);
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+
+    FOR rec_member IN c_complainers LOOP
+        v_total_flagged := v_total_flagged + 1;
+        v_total_bad_reviews := v_total_bad_reviews + rec_member.BadReviews;
+        v_toxicity_rate := (rec_member.BadReviews / rec_member.TotalOrders) * 100;
+
+        -- Risk Level Determination
+        IF v_toxicity_rate >= 50 THEN v_risk_status := '🚨 HIGH RISK';
+        ELSIF v_toxicity_rate >= 25 THEN v_risk_status := '⚠️ MEDIUM RISK';
+        ELSE v_risk_status := '✅ LOW RISK';
+        END IF;
+
+        DBMS_OUTPUT.PUT_LINE('MEMBER: ' || rec_member.FullName || ' (' || rec_member.MemberID || ')');
+        DBMS_OUTPUT.PUT_LINE('Toxicity Rate : ' || TO_CHAR(v_toxicity_rate, '990.00') || '% [' || v_risk_status || ']');
+        DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+        DBMS_OUTPUT.PUT_LINE(RPAD('RESTAURANT', 20) || RPAD('RATING', 8) || RPAD('COMMENT', 30) || 'VOUCHER FISHED?');
+        DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+
+        FOR rec_bad IN c_bad_reviews(rec_member.MemberID) LOOP
+            -- VOUCHER FISHING DETECTION LOGIC:
+            -- Checks if an 'Apology' voucher was claimed within 24 hours of this specific feedback date [cite: 3, 4]
+            BEGIN
+                SELECT v.VoucherName INTO v_voucher_name
+                FROM MEMBERVOUCHER mv
+                JOIN VOUCHER v ON mv.VoucherID = v.VoucherID
+                WHERE mv.MemberID = rec_member.MemberID
+                  AND (v.VoucherName LIKE '%Apology%' OR v.VoucherName LIKE '%Compensation%')
+                  AND mv.DateClaimed BETWEEN rec_bad.FeedbackDate AND rec_bad.FeedbackDate + 1
+                  AND ROWNUM = 1; -- Get the first matching apology voucher
+                
+                v_fished_count := v_fished_count + 1;
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN v_voucher_name := 'NONE';
+            END;
+
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(SUBSTR(rec_bad.RestaurantName, 1, 18), 20) || 
+                RPAD(rec_bad.Rating || ' Star', 8) || 
+                RPAD(SUBSTR(rec_bad.FeedbackComment, 1, 28), 30) || 
+                v_voucher_name
+            );
+        END LOOP;
+        DBMS_OUTPUT.PUT_LINE('================================================================================');
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('                                REPORT SUMMARY                                  ');
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Members Flagged', 40) || ': ' || v_total_flagged);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Bad Reviews Found', 40) || ': ' || v_total_bad_reviews);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Vouchers "Fished" via Complaints', 40) || ': ' || v_fished_count);
+    DBMS_OUTPUT.PUT_LINE('================================================================================');
+END;
+/
