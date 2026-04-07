@@ -1,3 +1,5 @@
+CL SCR
+
 -- Rider without Bonus
 INSERT INTO DELIVERYRIDER VALUES ('DR10001', 'DC00001', 'Abu Bakar', '0111111111', 0);
 -- Rider with Bonus

@@ -1,5 +1,6 @@
 CL SCR
 
+SET SERVEROUTPUT ON FORMAT WRAPPED
 SET FEEDBACK OFF
 
 CREATE OR REPLACE VIEW vw_order_composition AS
@@ -37,7 +38,6 @@ AND O.OrderStatus = 'Completed';
 SET LINESIZE 110
 SET PAGESIZE 100
 SET SQLBLANKLINES ON
-SET SERVEROUTPUT ON
 SET COLSEP ' | '
 
 COLUMN CompositionType FORMAT A25 HEADING 'COMPOSITION TYPE'
@@ -86,13 +86,13 @@ BEGIN
     )
     WHERE ROWNUM = 1;
 
-    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('====================================================================================');
     DBMS_OUTPUT.PUT_LINE(' [ ORDER COMPOSITION SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' >> TOP COMPOSITION TYPE : ' || v_compType);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL UNITS SOLD     : ' || v_units);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE        : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.99'));
     DBMS_OUTPUT.PUT_LINE(' >> REVENUE CONTRIBUTION : ' || v_contrib || '%');
-    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('====================================================================================');
 END;
 /
 

@@ -1,5 +1,6 @@
 CL SCR
 
+SET SERVEROUTPUT ON FORMAT WRAPPED
 SET FEEDBACK OFF
 
 CREATE OR REPLACE VIEW vw_cancelled_revenue AS
@@ -30,7 +31,6 @@ WHERE O.OrderStatus = 'Cancelled';
 SET LINESIZE 110
 SET PAGESIZE 100
 SET SQLBLANKLINES ON
-SET SERVEROUTPUT ON
 SET COLSEP ' | '
 
 COLUMN RestaurantName FORMAT A36 HEADING 'RESTAURANT NAME'
@@ -79,13 +79,13 @@ BEGIN
     )
     WHERE ROWNUM = 1;
 
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('========================================================================================');
     DBMS_OUTPUT.PUT_LINE(' [ LOST REVENUE SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' >> MOST AFFECTED RESTAURANT : ' || v_restaurant);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL CANCELLED ORDERS   : ' || v_orders);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL POTENTIAL LOSS     : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.90'));
     DBMS_OUTPUT.PUT_LINE(' >> OVERALL IMPACT SHARE     : ' || v_impact || '%');
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('========================================================================================');
 END;
 /
 
