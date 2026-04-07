@@ -1,0 +1,27 @@
+-- 1. Setup Parent Records (Using 99992 series)
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A99992', '123 Karen St', 'Penang', 'Penang', '11200');
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) VALUES ('M99992', 'Karen Tester', 'karen@db.com', '0199999992', 'pass123', SYSDATE);
+INSERT INTO CATEGORY (CategoryID, CategoryName, Description) VALUES ('C99992', 'Drinks', 'Beverages');
+
+-- 2. Setup 2 Different Restaurants so we can prove she complains everywhere
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, AverageRating, IsHalal, OperationHours) VALUES ('R99992', 'A99992', 'Happy Coffee', '04-111', 4.5, 'Y', '8AM-5PM');
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, AverageRating, IsHalal, OperationHours) VALUES ('R99993', 'A99992', 'Good Sushi', '04-222', 4.8, 'Y', '10AM-10PM');
+
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I99992', 'R99992', 'C99992', 'Latte', 'Hot coffee', 12.00, 'Y');
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) VALUES ('I99993', 'R99993', 'C99992', 'Green Tea', 'Cold tea', 5.00, 'Y');
+
+-- 3. Order 1 (Complains about Coffee)
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O99992', 'M99992', 'Pickup', TO_DATE('2024-06-10', 'YYYY-MM-DD'), '10:00', 12.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O99992', 'I99992', 1, 12.00);
+INSERT INTO ORDERFEEDBACK (OrderFeedbackID, OrderID, Rating, FeedbackComment, FeedbackDate) VALUES ('OF99992', 'O99992', 1, 'Too hot! Burned my tongue!', TO_DATE('2024-06-11', 'YYYY-MM-DD'));
+
+-- 4. Order 2 (Complains about Sushi place's Tea)
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O99993', 'M99992', 'Pickup', TO_DATE('2024-06-15', 'YYYY-MM-DD'), '12:00', 5.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O99993', 'I99993', 1, 5.00);
+INSERT INTO ORDERFEEDBACK (OrderFeedbackID, OrderID, Rating, FeedbackComment, FeedbackDate) VALUES ('OF99993', 'O99993', 2, 'Ice melted too fast. Horrible.', TO_DATE('2024-06-16', 'YYYY-MM-DD'));
+
+-- 5. Order 3 (A normal order with no complaint, so we can test the percentage math)
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) VALUES ('O99994', 'M99992', 'Pickup', TO_DATE('2024-06-20', 'YYYY-MM-DD'), '09:00', 12.00, 'Completed');
+INSERT INTO ORDERITEM (OrderID, ItemID, Quantity, PriceEach) VALUES ('O99994', 'I99992', 1, 12.00);
+
+COMMIT;
