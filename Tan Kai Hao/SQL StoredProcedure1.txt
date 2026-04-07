@@ -2,29 +2,36 @@ CL SCR
 
 SET DEFINE OFF
 
+-- Sequence for Delivery ID
 DECLARE
     v_max_id NUMBER;
 BEGIN
+    -- get latest DeliveryID
     SELECT NVL(MAX(TO_NUMBER(SUBSTR(DeliveryID, 2))), 0) INTO v_max_id FROM DELIVERY;
     
     BEGIN
+        -- drop sequence if exists
         EXECUTE IMMEDIATE 'DROP SEQUENCE seq_delivery_id';
     EXCEPTION
         WHEN OTHERS THEN
+            -- Ignores the ORA-02289 error thrown if the sequence does not exist, but raises any other unexpected errors.
             IF SQLCODE != -2289 THEN 
                 RAISE;
             END IF;
     END;
     
+    -- create sequence
     EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_delivery_id START WITH ' || (v_max_id + 1) || ' INCREMENT BY 1 NOCACHE';
 END;
 /
 
+-- Procedure to assign a rider to an order
 CREATE OR REPLACE PROCEDURE prc_assign_rider (
     p_order_id IN CHAR,
     p_rider_id IN CHAR
 )
 AS
+    -- variable declaration and initialization
     v_pickup_type       ORDERS.PickupType%TYPE;
     v_delivery_id_chk   ORDERS.DeliveryID%TYPE;
     v_order_status      ORDERS.OrderStatus%TYPE;
@@ -52,6 +59,7 @@ AS
     v_total_earned      NUMBER(8,2) := 0;
 
 BEGIN
+    -- print parsed parameters
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
     DBMS_OUTPUT.PUT_LINE('PARSED PARAMETERS');
     DBMS_OUTPUT.PUT_LINE('>> Order ID : ' || p_order_id);
@@ -59,6 +67,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
 
     BEGIN
+        -- verify OrderID exists
         SELECT PickupType, DeliveryID, OrderStatus, MemberID, TotalAmount
         INTO v_pickup_type, v_delivery_id_chk, v_order_status, v_member_id, v_order_total
         FROM ORDERS 
@@ -68,23 +77,28 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20001, 'Validation Failed: Order ID (' || p_order_id || ') does not exist.');
     END;
 
+    -- ensure order is not 'Completed' status
     IF v_order_status = 'Completed' THEN
         RAISE_APPLICATION_ERROR(-20002, 'Validation Failed: Order (' || p_order_id || ') is already Completed.');
     END IF;
 
+    -- prevent assigning rider to order with 'Pickup' type
     IF v_pickup_type != 'Delivery' THEN
         RAISE_APPLICATION_ERROR(-20003, 'Validation Failed: Order (' || p_order_id || ') is registered as ' || v_pickup_type || '. Rider cannot be assigned.');
     END IF;
 
+    -- validate order hasn't already been assigned a delivery
     IF v_delivery_id_chk IS NOT NULL THEN
         RAISE_APPLICATION_ERROR(-20004, 'Validation Failed: Order (' || p_order_id || ') already has Delivery ID (' || v_delivery_id_chk || ') assigned.');
     END IF;
 
+    -- ensure order is in 'Pending' status
     IF v_order_status != 'Pending' THEN
         RAISE_APPLICATION_ERROR(-20005, 'Validation Failed: Order (' || p_order_id || ') is not Pending. Current Status: ' || v_order_status);
     END IF;
 
     BEGIN
+        -- veridy RiderID exists
         SELECT RiderName 
         INTO v_rider_name 
         FROM DELIVERYRIDER 
@@ -94,17 +108,20 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20005, 'Validation Failed: Rider ID (' || p_rider_id || ') does not exist.');
     END;
 
+    -- calculate rider's AverageRating from all previous feedbacks
     SELECT NVL(ROUND(AVG(DF.Rating), 1), 0)
     INTO v_rider_rating
     FROM DELIVERYFEEDBACK DF
     JOIN DELIVERY D ON DF.DeliveryID = D.DeliveryID
     WHERE D.DeliveryRiderID = p_rider_id;
 
+    -- update rider's AverageRating with new calculated value
     UPDATE DELIVERYRIDER 
     SET AverageRating = v_rider_rating 
     WHERE DeliveryRiderID = p_rider_id;
 
     BEGIN
+        -- get BonusTier and BonusRate based on rider's AverageRating
         SELECT BonusTier, BonusRate
         INTO v_bonus_tier, v_bonus_rate
         FROM RIDERBONUS
@@ -116,6 +133,7 @@ BEGIN
     END;
 
     BEGIN
+        -- get member's address
         SELECT A.AddressID, A.AddressLine, A.City, A.State, A.Postcode
         INTO v_address_id, v_address_line, v_city, v_state, v_postcode
         FROM MEMBERADDRESS MA
@@ -127,6 +145,7 @@ BEGIN
     END;
 
     BEGIN
+        -- get delivery type
         SELECT DeliveryTypeID 
         INTO v_delivery_type_id
         FROM DELIVERYTYPE 
@@ -136,10 +155,12 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20007, 'System Error: Delivery Types configuration missing.');
     END;
 
+    -- generate next new DeliveryID
     SELECT 'D' || LPAD(seq_delivery_id.NEXTVAL, 5, '0')
     INTO v_new_delivery_id 
     FROM DUAL;
 
+    -- randomize delivery distance
     v_distance := ROUND(DBMS_RANDOM.VALUE(1.00, 15.00), 2);
     IF v_distance <= 5.00 THEN
         v_base_delivery_fee := 4.99;
@@ -147,9 +168,11 @@ BEGIN
         v_base_delivery_fee := 4.99 + (CEIL(v_distance - 5.00) * 1.50);
     END IF;
 
+    -- compute bonus earned and total earned
     v_bonus_earned := v_base_delivery_fee * v_bonus_rate;
     v_total_earned := v_base_delivery_fee + v_bonus_earned;
 
+    -- insert new delivery record
     INSERT INTO DELIVERY (
         DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, 
         DistanceInKm, DeliveryDate, DeliveryTime, 
@@ -160,6 +183,7 @@ BEGIN
         v_base_delivery_fee, v_base_delivery_fee
     );
 
+    -- update order with new DeliveryID and change status to 'Delivering'
     UPDATE ORDERS
     SET DeliveryID = v_new_delivery_id,
         OrderStatus = 'Delivering'
@@ -167,6 +191,7 @@ BEGIN
 
     COMMIT;
 
+    -- print details
     DBMS_OUTPUT.PUT_LINE(' TARGET ORDER INFO ');
     DBMS_OUTPUT.PUT_LINE('  * Order ID     : ' || p_order_id);
     DBMS_OUTPUT.PUT_LINE('  * Member ID    : ' || v_member_id);
@@ -196,6 +221,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
 
 EXCEPTION
+    -- Catches any errors, rolls back the transaction to prevent partial updates, and displays the error message.
     WHEN OTHERS THEN
         ROLLBACK;
         DBMS_OUTPUT.PUT_LINE('EXECUTION TERMINATED WITH EXCEPTION');

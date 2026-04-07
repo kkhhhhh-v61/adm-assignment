@@ -6,9 +6,11 @@ CREATE OR REPLACE PROCEDURE prc_category_sales_report (
     p_start_date IN DATE,
     p_end_date   IN DATE
 ) AS
+    -- Cursor to aggregate order counts and revenue and splitting data into weekday and weekend buckets
     CURSOR c_category IS
         SELECT C.CategoryID,
                C.CategoryName,
+               -- Utilizes TO_CHAR with 'DY' and an explicit 'NLS_DATE_LANGUAGE=AMERICAN' parameter, an advanced feature to reliably extract the day of the week regardless of the database's default locale.
                COUNT(DISTINCT CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') NOT IN ('SAT', 'SUN') THEN O.OrderID END) AS WeekdayOrders,
                NVL(SUM(CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') NOT IN ('SAT', 'SUN') THEN OI.Quantity * OI.PriceEach END), 0) AS WeekdayRev,
                COUNT(DISTINCT CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') IN ('SAT', 'SUN') THEN O.OrderID END) AS WeekendOrders,
@@ -24,13 +26,14 @@ CREATE OR REPLACE PROCEDURE prc_category_sales_report (
         GROUP BY C.CategoryID, C.CategoryName
         ORDER BY TotalRev DESC;
 
+    -- variable declaration and initialization
     v_grand_wd_ord NUMBER := 0;
     v_grand_wd_rev NUMBER := 0;
     v_grand_we_ord NUMBER := 0;
     v_grand_we_rev NUMBER := 0;
     v_grand_tot_ord NUMBER := 0;
     v_grand_tot_rev NUMBER := 0;
-    
+
     v_top_cat_name VARCHAR2(50) := 'N/A';
     v_top_cat_rev  NUMBER := -1;
     v_top_cat_ord  NUMBER := 0;
@@ -45,6 +48,7 @@ CREATE OR REPLACE PROCEDURE prc_category_sales_report (
 
     v_has_data BOOLEAN := FALSE;
 
+    -- PL/SQL function to generate a visual, colored bar chart using ANSI escape codes
     FUNCTION get_color_bar(p_revenue NUMBER, p_total_revenue NUMBER, p_rank NUMBER) RETURN VARCHAR2 IS
         v_pct NUMBER;
         v_len NUMBER;
@@ -62,6 +66,7 @@ CREATE OR REPLACE PROCEDURE prc_category_sales_report (
             v_bar := v_bar || '#';
         END LOOP;
         
+        -- Assigns terminal color codes: green for the winning period, red for the losing period.
         IF p_rank = 1 THEN
             v_color := '32';
         ELSE
@@ -72,11 +77,13 @@ CREATE OR REPLACE PROCEDURE prc_category_sales_report (
     END;
 
 BEGIN
+    -- ensure the start date precedes the end date
     IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
         RAISE_APPLICATION_ERROR(-20001, 'INVALID DATE RANGE: Start date cannot be later than end date.');
     END IF;
 
     FOR r IN c_category LOOP
+        -- compute grand total
         v_has_data := TRUE;
         v_grand_wd_ord := v_grand_wd_ord + r.WeekdayOrders;
         v_grand_wd_rev := v_grand_wd_rev + r.WeekdayRev;
@@ -85,6 +92,7 @@ BEGIN
         v_grand_tot_ord := v_grand_tot_ord + r.TotalOrders;
         v_grand_tot_rev := v_grand_tot_rev + r.TotalRev;
         
+        -- compute top category
         IF r.TotalRev > v_top_cat_rev THEN
             v_top_cat_rev := r.TotalRev;
             v_top_cat_name := r.CategoryName;
@@ -109,6 +117,7 @@ BEGIN
         RETURN;
     END IF;
 
+    -- print title, header, and dates
     DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
     DBMS_OUTPUT.PUT_LINE('                           WEEKDAY VS WEEKEND SALES PERFORMANCE BY CATEGORY');
     DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
@@ -125,6 +134,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('--------------------------------|---------|----------|----------------|------------------------------');
 
     FOR r IN c_category LOOP
+        -- Evaluates which period (weekday or weekend) generated more revenue to assign the appropriate color rank to the bar chart.
         IF r.WeekdayRev >= r.WeekendRev THEN
             v_wd_rank := 1;
             v_we_rank := 2;
@@ -133,6 +143,7 @@ BEGIN
             v_we_rank := 1;
         END IF;
 
+        -- print weekday statistics
         DBMS_OUTPUT.PUT_LINE(
             ' ' || RPAD(SUBSTR(r.CategoryName, 1, 30), 30) || ' | ' ||
             RPAD('Weekday', 7) || ' | ' ||
@@ -141,6 +152,7 @@ BEGIN
             LPAD(TO_CHAR(NVL(ROUND((r.WeekdayRev / NULLIF(r.TotalRev, 0)) * 100, 1), 0), '990.0') || '% ', 8) || 
             get_color_bar(r.WeekdayRev, r.TotalRev, v_wd_rank)
         );
+        -- print weekend statistics
         DBMS_OUTPUT.PUT_LINE(
             ' ' || RPAD(' ', 30) || ' | ' ||
             RPAD('Weekend', 7) || ' | ' ||
@@ -152,6 +164,7 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('--------------------------------|---------|----------|----------------|------------------------------');
     END LOOP;
 
+    -- Calculates the winning period for the grand total summary.
     IF v_grand_wd_rev >= v_grand_we_rev THEN
         v_wd_rank := 1;
         v_we_rank := 2;
@@ -160,6 +173,7 @@ BEGIN
         v_we_rank := 1;
     END IF;
 
+    -- print grand total
     DBMS_OUTPUT.PUT_LINE(
         ' ' || RPAD('GRAND TOTAL :', 30) || ' | ' ||
         RPAD('Weekday', 7) || ' | ' ||
@@ -178,6 +192,7 @@ BEGIN
     );
     DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
     
+    -- print summary details
     DBMS_OUTPUT.PUT_LINE(' [ CATEGORY PERFORMANCE SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' >> TOP OVERALL CATEGORY    : ' || v_top_cat_name);
     DBMS_OUTPUT.PUT_LINE('      * Orders Generated    : ' || TRIM(TO_CHAR(v_top_cat_ord, '99,990')));

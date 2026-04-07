@@ -7,9 +7,11 @@ CREATE OR REPLACE PROCEDURE prc_restaurant_rating_report (
     p_end_date   IN DATE
 )
 AS
+    -- declare REF Cursor
     TYPE rest_cursor_typ IS REF CURSOR;
     v_rest_cursor rest_cursor_typ;
     
+    -- variable declaration
     v_rating_cat    VARCHAR2(30);
     v_tot_rest      NUMBER;
     v_tot_rev       NUMBER;
@@ -18,6 +20,7 @@ AS
     v_rest_name     RESTAURANT.RestaurantName%TYPE;
     v_rest_indiv_rev NUMBER;
 
+    -- Cursor to aggregate category data with a nested cursor that retrives individual restaurant revenues within that category
     CURSOR c_rating_revenue IS
         SELECT
             RatingCategory_Outer,
@@ -33,6 +36,7 @@ AS
                     JOIN ORDERITEM OI ON O.OrderID = OI.OrderID
                     JOIN ITEM I ON OI.ItemID = I.ItemID
                     WHERE O.OrderStatus = 'Completed'
+                      -- Utilizes TRUNC() to accurately compare dates by stripping the time component.
                       AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
                     UNION ALL
                     SELECT PR.RestaurantID, (OP.Quantity * OP.PriceEach) AS Revenue
@@ -90,6 +94,7 @@ AS
         GROUP BY RatingCategory_Outer
         ORDER BY TOTAL_REVENUE DESC;
 
+    -- variable declaration and initialization
     v_grand_restaurants NUMBER := 0;
     v_grand_revenue     NUMBER := 0;
     v_top_category      VARCHAR2(30) := 'N/A';
@@ -100,6 +105,7 @@ AS
     v_rank              NUMBER := 1;
     v_inner_rank        NUMBER := 1;
     
+    -- PL/SQL function to generate a visual, colored bar chart using ANSI escape codes
     FUNCTION get_color_bar(p_revenue NUMBER, p_max_revenue NUMBER, p_rank NUMBER) RETURN VARCHAR2 IS
         v_pct NUMBER;
         v_len NUMBER;
@@ -119,6 +125,7 @@ AS
         
         v_bar := RPAD(v_bar, 20, ' ');
         
+        -- Assigns terminal color codes: green for 1st place, yellow for 2nd, and red for the rest.
         IF p_rank = 1 THEN
             v_color := '32';
         ELSIF p_rank = 2 THEN
@@ -131,6 +138,7 @@ AS
     END;
 
 BEGIN
+    -- ensure the start date precedes the end date
     IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
         RAISE_APPLICATION_ERROR(-20001, 'INVALID DATE RANGE: Start date cannot be later than end date.');
     END IF;
@@ -162,6 +170,7 @@ BEGIN
         RETURN;
     END IF;
 
+    -- print title, header, and dates
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 129, '='));
     DBMS_OUTPUT.PUT_LINE('                                             RESTAURANT REVENUE COMPARISON BY RATING                                             ');
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 129, '='));
@@ -177,11 +186,13 @@ BEGIN
     );
     DBMS_OUTPUT.PUT_LINE(RPAD('-', 38, '-') || '-+-' || RPAD('-', 17, '-') || '-+-' || RPAD('-', 18, '-') || '-+-' || RPAD('-', 16, '-') || '-+-' || RPAD('-', 28, '-'));
 
+    -- print report contents
     OPEN c_rating_revenue;
     LOOP
         FETCH c_rating_revenue INTO v_rating_cat, v_tot_rest, v_tot_rev, v_avg_rev, v_rest_cursor;
         EXIT WHEN c_rating_revenue%NOTFOUND;
         
+        -- Prints the main category summary row and appends the dynamic colored bar chart.
         DBMS_OUTPUT.PUT_LINE(
             RPAD(v_rating_cat, 38) || ' | ' ||
             LPAD(TO_CHAR(v_tot_rest, '999,990'), 17) || ' | ' ||
@@ -191,6 +202,7 @@ BEGIN
             get_color_bar(v_tot_rev, v_top_revenue, v_rank)
         );
         
+        -- get top 3 highest revenue restaurants for each category
         v_inner_rank := 1;
         LOOP
             FETCH v_rest_cursor INTO v_rest_name, v_rest_indiv_rev;
@@ -214,6 +226,7 @@ BEGIN
     END LOOP;
     CLOSE c_rating_revenue;
 
+    -- print grand total
     DBMS_OUTPUT.PUT_LINE(
         RPAD('GRAND TOTAL :', 38) || ' | ' ||
         LPAD(TO_CHAR(v_grand_restaurants, '999,990'), 17) || ' | ' ||
@@ -223,6 +236,7 @@ BEGIN
     );
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 129, '='));
     
+    -- print summary details
     DBMS_OUTPUT.PUT_LINE(' [ RESTAURANT REVENUE SUMMARY BY RATING ]');
     DBMS_OUTPUT.PUT_LINE(' >> TOP PERFORMING CATEGORY : ' || v_top_category);
     DBMS_OUTPUT.PUT_LINE(' >> TOTAL RESTAURANTS       : ' || TO_CHAR(v_top_restaurants));

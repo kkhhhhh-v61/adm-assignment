@@ -1,15 +1,19 @@
 CL SCR
 
+-- Trigger for enforcing rider workload limits
 CREATE OR REPLACE TRIGGER trg_limit_rider_workload
 BEFORE INSERT ON DELIVERY
 FOR EACH ROW
 DECLARE
+    -- run this trigger as an independent transaction
+    -- bypassing the mutating table error when querying the DELIVERY table during an insert.
     PRAGMA AUTONOMOUS_TRANSACTION;
+    -- variable declaration
     v_active_count NUMBER;
     v_rider_rating DELIVERYRIDER.AverageRating%TYPE;
     v_max_limit    NUMBER;
 BEGIN
-    -- 1. Get current active deliveries
+    -- count the number of active deliveries assigned to the rider
     SELECT COUNT(O.OrderID)
     INTO v_active_count
     FROM ORDERS O
@@ -17,13 +21,13 @@ BEGIN
     WHERE D.DeliveryRiderID = :NEW.DeliveryRiderID
     AND O.OrderStatus = 'Delivering';
 
-    -- 2. Get Rider's Rating
+    -- get the rider's average rating
     SELECT AverageRating 
     INTO v_rider_rating 
     FROM DELIVERYRIDER 
     WHERE DeliveryRiderID = :NEW.DeliveryRiderID;
 
-    -- 3. Determine Dynamic Limit
+    -- determine rider's workload limit based on rating
     IF v_rider_rating >= 4.5 THEN
         v_max_limit := 5;
     ELSIF v_rider_rating >= 3.0 THEN
@@ -32,7 +36,7 @@ BEGIN
         v_max_limit := 1;
     END IF;
 
-    -- 4. Validate
+    -- check if the rider's workload exceeds the limit
     IF v_active_count >= v_max_limit THEN
         ROLLBACK;
         RAISE_APPLICATION_ERROR(-20010, 'Workload Limit Exceeded: Rider rating is ' || v_rider_rating || ' (Max allowed: ' || v_max_limit || ' deliveries).');

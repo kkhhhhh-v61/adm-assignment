@@ -1,27 +1,35 @@
 CL SCR
 
+-- Procedure for changing status of Orders to 'Cancelled' after payment failure
 CREATE OR REPLACE TRIGGER trg_auto_cancel_failed_payment
 BEFORE UPDATE OF PaymentStatus ON PAYMENT
 FOR EACH ROW
+-- ensure trigger only executes when payment status changes from 'Pending' to 'Failed'
 WHEN ((OLD.PaymentStatus = 'Pending' OR OLD.PaymentStatus = 'Completed') AND (NEW.PaymentStatus = 'Failed'))
 DECLARE
+    -- variable declaration
     v_voucher_id ORDERS.MemberVoucherID%TYPE;
     v_order_status ORDERS.OrderStatus%TYPE;
 BEGIN
+    -- prevent altering 'Completed' payments
     IF :OLD.PaymentStatus = 'Completed' THEN
         :NEW.PaymentStatus := 'Completed';
     ELSE
+        -- get VoucherID linked to order
         SELECT MemberVoucherID, OrderStatus
         INTO v_voucher_id, v_order_status
         FROM ORDERS
         WHERE OrderID = :NEW.OrderID;
 
         IF v_order_status = 'Pending' THEN
+            -- update order status to 'Cancelled'
             UPDATE ORDERS
             SET OrderStatus = 'Cancelled'
             WHERE OrderID = :NEW.OrderID;
 
+            -- check if voucher is used
             IF v_voucher_id IS NOT NULL THEN
+                -- refunds voucher
                 UPDATE MEMBERVOUCHER
                 SET IsUsed = 'N'
                 WHERE MemberVoucherID = v_voucher_id;

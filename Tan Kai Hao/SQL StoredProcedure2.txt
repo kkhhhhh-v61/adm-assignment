@@ -1,27 +1,33 @@
-CL SCR;
+CL SCR
 
-SET DEFINE OFF;
+SET DEFINE OFF
 
+-- Sequence for Package ID
 DECLARE
     v_max_id NUMBER;
 BEGIN
+    -- get latest PackageID
     SELECT NVL(MAX(TO_NUMBER(SUBSTR(PackageID, 3))), 0) INTO v_max_id FROM PACKAGE;
     
     BEGIN
+        -- drop sequence if exists
         EXECUTE IMMEDIATE 'DROP SEQUENCE seq_package_id';
     EXCEPTION
         WHEN OTHERS THEN
+            -- Ignores the ORA-02289 error thrown if the sequence does not exist, but raises any other unexpected errors.
             IF SQLCODE != -2289 THEN 
                 RAISE;
             END IF;
     END;
     
+    -- create sequence
     EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_package_id START WITH ' || (v_max_id + 1) || ' INCREMENT BY 1 NOCACHE';
 END;
 /
 
 SET SERVEROUTPUT ON FORMAT WRAPPED;
 
+-- Procedure to create package
 CREATE OR REPLACE PROCEDURE prc_create_package (
     p_item1_id IN CHAR, p_qty1 IN NUMBER,
     p_item2_id IN CHAR, p_qty2 IN NUMBER,
@@ -29,6 +35,7 @@ CREATE OR REPLACE PROCEDURE prc_create_package (
     p_item3_id IN CHAR DEFAULT NULL, p_qty3 IN NUMBER DEFAULT NULL
 )
 AS
+    -- variable declaration and initialization
     v_item1_name ITEM.ItemName%TYPE;
     v_item1_price ITEM.Price%TYPE;
     v_item1_rest ITEM.RestaurantID%TYPE;
@@ -50,36 +57,44 @@ AS
     v_disc_price NUMBER(8,2) := 0;
 
 BEGIN
+    -- print parsed parameters
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
     DBMS_OUTPUT.PUT_LINE('PARSED PACKAGE PARAMETERS');
     DBMS_OUTPUT.PUT_LINE('>> Item 1   : ' || p_item1_id || ' (Qty: ' || p_qty1 || ')');
     DBMS_OUTPUT.PUT_LINE('>> Item 2   : ' || p_item2_id || ' (Qty: ' || p_qty2 || ')');
+    -- print if Item 3 is provided
     IF p_item3_id IS NOT NULL THEN
         DBMS_OUTPUT.PUT_LINE('>> Item 3   : ' || p_item3_id || ' (Qty: ' || p_qty3 || ')');
     END IF;
     DBMS_OUTPUT.PUT_LINE('>> Discount : ' || (p_discount * 100) || '%');
 
+    -- validate discount format and range
     IF p_discount <= 0 OR p_discount > 1 THEN
         RAISE_APPLICATION_ERROR(-20001, 'Validation Failed: Discount format invalid. Use decimal between 0.01 and 1.00');
     END IF;
 
+    -- ensure quantity for Item 1 is strictly positive
     IF NVL(p_qty1, 0) <= 0 THEN
         RAISE_APPLICATION_ERROR(-20002, 'Validation Failed: Quantity for Item 1 must be greater than 0.');
     END IF;
 
+    -- ensure quantity for Item 2 is strictly positive
     IF NVL(p_qty2, 0) <= 0 THEN
         RAISE_APPLICATION_ERROR(-20002, 'Validation Failed: Quantity for Item 2 must be greater than 0.');
     END IF;
 
+    -- if Item 3 is provided, ensure its quantity is strictly positive
     IF p_item3_id IS NOT NULL AND NVL(p_qty3, 0) <= 0 THEN
         RAISE_APPLICATION_ERROR(-20003, 'Validation Failed: Quantity for Item 3 must be greater than 0 if provided.');
     END IF;
 
+    -- prevents duplicate Item IDs
     IF p_item1_id = p_item2_id OR (p_item3_id IS NOT NULL AND (p_item3_id = p_item1_id OR p_item3_id = p_item2_id)) THEN
         RAISE_APPLICATION_ERROR(-20004, 'Validation Failed: Duplicate Item IDs detected in parameters.');
     END IF;
 
     BEGIN
+        -- verify Item 1 exists and is available
         SELECT ItemName, Price, RestaurantID INTO v_item1_name, v_item1_price, v_item1_rest
         FROM ITEM WHERE ItemID = p_item1_id AND IsAvailable = 'Y';
     EXCEPTION
@@ -88,6 +103,7 @@ BEGIN
     END;
 
     BEGIN
+        -- verify Item 2 exists and is available
         SELECT ItemName, Price, RestaurantID INTO v_item2_name, v_item2_price, v_item2_rest
         FROM ITEM WHERE ItemID = p_item2_id AND IsAvailable = 'Y';
     EXCEPTION
@@ -95,12 +111,14 @@ BEGIN
             RAISE_APPLICATION_ERROR(-20006, 'Validation Failed: Item 2 (' || p_item2_id || ') does not exist or is unavailable.');
     END;
 
+    -- ensure both items belong to the same restaurant
     IF v_item1_rest != v_item2_rest THEN
         RAISE_APPLICATION_ERROR(-20007, 'Validation Failed: Item 1 and Item 2 belong to completely different restaurants.');
     END IF;
 
     IF p_item3_id IS NOT NULL THEN
         BEGIN
+            -- verify Item 3 exists and is available
             SELECT ItemName, Price, RestaurantID INTO v_item3_name, v_item3_price, v_item3_rest
             FROM ITEM WHERE ItemID = p_item3_id AND IsAvailable = 'Y';
         EXCEPTION
@@ -108,20 +126,26 @@ BEGIN
                 RAISE_APPLICATION_ERROR(-20008, 'Validation Failed: Item 3 (' || p_item3_id || ') does not exist or is unavailable.');
         END;
 
+        -- ensure Item 3 belongs to the same restaurant as Item 1 and Item 2
         IF v_item3_rest != v_item1_rest THEN
             RAISE_APPLICATION_ERROR(-20009, 'Validation Failed: Item 3 belongs to a different restaurant from Item 1 & 2.');
         END IF;
     END IF;
 
     BEGIN
+        -- get restaurant name
         SELECT RestaurantName INTO v_rest_name FROM RESTAURANT WHERE RestaurantID = v_item1_rest;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
             v_rest_name := 'Unknown Restaurant';
     END;
 
-    SELECT 'PK' || LPAD(seq_package_id.NEXTVAL, 5, '0') INTO v_pkg_id FROM DUAL;
+    -- generate next new PackageID
+    SELECT 'PK' || LPAD(seq_package_id.NEXTVAL, 5, '0') 
+    INTO v_pkg_id 
+    FROM DUAL;
 
+    -- compute original price and construct package name
     v_orig_price := (v_item1_price * p_qty1) + (v_item2_price * p_qty2);
     v_pkg_name := v_item1_name || ' & ' || v_item2_name;
 
@@ -132,11 +156,14 @@ BEGIN
 
     v_pkg_name := v_pkg_name || ' Combo';
     
+    -- apply discount to original price and compute discounted price
     v_disc_price := v_orig_price * (1 - p_discount);
 
+    -- insert new package record
     INSERT INTO PACKAGE (PackageID, PackageName, OriginalPrice, Discount)
     VALUES (v_pkg_id, v_pkg_name, v_orig_price, p_discount);
     
+    -- insert package items records
     INSERT INTO PACKAGEITEM (PackageID, ItemID, Quantity) VALUES (v_pkg_id, p_item1_id, p_qty1);
     INSERT INTO PACKAGEITEM (PackageID, ItemID, Quantity) VALUES (v_pkg_id, p_item2_id, p_qty2);
     
@@ -146,6 +173,7 @@ BEGIN
 
     COMMIT;
 
+    -- print details
     DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
     DBMS_OUTPUT.PUT_LINE(' PACKAGE PROFILE ');
     DBMS_OUTPUT.PUT_LINE('  * Package ID   : ' || v_pkg_id);
@@ -172,6 +200,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
 
 EXCEPTION
+    -- Handles any validation failures or unexpected errors by rolling back changes and printing the error message.
     WHEN OTHERS THEN
         ROLLBACK;
         DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
