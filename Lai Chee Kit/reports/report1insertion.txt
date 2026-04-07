@@ -1,0 +1,136 @@
+CLEAR SCREEN;
+SET DEFINE OFF;
+
+PROMPT >>> INSERTING MASSIVE DIVERSE DATA FOR NESTED CURSOR ROI REPORT...
+
+-- ====================================================================================
+-- 1. BASE DATA: ADDRESSES
+-- ====================================================================================
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A81001', '1 KLCC Road', 'KL', 'KL', '50000');
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A81002', '10 Gurney Drive', 'Georgetown', 'Penang', '10250');
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) VALUES ('A81003', '5 Sunway St', 'Petaling Jaya', 'Selangor', '46150');
+
+-- ====================================================================================
+-- 2. BASE DATA: DELIVERY TYPES & COMPANIES
+-- ====================================================================================
+INSERT INTO DELIVERYTYPE (DeliveryTypeID, DeliveryName, DeliveryFee) VALUES ('DT81001', 'Standard', 5.00);
+INSERT INTO DELIVERYCOMPANY (DeliveryCompanyID, CompanyName) VALUES ('DC81001', 'Speedy Logistics');
+
+-- ====================================================================================
+-- 3. RIDER BONUS TIERS
+-- ====================================================================================
+INSERT INTO RIDERBONUS (RiderBonusID, BonusTier, MinRating, MaxRating, BonusRate) VALUES ('RB81001', 'Basic Tier', 0.00, 3.99, 0.05); -- 5% bonus
+INSERT INTO RIDERBONUS (RiderBonusID, BonusTier, MinRating, MaxRating, BonusRate) VALUES ('RB81002', 'Pro Tier', 4.00, 4.50, 0.10); -- 10% bonus
+INSERT INTO RIDERBONUS (RiderBonusID, BonusTier, MinRating, MaxRating, BonusRate) VALUES ('RB81003', 'Elite Tier', 4.51, 5.00, 0.20); -- 20% bonus
+
+-- ====================================================================================
+-- 4. DELIVERY RIDERS 
+-- ====================================================================================
+-- Elite Tier Riders (AvgRating > 4.5)
+INSERT INTO DELIVERYRIDER (DeliveryRiderID, DeliveryCompanyID, RiderName, ContactNo, AverageRating) VALUES ('DR81001', 'DC81001', 'Slacking Sam', '011-1111', 4.80);
+INSERT INTO DELIVERYRIDER (DeliveryRiderID, DeliveryCompanyID, RiderName, ContactNo, AverageRating) VALUES ('DR81002', 'DC81001', 'Fast Fiona', '012-2222', 4.90);
+
+-- Pro Tier Rider (AvgRating 4.0 - 4.5)
+INSERT INTO DELIVERYRIDER (DeliveryRiderID, DeliveryCompanyID, RiderName, ContactNo, AverageRating) VALUES ('DR81003', 'DC81001', 'Average Andy', '013-3333', 4.20);
+
+-- Basic Tier Rider (AvgRating < 4.0)
+INSERT INTO DELIVERYRIDER (DeliveryRiderID, DeliveryCompanyID, RiderName, ContactNo, AverageRating) VALUES ('DR81004', 'DC81001', 'Hustling Harry', '014-4444', 3.50);
+
+
+-- ====================================================================================
+-- TEST 1 DATA: KL - MAY 2024 (Monthly Test - 6 Deliveries)
+-- ====================================================================================
+-- Slacking Sam (Elite) - Poor Performance
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81001', 'DT81001', 'DR81001', 'A81001', 5.5, TO_DATE('2024-05-10', 'YYYY-MM-DD'), '12:00', 10.00, 10.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81001', 'D81001', 2, 'Cold Food', TO_DATE('2024-05-10', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81002', 'DT81001', 'DR81001', 'A81001', 3.0, TO_DATE('2024-05-12', 'YYYY-MM-DD'), '13:00', 8.00, 8.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81002', 'D81002', 3, 'Late', TO_DATE('2024-05-12', 'YYYY-MM-DD'));
+
+-- Hustling Harry (Basic) - Excellent Performance
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81003', 'DT81001', 'DR81004', 'A81001', 4.0, TO_DATE('2024-05-14', 'YYYY-MM-DD'), '14:00', 12.00, 12.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81003', 'D81003', 5, 'Fast!', TO_DATE('2024-05-14', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81004', 'DT81001', 'DR81004', 'A81001', 2.0, TO_DATE('2024-05-18', 'YYYY-MM-DD'), '19:00', 6.00, 6.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81004', 'D81004', 5, 'Perfect', TO_DATE('2024-05-18', 'YYYY-MM-DD'));
+
+-- Average Andy (Pro) - Acceptable Performance
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81005', 'DT81001', 'DR81003', 'A81001', 6.0, TO_DATE('2024-05-22', 'YYYY-MM-DD'), '18:30', 15.00, 15.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81005', 'D81005', 4, 'Good', TO_DATE('2024-05-22', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81006', 'DT81001', 'DR81003', 'A81001', 5.0, TO_DATE('2024-05-25', 'YYYY-MM-DD'), '20:00', 10.00, 10.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81006', 'D81006', 4, 'Okay', TO_DATE('2024-05-25', 'YYYY-MM-DD'));
+
+
+-- ====================================================================================
+-- TEST 2 DATA: KL - Q3 2024 (July, Aug, Sept - 10 Deliveries)
+-- ====================================================================================
+-- Fast Fiona (Elite) - Perfect 5-Star Streak in Q3
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81007', 'DT81001', 'DR81002', 'A81001', 3.5, TO_DATE('2024-07-05', 'YYYY-MM-DD'), '12:00', 10.00, 10.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81007', 'D81007', 5, 'Super fast!', TO_DATE('2024-07-05', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81008', 'DT81001', 'DR81002', 'A81001', 2.0, TO_DATE('2024-07-15', 'YYYY-MM-DD'), '14:00', 8.00, 8.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81008', 'D81008', 5, 'Very polite', TO_DATE('2024-07-15', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81009', 'DT81001', 'DR81002', 'A81001', 4.5, TO_DATE('2024-08-10', 'YYYY-MM-DD'), '19:00', 12.00, 12.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81009', 'D81009', 5, 'Best rider', TO_DATE('2024-08-10', 'YYYY-MM-DD'));
+
+-- Slacking Sam (Elite) - Still terrible in Q3
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81010', 'DT81001', 'DR81001', 'A81001', 8.0, TO_DATE('2024-08-12', 'YYYY-MM-DD'), '21:00', 20.00, 20.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81010', 'D81010', 1, 'Rude', TO_DATE('2024-08-12', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81011', 'DT81001', 'DR81001', 'A81001', 6.0, TO_DATE('2024-09-02', 'YYYY-MM-DD'), '13:00', 15.00, 15.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81011', 'D81011', 2, 'Spilled drinks', TO_DATE('2024-09-02', 'YYYY-MM-DD'));
+
+-- Average Andy (Pro) - Mixed Q3
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81012', 'DT81001', 'DR81003', 'A81001', 3.0, TO_DATE('2024-07-20', 'YYYY-MM-DD'), '11:00', 10.00, 10.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81012', 'D81012', 4, 'Standard', TO_DATE('2024-07-20', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81013', 'DT81001', 'DR81003', 'A81001', 4.0, TO_DATE('2024-08-25', 'YYYY-MM-DD'), '18:00', 12.00, 12.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81013', 'D81013', 3, 'A bit slow', TO_DATE('2024-08-25', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81014', 'DT81001', 'DR81003', 'A81001', 5.5, TO_DATE('2024-09-15', 'YYYY-MM-DD'), '20:00', 16.00, 16.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81014', 'D81014', 5, 'Great!', TO_DATE('2024-09-15', 'YYYY-MM-DD'));
+
+-- Hustling Harry (Basic) - Solid Q3
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81015', 'DT81001', 'DR81004', 'A81001', 2.5, TO_DATE('2024-09-22', 'YYYY-MM-DD'), '12:30', 9.00, 9.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81015', 'D81015', 5, 'Perfect', TO_DATE('2024-09-22', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81016', 'DT81001', 'DR81004', 'A81001', 3.0, TO_DATE('2024-09-28', 'YYYY-MM-DD'), '19:00', 11.00, 11.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81016', 'D81016', 4, 'Good', TO_DATE('2024-09-28', 'YYYY-MM-DD'));
+
+
+-- ====================================================================================
+-- TEST 3 DATA: KL - OTHER MONTHS FOR YEARLY AUDIT (Jan, Feb, Oct, Nov, Dec)
+-- ====================================================================================
+-- Jan & Feb
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81017', 'DT81001', 'DR81002', 'A81001', 5.0, TO_DATE('2024-01-10', 'YYYY-MM-DD'), '14:00', 15.00, 15.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81017', 'D81017', 5, 'Amazing', TO_DATE('2024-01-10', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81018', 'DT81001', 'DR81001', 'A81001', 2.0, TO_DATE('2024-02-14', 'YYYY-MM-DD'), '20:00', 8.00, 8.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81018', 'D81018', 2, 'Messed up order', TO_DATE('2024-02-14', 'YYYY-MM-DD'));
+
+-- Oct, Nov, Dec
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81019', 'DT81001', 'DR81003', 'A81001', 6.0, TO_DATE('2024-10-05', 'YYYY-MM-DD'), '18:00', 18.00, 18.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81019', 'D81019', 4, 'Okay', TO_DATE('2024-10-05', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81020', 'DT81001', 'DR81004', 'A81001', 4.5, TO_DATE('2024-11-11', 'YYYY-MM-DD'), '12:00', 14.00, 14.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81020', 'D81020', 5, 'Quick', TO_DATE('2024-11-11', 'YYYY-MM-DD'));
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81021', 'DT81001', 'DR81002', 'A81001', 3.0, TO_DATE('2024-12-25', 'YYYY-MM-DD'), '19:30', 12.00, 12.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81021', 'D81021', 5, 'Merry Christmas', TO_DATE('2024-12-25', 'YYYY-MM-DD'));
+
+-- ====================================================================================
+-- TEST 4 DATA: PENANG - MAY 2024 (Monthly Test)
+-- ====================================================================================
+-- Fast Fiona (Platinum) does a flawless delivery in Penang
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81022', 'DT81001', 'DR81002', 'A81002', 4.0, TO_DATE('2024-05-20', 'YYYY-MM-DD'), '15:00', 12.00, 12.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81022', 'D81022', 5, 'Awesome service in Penang', TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+
+-- Average Andy (Bronze) does an acceptable delivery in Penang
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) VALUES ('D81023', 'DT81001', 'DR81003', 'A81002', 5.5, TO_DATE('2024-05-21', 'YYYY-MM-DD'), '18:00', 15.00, 15.00);
+INSERT INTO DELIVERYFEEDBACK (DeliveryFeedbackID, DeliveryID, Rating, FeedbackComment, FeedbackDate) VALUES ('DF81023', 'D81023', 4, 'Standard', TO_DATE('2024-05-21', 'YYYY-MM-DD'));
+
+COMMIT;
+COMMIT;
+PROMPT >>> DIVERSE SCHEMA-COMPLIANT SAMPLE DATA SUCCESSFULLY INSERTED!

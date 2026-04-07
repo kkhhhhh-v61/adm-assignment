@@ -12,7 +12,9 @@ CREATE OR REPLACE PROCEDURE PR_AUDIT_MENU_PROFITABILITY (
     v_total_revenue      NUMBER(8,2);
     v_archived_qty       NUMBER := 0;
     v_promo_flag_qty     NUMBER := 0;
-    v_rest_exists        NUMBER;
+    
+    -- Added variable for Restaurant Name
+    v_rest_name          RESTAURANT.RestaurantName%TYPE;
     
     -- Variables for Dynamic Math Extension
     v_rest_total_rev     NUMBER(8,2) := 0;
@@ -23,11 +25,15 @@ CREATE OR REPLACE PROCEDURE PR_AUDIT_MENU_PROFITABILITY (
 BEGIN
     SAVEPOINT start_audit;
 
-    -- Validate if the Restaurant actually exists
-    SELECT COUNT(*) INTO v_rest_exists FROM RESTAURANT WHERE RestaurantID = p_restaurant_id;
-    IF v_rest_exists = 0 THEN
-        RAISE e_invalid_rest;
-    END IF;
+    -- Validate if the Restaurant actually exists AND get the Name
+    BEGIN
+        SELECT RestaurantName INTO v_rest_name 
+        FROM RESTAURANT 
+        WHERE RestaurantID = p_restaurant_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE e_invalid_rest;
+    END;
 
     -- 🌟 DYNAMIC MATH EXTENSION: Calculate Restaurant Average Revenue 🌟
     -- 1. Count total active items
@@ -53,7 +59,8 @@ BEGIN
     -- Print Header
     DBMS_OUTPUT.PUT_LINE('==================================================');
     DBMS_OUTPUT.PUT_LINE('📋 DYNAMIC MENU PROFITABILITY and LIFECYCLE AUDIT');
-    DBMS_OUTPUT.PUT_LINE('Target Restaurant : ' || p_restaurant_id);
+    -- Displaying BOTH Name and ID here:
+    DBMS_OUTPUT.PUT_LINE('Target Restaurant : ' || v_rest_name || ' (' || p_restaurant_id || ')');
     DBMS_OUTPUT.PUT_LINE('Total Rest. Rev   : RM ' || v_rest_total_rev);
     DBMS_OUTPUT.PUT_LINE('Dynamic Avg Rev   : RM ' || v_dynamic_avg_rev || ' (Threshold)');
     DBMS_OUTPUT.PUT_LINE('Analysis Period   : Last 6 Months (Completed Orders)');

@@ -1,0 +1,55 @@
+
+-- =====================================================================
+-- TEST 1: RULE 1 (Immutability of Financial Transactions)
+-- =====================================================================
+PROMPT >>> TEST 1: Updating a Completed Payment to Pending (EXPECT ORA-20020) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86001', 'O86001', NULL, 'Credit Card', 'Completed');
+
+UPDATE PAYMENT SET PaymentStatus = 'Pending' WHERE PaymentID = 'PM86001';
+
+-- =====================================================================
+-- TEST 2: RULE 2 (Subscription COD Logic)
+-- =====================================================================
+PROMPT >>> TEST 2: Paying for a Subscription with Cash on Delivery (EXPECT ORA-20021) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86002', NULL, 'S86001', 'Cash on Delivery', 'Pending');
+
+-- =====================================================================
+-- TEST 3: RULE 5 (Paying for a Cancelled Order)
+-- =====================================================================
+PROMPT >>> TEST 3: Processing payment for a Cancelled Order (EXPECT ORA-20022) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86003', 'O86002', NULL, 'Credit Card', 'Completed');
+
+-- =====================================================================
+-- TEST 4: RULE 3 (COD for Pickups)
+-- =====================================================================
+PROMPT >>> TEST 4: Trying to use Cash on Delivery for a Pickup order (EXPECT ORA-20023) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86004', 'O86003', NULL, 'Cash on Delivery', 'Pending');
+
+-- =====================================================================
+-- TEST 5: RULE 3 (Rider Safety - COD > RM200)
+-- =====================================================================
+PROMPT >>> TEST 5: Trying to use COD for an order over RM200 (EXPECT ORA-20024) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86005', 'O86004', NULL, 'Cash on Delivery', 'Pending');
+
+-- =====================================================================
+-- TEST 6: RULE 4 (Logical Chronology)
+-- =====================================================================
+PROMPT >>> TEST 6: Marking COD as Completed while food is still Pending (EXPECT ORA-20025) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86006', 'O86005', NULL, 'Cash on Delivery', 'Completed');
+
+-- =====================================================================
+-- TEST 7: SUCCESSFUL COD PAYMENT (Valid scenario)
+-- =====================================================================
+PROMPT >>> TEST 7: Inserting a Pending COD payment for a Pending order (EXPECT SUCCESS) <<<
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM86007', 'O86005', NULL, 'Cash on Delivery', 'Pending');
+
+COMMIT;
+PROMPT >>> TESTS COMPLETED! <<<
+SET ECHO OFF;

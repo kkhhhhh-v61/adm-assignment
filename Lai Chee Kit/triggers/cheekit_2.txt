@@ -27,11 +27,17 @@ BEGIN
     -- RULES 3, 4, and 5: ORDER PAYMENT LOGIC (Cross-Table Validations)
     -- ========================================================================
     IF :NEW.OrderID IS NOT NULL THEN
-        -- Fetch real-time order details
-        SELECT OrderStatus, TotalAmount, PickupType
-        INTO v_order_status, v_order_total, v_pickup_type
-        FROM ORDERS
-        WHERE OrderID = :NEW.OrderID;
+        
+        -- FIX: Use a dedicated block with TRIM() to prevent CHAR/VARCHAR2 padding errors
+        BEGIN
+            SELECT OrderStatus, TotalAmount, PickupType
+            INTO v_order_status, v_order_total, v_pickup_type
+            FROM ORDERS
+            WHERE TRIM(OrderID) = TRIM(:NEW.OrderID);
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                RAISE_APPLICATION_ERROR(-20026, 'System Error: Order ID [' || :NEW.OrderID || '] does not exist in the ORDERS table.');
+        END;
 
         -- RULE 5: Prevent paying for Cancelled orders
         IF v_order_status = 'Cancelled' AND :NEW.PaymentStatus IN ('Pending', 'Completed') THEN

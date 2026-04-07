@@ -1,0 +1,17 @@
+-- =====================================================================
+-- SIMULATE DEBT: The payment for the first order FAILS
+-- =====================================================================
+PROMPT >>> SIMULATING DEBT: Inserting a FAILED payment for Order O85001 <<<
+
+INSERT INTO PAYMENT (PaymentID, OrderID, SubscriptionID, PaymentMethod, PaymentStatus) 
+VALUES ('PM85001', 'O85001', NULL, 'Credit Card', 'Failed');
+COMMIT;
+
+
+-- =====================================================================
+-- TEST 2: BLOCKED INSERT (Trigger catches the failed payment)
+-- =====================================================================
+PROMPT >>> TEST 2: Placing a new order. This should be BLOCKED. <<<
+
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O85002', 'M85001', NULL, NULL, 'Pickup', SYSDATE, '13:30', 55.00, 'Pending');
