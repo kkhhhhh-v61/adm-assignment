@@ -34,11 +34,11 @@ AS
     v_total_earned      NUMBER(8,2) := 0;
 
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
     DBMS_OUTPUT.PUT_LINE('PARSED PARAMETERS');
     DBMS_OUTPUT.PUT_LINE('>> Order ID : ' || p_order_id);
     DBMS_OUTPUT.PUT_LINE('>> Rider ID : ' || p_rider_id);
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
 
     BEGIN
         SELECT PickupType, DeliveryID, OrderStatus, MemberID, TotalAmount
@@ -171,11 +171,11 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(' EARNINGS CALCULATION ');
     DBMS_OUTPUT.PUT_LINE(RPAD('  * Base Delivery Earnings', 40) || ': RM ' || TO_CHAR(v_base_delivery_fee, 'FM99,990.90'));
     DBMS_OUTPUT.PUT_LINE(RPAD('  * Performance Bonus Earned', 40) || ': RM ' || TO_CHAR(v_bonus_earned, 'FM99,990.90'));
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(RPAD('-', 100, '-'));
     DBMS_OUTPUT.PUT_LINE(RPAD(' >> TOTAL PROJECTED EARNINGS', 40) || ': RM ' || TO_CHAR(v_total_earned, 'FM99,990.90'));
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
     DBMS_OUTPUT.PUT_LINE('* SUCCESS: Rider assigned successfully. OrderStatus is now ''Delivering''. *');
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
 
 EXCEPTION
     WHEN OTHERS THEN
@@ -183,7 +183,7 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('EXECUTION TERMINATED WITH EXCEPTION');
         DBMS_OUTPUT.PUT_LINE('ERROR at procedure execution:');
         DBMS_OUTPUT.PUT_LINE(SQLERRM);
-        DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+        DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
 END;
 /
 

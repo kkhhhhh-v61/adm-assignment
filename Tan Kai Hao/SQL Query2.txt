@@ -2,6 +2,8 @@ CL SCR
 
 SET SERVEROUTPUT ON FORMAT WRAPPED
 SET FEEDBACK OFF
+SET LINESIZE 88
+SET PAGESIZE 100
 
 CREATE OR REPLACE VIEW vw_cancelled_revenue AS
 SELECT 
@@ -28,46 +30,8 @@ JOIN (
 JOIN RESTAURANT R ON PR.RestaurantID = R.RestaurantID
 WHERE O.OrderStatus = 'Cancelled';
 
-SET LINESIZE 110
-SET PAGESIZE 100
-SET SQLBLANKLINES ON
-SET COLSEP ' | '
-
-COLUMN RestaurantName FORMAT A36 HEADING 'RESTAURANT NAME'
-COLUMN CANCELLED_ORDERS FORMAT 999,990 HEADING 'CANCELLED ORDERS'
-COLUMN LOST_REVENUE FORMAT $99,999,990.99 HEADING 'LOST REVENUE (RM)'
-COLUMN IMPACT_SHARE FORMAT 990.00 HEADING 'IMPACT (%)'
-
-TTITLE LEFT '========================================================================================' SKIP 1 -
-       LEFT '                 LOST REVENUE FROM INCOMPLETE ORDERS BY RESTAURANT                      ' SKIP 1 -
-       LEFT '========================================================================================' SKIP 1
-
-BREAK ON REPORT
-COMPUTE SUM LABEL 'GRAND TOTAL :' OF CANCELLED_ORDERS LOST_REVENUE IMPACT_SHARE ON REPORT
-
-SELECT
-    RestaurantName,
-    COUNT(DISTINCT OrderID) AS CANCELLED_ORDERS,
-    SUM(LostRevenue) AS LOST_REVENUE,
-    ROUND(RATIO_TO_REPORT(SUM(LostRevenue)) OVER () * 100, 2) AS IMPACT_SHARE
-FROM vw_cancelled_revenue
-GROUP BY RestaurantName
-ORDER BY LOST_REVENUE DESC;
-
-TTITLE OFF
-CLEAR BREAKS
-CLEAR COMPUTES
-SET HEADING OFF
-
 DECLARE
-    v_restaurant VARCHAR2(150);
-    v_orders NUMBER;
-    v_revenue NUMBER;
-    v_impact NUMBER;
-BEGIN
-    SELECT RestaurantName, CANCELLED_ORDERS, LOST_REVENUE, IMPACT_SHARE
-    INTO v_restaurant, v_orders, v_revenue, v_impact
-    FROM (
+    CURSOR c_cancel IS
         SELECT
             RestaurantName,
             COUNT(DISTINCT OrderID) AS CANCELLED_ORDERS,
@@ -75,21 +39,77 @@ BEGIN
             ROUND(RATIO_TO_REPORT(SUM(LostRevenue)) OVER () * 100, 2) AS IMPACT_SHARE
         FROM vw_cancelled_revenue
         GROUP BY RestaurantName
-        ORDER BY LOST_REVENUE DESC
-    )
-    WHERE ROWNUM = 1;
+        ORDER BY LOST_REVENUE DESC;
+        
+    v_grand_orders  NUMBER := 0;
+    v_grand_revenue NUMBER := 0;
+    v_grand_share   NUMBER := 0;
+    
+    v_top_restaurant VARCHAR2(150);
+    v_top_orders     NUMBER;
+    v_top_revenue    NUMBER;
+    v_top_impact     NUMBER;
+    v_is_first       BOOLEAN := TRUE;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
+    DBMS_OUTPUT.PUT_LINE(LPAD(' ', 20, ' ') || 'LOST REVENUE FROM INCOMPLETE ORDERS BY RESTAURANT');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('RESTAURANT NAME', 36, ' ') || ' | ' ||
+        LPAD('CANCELLED ORDERS', 16, ' ') || ' | ' ||
+        LPAD('LOST REVENUE (RM)', 17, ' ') || ' | ' ||
+        LPAD('IMPACT (%)', 10, ' ')
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 36, '-') || '-+-' ||
+        RPAD('-', 16, '-') || '-+-' ||
+        RPAD('-', 17, '-') || '-+-' ||
+        RPAD('-', 10, '-')
+    );
 
-    DBMS_OUTPUT.PUT_LINE('========================================================================================');
+    FOR r IN c_cancel LOOP
+        IF v_is_first THEN
+            v_top_restaurant := r.RestaurantName;
+            v_top_orders     := r.CANCELLED_ORDERS;
+            v_top_revenue    := r.LOST_REVENUE;
+            v_top_impact     := r.IMPACT_SHARE;
+            v_is_first       := FALSE;
+        END IF;
+        
+        v_grand_orders  := v_grand_orders + r.CANCELLED_ORDERS;
+        v_grand_revenue := v_grand_revenue + r.LOST_REVENUE;
+        v_grand_share   := v_grand_share + r.IMPACT_SHARE;
+        
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(r.RestaurantName, 36, ' ') || ' | ' ||
+            LPAD(TO_CHAR(r.CANCELLED_ORDERS, '999,990'), 16, ' ') || ' | ' ||
+            LPAD(TO_CHAR(r.LOST_REVENUE, '$99,999,990.99'), 17, ' ') || ' | ' ||
+            LPAD(TO_CHAR(r.IMPACT_SHARE, '990.00'), 10, ' ')
+        );
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 36, '-') || '-+-' ||
+        RPAD('-', 16, '-') || '-+-' ||
+        RPAD('-', 17, '-') || '-+-' ||
+        RPAD('-', 10, '-')
+    );
+    
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('GRAND TOTAL :', 36, ' ') || ' | ' ||
+        LPAD(TO_CHAR(v_grand_orders, '999,990'), 16, ' ') || ' | ' ||
+        LPAD(TO_CHAR(v_grand_revenue, '$99,999,990.99'), 17, ' ') || ' | ' ||
+        LPAD(TO_CHAR(v_grand_share, '990.00'), 10, ' ')
+    );
+    
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
     DBMS_OUTPUT.PUT_LINE(' [ LOST REVENUE SUMMARY ]');
-    DBMS_OUTPUT.PUT_LINE(' >> MOST AFFECTED RESTAURANT : ' || v_restaurant);
-    DBMS_OUTPUT.PUT_LINE(' >> TOTAL CANCELLED ORDERS   : ' || v_orders);
-    DBMS_OUTPUT.PUT_LINE(' >> TOTAL POTENTIAL LOSS     : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.90'));
-    DBMS_OUTPUT.PUT_LINE(' >> OVERALL IMPACT SHARE     : ' || v_impact || '%');
-    DBMS_OUTPUT.PUT_LINE('========================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' >> MOST AFFECTED RESTAURANT : ' || v_top_restaurant);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL CANCELLED ORDERS   : ' || v_top_orders);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL POTENTIAL LOSS     : RM ' || TO_CHAR(v_top_revenue, 'FM99,999,990.99'));
+    DBMS_OUTPUT.PUT_LINE(' >> OVERALL IMPACT SHARE     : ' || v_top_impact || '%');
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 88, '='));
 END;
 /
 
-SET HEADING ON
 SET FEEDBACK ON
-CLEAR COLUMNS
-SET COLSEP ' '

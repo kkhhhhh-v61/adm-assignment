@@ -180,19 +180,19 @@ BEGIN
     
     DBMS_OUTPUT.PUT_LINE(' [ CATEGORY PERFORMANCE SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' >> TOP OVERALL CATEGORY    : ' || v_top_cat_name);
-    DBMS_OUTPUT.PUT_LINE('      - Orders Generated    : ' || TRIM(TO_CHAR(v_top_cat_ord, '99,990')));
-    DBMS_OUTPUT.PUT_LINE('      - Revenue Contributed : RM ' || TRIM(TO_CHAR(v_top_cat_rev, '999,999,990.99')));
-    DBMS_OUTPUT.PUT_LINE('      - Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_top_cat_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0')) || '% of Overall');
+    DBMS_OUTPUT.PUT_LINE('      * Orders Generated    : ' || TRIM(TO_CHAR(v_top_cat_ord, '99,990')));
+    DBMS_OUTPUT.PUT_LINE('      * Revenue Contributed : RM ' || TRIM(TO_CHAR(v_top_cat_rev, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('      * Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_top_cat_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0')) || '% of Overall');
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> TOP WEEKDAY CATEGORY    : ' || v_best_wd_cat);
-    DBMS_OUTPUT.PUT_LINE('      - Orders Generated    : ' || TRIM(TO_CHAR(v_best_wd_ord, '99,990')));
-    DBMS_OUTPUT.PUT_LINE('      - Revenue Contributed : RM ' || TRIM(TO_CHAR(v_best_wd_rev, '999,999,990.99')));
-    DBMS_OUTPUT.PUT_LINE('      - Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_best_wd_rev / NULLIF(v_grand_wd_rev, 0)) * 100, 1), 0), '990.0')) || '% of Weekday');
+    DBMS_OUTPUT.PUT_LINE('      * Orders Generated    : ' || TRIM(TO_CHAR(v_best_wd_ord, '99,990')));
+    DBMS_OUTPUT.PUT_LINE('      * Revenue Contributed : RM ' || TRIM(TO_CHAR(v_best_wd_rev, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('      * Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_best_wd_rev / NULLIF(v_grand_wd_rev, 0)) * 100, 1), 0), '990.0')) || '% of Weekday');
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> TOP WEEKEND CATEGORY    : ' || v_best_we_cat);
-    DBMS_OUTPUT.PUT_LINE('      - Orders Generated    : ' || TRIM(TO_CHAR(v_best_we_ord, '99,990')));
-    DBMS_OUTPUT.PUT_LINE('      - Revenue Contributed : RM ' || TRIM(TO_CHAR(v_best_we_rev, '999,999,990.99')));
-    DBMS_OUTPUT.PUT_LINE('      - Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_best_we_rev / NULLIF(v_grand_we_rev, 0)) * 100, 1), 0), '990.0')) || '% of Weekend');
+    DBMS_OUTPUT.PUT_LINE('      * Orders Generated    : ' || TRIM(TO_CHAR(v_best_we_ord, '99,990')));
+    DBMS_OUTPUT.PUT_LINE('      * Revenue Contributed : RM ' || TRIM(TO_CHAR(v_best_we_rev, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('      * Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_best_we_rev / NULLIF(v_grand_we_rev, 0)) * 100, 1), 0), '990.0')) || '% of Weekend');
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> WEEKDAY VS WEEKEND RATIO: ' || 
                          TRIM(TO_CHAR(NVL(ROUND((v_grand_wd_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0')) || '% (Weekday) vs ' ||

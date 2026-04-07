@@ -72,8 +72,8 @@ Update → Update Restaurant.AverageRating)
 - Create New Package for Restaurant (Insert new package details and link multiple items to the package with a discounted price)
 
 3）Triggers
-- Enforce Rider Active Workload Limit (Prevent riders from accepting too much deliveries at once)
-- Auto-Cascade Order Cancellation on Payment Failure (Change OrderStatus to 'CANCELLED' if PaymentStatus is 'FAILED' and automatically refunds the voucher used on that order (if applicable))
+- Enforce Dynamic Workload Limits Based on Rider Performance (Prevent riders from accepting too much deliveries at once)
+- Auto-Cascade Cancellation on Payment Failure (Change OrderStatus or Subscription Status to 'CANCELLED' if PaymentStatus is 'FAILED' and automatically refunds the voucher used (for Orders only if applicable))
 
 4）Reports
 - Restaurant Revenue Comparison based on Rating (Low Rating 1.0 - 2.9, Average Rating 3.0 - 3.9, High Rating 4.0 - 5.0)
