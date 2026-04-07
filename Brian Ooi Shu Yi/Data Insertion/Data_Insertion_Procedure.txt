@@ -5,23 +5,72 @@ UPDATE ORDERS
 SET MemberVoucherID = 'MV09999'
 WHERE OrderID = 'O00003';
 
+
+-- AddressID, AddressLine, City, State, Postcode
 INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) 
-VALUES ('A88888', '88888 Infinite Loop Road', 'Kuala Lumpur', 'WPKL', '50000');
+VALUES ('A01001', '123 Trigger Demo Road', 'Sabah', 'Sabah', '88000');
+
+-- MemberID, FullName, Email, PhoneNo, Password, RegistrationDate
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
+VALUES ('M01001', 'Trigger Normal User', 'norm1001@test.com', '0121001001', '123456', TO_DATE('2026-04-01', 'YYYY-MM-DD'));
 
 INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
-VALUES ('M88888', 'Super VIP Tester', 'vip88888@test.com', '0188888888', 'pass88888', SYSDATE);
+VALUES ('M01002', 'Trigger VIP User', 'vip1002@test.com', '0121002002', '123456', TO_DATE('2026-04-01', 'YYYY-MM-DD'));
 
+-- SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status
 INSERT INTO SUBSCRIPTION (SubscriptionID, MemberID, SubscriptionPlanID, StartDate, EndDate, Status) 
-VALUES ('S88888', 'M88888', 'SP00001', SYSDATE - 5, SYSDATE + 30, 'Active');
-
-INSERT INTO VOUCHER (VoucherID, VoucherTypeID, VoucherName, VoucherCode, DiscountPercentage, DiscountAmount, MinSpendAmount, MaxDiscountAmount, ExpiryDate) 
-VALUES ('V88888', 'VT00003', 'Max Saver Delivery (RM 15 Off)', 'MAXSAVE88888', NULL, 15.00, 0, 15.00, SYSDATE + 30);
-
-INSERT INTO MEMBERVOUCHER (MemberVoucherID, MemberID, VoucherID, DateClaimed, IsUsed) 
-VALUES ('MV88888', 'M88888', 'V88888', SYSDATE, 'N');
+VALUES ('S09001', 'M01002', 'SP00001', TO_DATE('2026-04-01', 'YYYY-MM-DD'), TO_DATE('2026-12-31', 'YYYY-MM-DD'), 'Active');
 
 INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
-VALUES ('D88888', 'DT00003', 'DR00001', 'A88888', 25.00, SYSDATE, '15:00', 0.00, 0.00);
+VALUES ('D01001', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:00', 8.00, 8.00);
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D01002', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:15', 8.00, 8.00);
+
+INSERT INTO DELIVERY (DeliveryID, DeliveryTypeID, DeliveryRiderID, AddressID, DistanceInKm, DeliveryDate, DeliveryTime, OriginalDeliveryPrice, DiscountedDeliveryPrice) 
+VALUES ('D01003', 'DT00001', 'DR00001', 'A01001', 50.00, TO_DATE('2026-04-02', 'YYYY-MM-DD'), '12:30', 8.00, 8.00);
+
+-- OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O01001', 'M01001', 'D01001', NULL, 'Delivery', TO_DATE('2026-04-02', 'YYYY-MM-DD'), '11:00', 0.00, 'Pending');
 
 INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
-VALUES ('O88888', 'M88888', 'D88888', 'MV88888', 'Delivery', SYSDATE, '14:30', 100.00, 'Pending');
+VALUES ('O01002', 'M01002', 'D01002', NULL, 'Delivery', TO_DATE('2026-04-02', 'YYYY-MM-DD'), '11:15', 0.00, 'Pending');
+
+INSERT INTO ORDERS (OrderID, MemberID, DeliveryID, MemberVoucherID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O01003', 'M01002', 'D01003', NULL, 'Delivery', TO_DATE('2026-04-02', 'YYYY-MM-DD'), '11:30', 0.00, 'Pending');
+
+-- 1. Create a dedicated test address
+INSERT INTO ADDRESS (AddressID, AddressLine, City, State, Postcode) 
+VALUES ('A03001', '3000 Testing Street', 'Kuala Lumpur', 'WPKL', '50000');
+
+-- 2. Create a test member
+INSERT INTO MEMBER (MemberID, FullName, Email, PhoneNo, Password, RegistrationDate) 
+VALUES ('M03001', 'Trigger Three User', 'test3000@mail.com', '0133003000', 'pass3000', SYSDATE);
+
+-- 3. Create a test restaurant (Hours: 7.00a.m.- 8.00p.m.)
+INSERT INTO RESTAURANT (RestaurantID, AddressID, RestaurantName, ContactNo, IsHalal, OperationHours) 
+VALUES ('R03001', 'A03001', 'Trigger Test Kitchen', '03-30003000', 'Y', '7.00a.m.- 8.00p.m.');
+
+-- 4. Create items (I03001 = Burger/Heavy, I03002 = Drink/Quick)
+-- Using C00009 for Burgers and C00016 for Drinks
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I03001', 'R03001', 'C00009', 'Algorithm Burger', 'A heavy burger for testing', 15.00, 'Y');
+
+INSERT INTO ITEM (ItemID, RestaurantID, CategoryID, ItemName, Description, Price, IsAvailable) 
+VALUES ('I03002', 'R03001', 'C00016', 'Algorithm Soda', 'A quick drink for testing', 5.00, 'Y');
+
+-- 5. Create 4 empty orders for different scenarios
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O03001', 'M03001', 'Pickup', SYSDATE, '06:00', 0.00, 'Pending');
+
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O03002', 'M03001', 'Pickup', SYSDATE, '19:45', 0.00, 'Pending');
+
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O03003', 'M03001', 'Pickup', SYSDATE, '19:45', 0.00, 'Pending');
+
+INSERT INTO ORDERS (OrderID, MemberID, PickupType, OrderDate, OrderTime, TotalAmount, OrderStatus) 
+VALUES ('O03004', 'M03001', 'Pickup', SYSDATE, '19:45', 0.00, 'Pending');
+
+COMMIT;
