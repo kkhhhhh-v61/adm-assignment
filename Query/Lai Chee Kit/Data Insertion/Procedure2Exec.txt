@@ -3,24 +3,67 @@ UPDATE ITEM SET IsAvailable = 'Y' WHERE RestaurantID = 'R84001';
 DELETE FROM ORDERITEM WHERE ItemID = 'I84003';
 COMMIT;
 
--- RUN PROCEDURE
+-- 2. SETUP ADVANCED FORMATTING
+SET DEFINE OFF;
 CLEAR SCREEN;
-SET SERVEROUTPUT ON;
-SET LINESIZE 200;
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 150;
 SET PAGESIZE 100;
 
-COLUMN ItemID FORMAT A10;
-COLUMN ItemName FORMAT A25;
-COLUMN Price FORMAT 99.99;
-COLUMN IsAvailable FORMAT A15;
+-- Turn off any lingering titles or breaks from previous scripts!
+TTITLE OFF;
+CLEAR COLUMNS;
+CLEAR BREAKS;
 
-PROMPT [BEFORE AUDIT] Menu Items for R84001:
-SELECT ItemID, ItemName, Price, IsAvailable FROM ITEM WHERE RestaurantID = 'R84001' ORDER BY ItemID;
+-- Formatting the headers to look highly readable
+COLUMN ItemID FORMAT A12 HEADING "ITEM ID";
+COLUMN ItemName FORMAT A25 HEADING "MENU ITEM";
+COLUMN "Price (RM)" FORMAT A12;
+COLUMN "Current Status" FORMAT A18;
+
+PROMPT +=============================================================================+
+PROMPT |  [ SYSTEM AUDIT LOG ] : MENU PROFITABILITY & LIFECYCLE TEST                 |
+PROMPT |  TARGET RESTAURANT    : R84001 (Burger Hub 84k)                             |
+PROMPT +=============================================================================+
+PROMPT
+
+PROMPT >>> [ PRE-AUDIT ] DATABASE RECORD
+PROMPT +-----------------------------------------------------------------------------+
+SELECT 
+    ItemID, 
+    ItemName, 
+    TO_CHAR(Price, 'FM990.00') AS "Price (RM)", 
+    CASE 
+        WHEN IsAvailable = 'Y' THEN '[ ACTIVE ]' 
+        ELSE '>> ARCHIVED <<' 
+    END AS "Current Status"
+FROM ITEM 
+WHERE RestaurantID = 'R84001' 
+ORDER BY ItemID;
+
 
 PROMPT 
-PROMPT >>> EXECUTING DYNAMIC PROFITABILITY AUDIT <<<
+PROMPT >>> TRIGGERING AUTOMATED PROFITABILITY AUDIT...
+PROMPT +-----------------------------------------------------------------------------+
 EXEC PR_AUDIT_MENU_PROFITABILITY('R84001');
 
+
 PROMPT 
-PROMPT [AFTER AUDIT] Menu Items for R84001:
-SELECT ItemID, ItemName, Price, IsAvailable FROM ITEM WHERE RestaurantID = 'R84001' ORDER BY ItemID;
+PROMPT >>> [ POST-AUDIT ] DATABASE VERIFICATION 
+PROMPT +-----------------------------------------------------------------------------+
+SELECT 
+    ItemID, 
+    ItemName, 
+    TO_CHAR(Price, 'FM990.00') AS "Price (RM)", 
+    CASE 
+        WHEN IsAvailable = 'Y' THEN '[ ACTIVE ]' 
+        ELSE '>> ARCHIVED <<' 
+    END AS "Current Status"
+FROM ITEM 
+WHERE RestaurantID = 'R84001' 
+ORDER BY ItemID;
+
+PROMPT
+PROMPT +=============================================================================+
+PROMPT |  END OF SYSTEM AUDIT LOG                                                    |
+PROMPT +=============================================================================+
