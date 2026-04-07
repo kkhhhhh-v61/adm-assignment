@@ -17,10 +17,10 @@ PROMPT >>> Creating View VW_PEAK_HOUR_BOTTLENECK...
 CREATE OR REPLACE VIEW VW_PEAK_HOUR_BOTTLENECK AS
 WITH WaitTimeData AS (
     SELECT 
-        TO_CHAR(TO_DATE(o.OrderTime, 'HH24:MI'), 'HH24') || ':00' AS PeakHour,
+        TO_CHAR(TO_DATE(SUBSTR(o.OrderTime, 1, 5), 'HH24:MI'), 'HH24') || ':00' AS PeakHour,
         dc.CompanyName AS DeliveryCompany,
         o.OrderID,
-        MOD((TO_DATE(d.DeliveryTime, 'HH24:MI') - TO_DATE(o.OrderTime, 'HH24:MI')) * 24 * 60 + 1440, 1440) AS WaitTimeMins
+        MOD((TO_DATE(SUBSTR(d.DeliveryTime, 1, 5), 'HH24:MI') - TO_DATE(SUBSTR(o.OrderTime, 1, 5), 'HH24:MI')) * 24 * 60 + 1440, 1440) AS WaitTimeMins
     FROM 
         ORDERS o
     JOIN 
