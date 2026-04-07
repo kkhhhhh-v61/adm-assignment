@@ -1,0 +1,119 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE register_restaurant_menu_item (
+    p_restaurant_id   IN CHAR,
+    p_category_id     IN CHAR,
+    p_item_name       IN VARCHAR2,
+    p_description     IN VARCHAR2,
+    p_price           IN NUMBER
+)
+AS
+
+    v_restaurant_count NUMBER;
+    v_category_count   NUMBER;
+    v_duplicate_count  NUMBER;
+    v_new_item_id      CHAR(6);
+
+BEGIN
+
+    DBMS_OUTPUT.PUT_LINE('=======================================');
+    DBMS_OUTPUT.PUT_LINE('     REGISTER NEW RESTAURANT ITEM      ');
+    DBMS_OUTPUT.PUT_LINE('=======================================');
+
+    -- ======================================
+    -- Validate Restaurant
+    -- ======================================
+    SELECT COUNT(*)
+    INTO v_restaurant_count
+    FROM RESTAURANT
+    WHERE RestaurantID = p_restaurant_id;
+
+    IF v_restaurant_count = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Restaurant does not exist.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Restaurant validated');
+
+    -- ======================================
+    -- Validate Category
+    -- ======================================
+    SELECT COUNT(*)
+    INTO v_category_count
+    FROM CATEGORY
+    WHERE CategoryID = p_category_id;
+
+    IF v_category_count = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Category does not exist.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Category validated');
+
+    -- ======================================
+    -- Validate Price
+    -- ======================================
+    IF p_price < 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Price must be greater than or equal to 0.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Price validated');
+
+    -- ======================================
+    -- Prevent Duplicate Menu Item
+    -- ======================================
+    SELECT COUNT(*)
+    INTO v_duplicate_count
+    FROM ITEM
+    WHERE RestaurantID = p_restaurant_id
+    AND UPPER(ItemName) = UPPER(p_item_name);
+
+    IF v_duplicate_count > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Menu item already exists for this restaurant.');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('No duplicate item found');
+
+    -- ======================================
+    -- Generate New ItemID (AUTO NEXT ID)
+    -- ======================================
+    SELECT 'I' || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(ItemID,2))),0) + 1,5,'0')
+    INTO v_new_item_id
+    FROM ITEM;
+
+    -- ======================================
+    -- Insert New Menu Item
+    -- ======================================
+    INSERT INTO ITEM
+    VALUES (
+        v_new_item_id,
+        p_restaurant_id,
+        p_category_id,
+        p_item_name,
+        p_description,
+        p_price,
+        'Y'
+    );
+
+    COMMIT;
+
+    -- ======================================
+    -- Output Result
+    -- ======================================
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('New Menu Item Registered Successfully');
+    DBMS_OUTPUT.PUT_LINE('Item ID   : ' || v_new_item_id);
+    DBMS_OUTPUT.PUT_LINE('Item Name : ' || p_item_name);
+    DBMS_OUTPUT.PUT_LINE('Price     : RM ' || TO_CHAR(p_price,'9990.99'));
+    DBMS_OUTPUT.PUT_LINE('---------------------------------------');
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
+
+END;
+/

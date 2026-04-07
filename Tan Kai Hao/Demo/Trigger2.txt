@@ -1,0 +1,92 @@
+CL SCR;
+
+SET DEFINE OFF;
+SET FEEDBACK OFF;
+SET PAGESIZE 100;
+SET LINESIZE 100;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 1: PAYMENT FAILED (NO VOUCHER USED)
+PROMPT Description: Updating a Pending Payment to Failed for an order that did not use a voucher.
+PROMPT ====================================================================================================
+PROMPT
+
+COLUMN OrderID FORMAT A7
+COLUMN PaymentStatus FORMAT A13
+COLUMN OrderStatus FORMAT A11
+COLUMN MemberVoucherID FORMAT A15
+COLUMN IsUsed FORMAT A6
+
+PROMPT >> BEFORE UPDATE:
+SELECT P.PaymentID, P.PaymentStatus, O.OrderID, O.OrderStatus, O.MemberVoucherID
+FROM PAYMENT P
+JOIN ORDERS O ON P.OrderID = O.OrderID
+WHERE P.PaymentID = 'PM10001';
+
+UPDATE PAYMENT 
+SET PaymentStatus = 'Failed' 
+WHERE PaymentID = 'PM10001';
+COMMIT;
+
+PROMPT
+PROMPT >> AFTER UPDATE (Trigger Executed):
+SELECT P.PaymentID, P.PaymentStatus, O.OrderID, O.OrderStatus, O.MemberVoucherID
+FROM PAYMENT P
+JOIN ORDERS O ON P.OrderID = O.OrderID
+WHERE P.PaymentID = 'PM10001';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2: PAYMENT FAILED (WITH VOUCHER REFUND)
+PROMPT Description: Updating a Pending Payment to Failed for an order that used a voucher.
+PROMPT ====================================================================================================
+PROMPT
+
+PROMPT >> BEFORE UPDATE:
+SELECT P.PaymentID, P.PaymentStatus, O.OrderID, O.OrderStatus, O.MemberVoucherID, MV.IsUsed
+FROM PAYMENT P
+JOIN ORDERS O ON P.OrderID = O.OrderID
+JOIN MEMBERVOUCHER MV ON O.MemberVoucherID = MV.MemberVoucherID
+WHERE P.PaymentID = 'PM10002';
+
+UPDATE PAYMENT 
+SET PaymentStatus = 'Failed' 
+WHERE PaymentID = 'PM10002';
+COMMIT;
+
+PROMPT
+PROMPT >> AFTER UPDATE (Trigger Executed & Voucher Refunded):
+SELECT P.PaymentID, P.PaymentStatus, O.OrderID, O.OrderStatus, O.MemberVoucherID, MV.IsUsed
+FROM PAYMENT P
+JOIN ORDERS O ON P.OrderID = O.OrderID
+JOIN MEMBERVOUCHER MV ON O.MemberVoucherID = MV.MemberVoucherID
+WHERE P.PaymentID = 'PM10002';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 3: UPDATE ON COMPLETED PAYMENT (NO TRIGGER ACTION)
+PROMPT Description: Attempting to change a 'Completed' payment to 'Failed'.
+PROMPT ====================================================================================================
+PROMPT
+
+PROMPT >> BEFORE UPDATE:
+SELECT P.PaymentID, P.PaymentStatus, O.OrderID, O.OrderStatus
+FROM PAYMENT P
+JOIN ORDERS O ON P.OrderID = O.OrderID
+WHERE P.PaymentID = 'PM10003';
+
+UPDATE PAYMENT 
+SET PaymentStatus = 'Failed' 
+WHERE PaymentID = 'PM10003';
+COMMIT;
+
+PROMPT
+PROMPT >> AFTER UPDATE: (Order status remains unaffected)
+SELECT P.PaymentID, P.PaymentStatus, O.OrderID, O.OrderStatus
+FROM PAYMENT P
+JOIN ORDERS O ON P.OrderID = O.OrderID
+WHERE P.PaymentID = 'PM10003';
+
+SET FEEDBACK ON;
+SET DEFINE ON;

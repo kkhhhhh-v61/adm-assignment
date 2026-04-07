@@ -1,0 +1,31 @@
+CL SCR;
+
+SET FEEDBACK OFF;
+SET PAGESIZE 100;
+SET LINESIZE 100;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 1: ASSIGN DELIVERY WITHIN WORKLOAD LIMIT
+PROMPT Description: Assigning deliveries to a rider who has not yet reached the maximum active workload (3).
+EXEC prc_assign_rider('O10007', 'DR10002');
+PROMPT
+EXEC prc_assign_rider('O10008', 'DR10002');
+
+COLUMN OrderID FORMAT A7
+COLUMN DeliveryID FORMAT A10
+COLUMN DeliveryRiderID FORMAT A15
+COLUMN OrderStatus FORMAT A11
+
+SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
+FROM ORDERS O
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+WHERE D.DeliveryRiderID = 'DR10002' AND O.OrderStatus = 'Delivering';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2: RIDER WORKLOAD LIMIT EXCEEDED
+PROMPT Description: Attempting to assign a delivery to a rider who already has 3 active deliveries.
+EXEC prc_assign_rider('O10009', 'DR10002');
+
+SET FEEDBACK ON;

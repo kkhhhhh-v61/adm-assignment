@@ -1,0 +1,207 @@
+CL SCR
+
+SET SERVEROUTPUT ON FORMAT WRAPPED
+
+CREATE OR REPLACE PROCEDURE prc_category_sales_report (
+    p_start_date IN DATE,
+    p_end_date   IN DATE
+) AS
+    CURSOR c_category IS
+        SELECT C.CategoryID,
+               C.CategoryName,
+               COUNT(DISTINCT CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') NOT IN ('SAT', 'SUN') THEN O.OrderID END) AS WeekdayOrders,
+               NVL(SUM(CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') NOT IN ('SAT', 'SUN') THEN OI.Quantity * OI.PriceEach END), 0) AS WeekdayRev,
+               COUNT(DISTINCT CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') IN ('SAT', 'SUN') THEN O.OrderID END) AS WeekendOrders,
+               NVL(SUM(CASE WHEN TO_CHAR(O.OrderDate, 'DY', 'NLS_DATE_LANGUAGE=AMERICAN') IN ('SAT', 'SUN') THEN OI.Quantity * OI.PriceEach END), 0) AS WeekendRev,
+               COUNT(DISTINCT O.OrderID) AS TotalOrders,
+               NVL(SUM(OI.Quantity * OI.PriceEach), 0) AS TotalRev
+        FROM CATEGORY C
+        JOIN ITEM I ON C.CategoryID = I.CategoryID
+        JOIN ORDERITEM OI ON I.ItemID = OI.ItemID
+        JOIN ORDERS O ON OI.OrderID = O.OrderID
+        WHERE O.OrderStatus = 'Completed'
+          AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+        GROUP BY C.CategoryID, C.CategoryName
+        ORDER BY TotalRev DESC;
+
+    v_grand_wd_ord NUMBER := 0;
+    v_grand_wd_rev NUMBER := 0;
+    v_grand_we_ord NUMBER := 0;
+    v_grand_we_rev NUMBER := 0;
+    v_grand_tot_ord NUMBER := 0;
+    v_grand_tot_rev NUMBER := 0;
+    
+    v_top_cat_name VARCHAR2(50) := 'N/A';
+    v_top_cat_rev  NUMBER := -1;
+    v_top_cat_ord  NUMBER := 0;
+    v_best_we_cat  VARCHAR2(50) := 'N/A';
+    v_best_we_rev  NUMBER := -1;
+    v_best_we_ord  NUMBER := 0;
+    v_best_wd_cat  VARCHAR2(50) := 'N/A';
+    v_best_wd_rev  NUMBER := -1;
+    v_best_wd_ord  NUMBER := 0;
+    v_wd_rank      NUMBER;
+    v_we_rank      NUMBER;
+
+    v_has_data BOOLEAN := FALSE;
+
+    FUNCTION get_color_bar(p_revenue NUMBER, p_total_revenue NUMBER, p_rank NUMBER) RETURN VARCHAR2 IS
+        v_pct NUMBER;
+        v_len NUMBER;
+        v_bar VARCHAR2(200) := '';
+        v_color VARCHAR2(10);
+    BEGIN
+        IF NVL(p_total_revenue, 0) = 0 THEN
+            RETURN '';
+        END IF;
+        
+        v_pct := (p_revenue / p_total_revenue) * 100;
+        v_len := ROUND(v_pct / 5);
+        
+        FOR i IN 1..v_len LOOP
+            v_bar := v_bar || '#';
+        END LOOP;
+        
+        IF p_rank = 1 THEN
+            v_color := '32';
+        ELSE
+            v_color := '31';
+        END IF;
+        
+        RETURN CHR(27) || '[' || v_color || 'm' || v_bar || CHR(27) || '[0m';
+    END;
+
+BEGIN
+    IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
+        RAISE_APPLICATION_ERROR(-20001, 'INVALID DATE RANGE: Start date cannot be later than end date.');
+    END IF;
+
+    FOR r IN c_category LOOP
+        v_has_data := TRUE;
+        v_grand_wd_ord := v_grand_wd_ord + r.WeekdayOrders;
+        v_grand_wd_rev := v_grand_wd_rev + r.WeekdayRev;
+        v_grand_we_ord := v_grand_we_ord + r.WeekendOrders;
+        v_grand_we_rev := v_grand_we_rev + r.WeekendRev;
+        v_grand_tot_ord := v_grand_tot_ord + r.TotalOrders;
+        v_grand_tot_rev := v_grand_tot_rev + r.TotalRev;
+        
+        IF r.TotalRev > v_top_cat_rev THEN
+            v_top_cat_rev := r.TotalRev;
+            v_top_cat_name := r.CategoryName;
+            v_top_cat_ord := r.TotalOrders;
+        END IF;
+        
+        IF r.WeekendRev > v_best_we_rev THEN
+            v_best_we_rev := r.WeekendRev;
+            v_best_we_cat := r.CategoryName;
+            v_best_we_ord := r.WeekendOrders;
+        END IF;
+        
+        IF r.WeekdayRev > v_best_wd_rev THEN
+            v_best_wd_rev := r.WeekdayRev;
+            v_best_wd_cat := r.CategoryName;
+            v_best_wd_ord := r.WeekdayOrders;
+        END IF;
+    END LOOP;
+
+    IF NOT v_has_data THEN
+        DBMS_OUTPUT.PUT_LINE('>>> NO DATA FOUND FOR THIS DATE RANGE <<<');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                           WEEKDAY VS WEEKEND SALES PERFORMANCE BY CATEGORY');
+    DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' Period    : ' || TO_CHAR(p_start_date, 'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE(' Generated : ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'));
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(
+        ' ' || RPAD('CATEGORY NAME', 30) || ' | ' ||
+        RPAD('WEEK', 7) || ' | ' ||
+        LPAD('ORDERS', 8) || ' | ' ||
+        LPAD('REVENUE (RM)', 14) || ' | ' ||
+        'REVENUE SHARE'
+    );
+    DBMS_OUTPUT.PUT_LINE('--------------------------------|---------|----------|----------------|------------------------------');
+
+    FOR r IN c_category LOOP
+        IF r.WeekdayRev >= r.WeekendRev THEN
+            v_wd_rank := 1;
+            v_we_rank := 2;
+        ELSE
+            v_wd_rank := 2;
+            v_we_rank := 1;
+        END IF;
+
+        DBMS_OUTPUT.PUT_LINE(
+            ' ' || RPAD(SUBSTR(r.CategoryName, 1, 30), 30) || ' | ' ||
+            RPAD('Weekday', 7) || ' | ' ||
+            LPAD(TO_CHAR(r.WeekdayOrders, '999,990'), 8) || ' | ' ||
+            LPAD(TO_CHAR(r.WeekdayRev, '999,990.99'), 14) || ' | ' ||
+            LPAD(TO_CHAR(NVL(ROUND((r.WeekdayRev / NULLIF(r.TotalRev, 0)) * 100, 1), 0), '990.0') || '% ', 8) || 
+            get_color_bar(r.WeekdayRev, r.TotalRev, v_wd_rank)
+        );
+        DBMS_OUTPUT.PUT_LINE(
+            ' ' || RPAD(' ', 30) || ' | ' ||
+            RPAD('Weekend', 7) || ' | ' ||
+            LPAD(TO_CHAR(r.WeekendOrders, '999,990'), 8) || ' | ' ||
+            LPAD(TO_CHAR(r.WeekendRev, '999,990.99'), 14) || ' | ' ||
+            LPAD(TO_CHAR(NVL(ROUND((r.WeekendRev / NULLIF(r.TotalRev, 0)) * 100, 1), 0), '990.0') || '% ', 8) || 
+            get_color_bar(r.WeekendRev, r.TotalRev, v_we_rank)
+        );
+        DBMS_OUTPUT.PUT_LINE('--------------------------------|---------|----------|----------------|------------------------------');
+    END LOOP;
+
+    IF v_grand_wd_rev >= v_grand_we_rev THEN
+        v_wd_rank := 1;
+        v_we_rank := 2;
+    ELSE
+        v_wd_rank := 2;
+        v_we_rank := 1;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE(
+        ' ' || RPAD('GRAND TOTAL :', 30) || ' | ' ||
+        RPAD('Weekday', 7) || ' | ' ||
+        LPAD(TO_CHAR(v_grand_wd_ord, '999,990'), 8) || ' | ' ||
+        LPAD(TO_CHAR(v_grand_wd_rev, '999,990.99'), 14) || ' | ' ||
+        LPAD(TO_CHAR(NVL(ROUND((v_grand_wd_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0') || '% ', 8) || 
+        get_color_bar(v_grand_wd_rev, v_grand_tot_rev, v_wd_rank)
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        ' ' || RPAD(' ', 30) || ' | ' ||
+        RPAD('Weekend', 7) || ' | ' ||
+        LPAD(TO_CHAR(v_grand_we_ord, '999,990'), 8) || ' | ' ||
+        LPAD(TO_CHAR(v_grand_we_rev, '999,990.99'), 14) || ' | ' ||
+        LPAD(TO_CHAR(NVL(ROUND((v_grand_we_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0') || '% ', 8) || 
+        get_color_bar(v_grand_we_rev, v_grand_tot_rev, v_we_rank)
+    );
+    DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
+    
+    DBMS_OUTPUT.PUT_LINE(' [ CATEGORY PERFORMANCE SUMMARY ]');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP OVERALL CATEGORY    : ' || v_top_cat_name);
+    DBMS_OUTPUT.PUT_LINE('      - Orders Generated    : ' || TRIM(TO_CHAR(v_top_cat_ord, '99,990')));
+    DBMS_OUTPUT.PUT_LINE('      - Revenue Contributed : RM ' || TRIM(TO_CHAR(v_top_cat_rev, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('      - Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_top_cat_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0')) || '% of Overall');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP WEEKDAY CATEGORY    : ' || v_best_wd_cat);
+    DBMS_OUTPUT.PUT_LINE('      - Orders Generated    : ' || TRIM(TO_CHAR(v_best_wd_ord, '99,990')));
+    DBMS_OUTPUT.PUT_LINE('      - Revenue Contributed : RM ' || TRIM(TO_CHAR(v_best_wd_rev, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('      - Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_best_wd_rev / NULLIF(v_grand_wd_rev, 0)) * 100, 1), 0), '990.0')) || '% of Weekday');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP WEEKEND CATEGORY    : ' || v_best_we_cat);
+    DBMS_OUTPUT.PUT_LINE('      - Orders Generated    : ' || TRIM(TO_CHAR(v_best_we_ord, '99,990')));
+    DBMS_OUTPUT.PUT_LINE('      - Revenue Contributed : RM ' || TRIM(TO_CHAR(v_best_we_rev, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('      - Revenue Share       : ' || TRIM(TO_CHAR(NVL(ROUND((v_best_we_rev / NULLIF(v_grand_we_rev, 0)) * 100, 1), 0), '990.0')) || '% of Weekend');
+    DBMS_OUTPUT.PUT_LINE(' ');
+    DBMS_OUTPUT.PUT_LINE(' >> WEEKDAY VS WEEKEND RATIO: ' || 
+                         TRIM(TO_CHAR(NVL(ROUND((v_grand_wd_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0')) || '% (Weekday) vs ' ||
+                         TRIM(TO_CHAR(NVL(ROUND((v_grand_we_rev / NULLIF(v_grand_tot_rev, 0)) * 100, 1), 0), '990.0')) || '% (Weekend)');
+    DBMS_OUTPUT.PUT_LINE('=====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' End of Report.');
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+END prc_category_sales_report;
+/

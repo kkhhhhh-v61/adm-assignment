@@ -1,0 +1,138 @@
+CREATE OR REPLACE TRIGGER trg_validate_item_promotion
+BEFORE INSERT OR UPDATE ON ORDERITEM
+FOR EACH ROW
+DECLARE
+
+    v_promo_id PROMOTION.PromotionID%TYPE;
+    v_discount PROMOTION.Discount%TYPE;
+    v_min_spend PROMOTION.MinSpendAmount%TYPE;
+    v_max_discount PROMOTION.MaxDiscountAmount%TYPE;
+    v_max_redemptions PROMOTION.MaxRedemptions%TYPE;
+    v_current_redemptions PROMOTION.CurrentRedemptions%TYPE;
+    v_start_date PROMOTION.StartDate%TYPE;
+    v_end_date PROMOTION.EndDate%TYPE;
+    v_is_active PROMOTION.IsActive%TYPE;
+
+    v_order_total NUMBER(10,2);
+    v_discount_amount NUMBER(10,2);
+
+BEGIN
+
+    -------------------------------------------------
+    -- Validate quantity
+    -------------------------------------------------
+    IF :NEW.Quantity <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20001,
+        'Quantity must be greater than 0');
+    END IF;
+
+    -------------------------------------------------
+    -- Validate item availability
+    -------------------------------------------------
+    DECLARE
+        v_available CHAR(1);
+    BEGIN
+        SELECT IsAvailable
+        INTO v_available
+        FROM ITEM
+        WHERE ItemID = :NEW.ItemID;
+
+        IF v_available = 'N' THEN
+            RAISE_APPLICATION_ERROR(-20002,
+            'Item is currently unavailable.');
+        END IF;
+    END;
+
+    -------------------------------------------------
+    -- Check if item has a promotion
+    -------------------------------------------------
+    BEGIN
+        SELECT p.PromotionID,
+               p.Discount,
+               p.MinSpendAmount,
+               p.MaxDiscountAmount,
+               p.MaxRedemptions,
+               p.CurrentRedemptions,
+               p.StartDate,
+               p.EndDate,
+               p.IsActive
+        INTO
+               v_promo_id,
+               v_discount,
+               v_min_spend,
+               v_max_discount,
+               v_max_redemptions,
+               v_current_redemptions,
+               v_start_date,
+               v_end_date,
+               v_is_active
+        FROM ITEMPROMOTION ip
+        JOIN PROMOTION p
+        ON ip.PromotionID = p.PromotionID
+        WHERE ip.ItemID = :NEW.ItemID;
+
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RETURN; -- item has no promotion
+    END;
+
+    -------------------------------------------------
+    -- Validate promotion active
+    -------------------------------------------------
+    IF v_is_active = 'N' THEN
+        RAISE_APPLICATION_ERROR(-20003,
+        'Promotion is not active.');
+    END IF;
+
+    -------------------------------------------------
+    -- Validate promotion period
+    -------------------------------------------------
+    IF SYSDATE < v_start_date OR SYSDATE > v_end_date THEN
+        RAISE_APPLICATION_ERROR(-20004,
+        'Promotion is outside validity period.');
+    END IF;
+
+    -------------------------------------------------
+    -- Validate redemption limit
+    -------------------------------------------------
+    IF v_current_redemptions >= v_max_redemptions THEN
+        RAISE_APPLICATION_ERROR(-20005,
+        'Promotion redemption limit reached.');
+    END IF;
+
+    -------------------------------------------------
+    -- Calculate current order total
+    -------------------------------------------------
+    SELECT NVL(SUM(Quantity * PriceEach),0)
+    INTO v_order_total
+    FROM ORDERITEM
+    WHERE OrderID = :NEW.OrderID;
+
+    v_order_total := v_order_total + (:NEW.Quantity * :NEW.PriceEach);
+
+    -------------------------------------------------
+    -- Validate minimum spend
+    -------------------------------------------------
+    IF v_order_total < v_min_spend THEN
+        RAISE_APPLICATION_ERROR(-20006,
+        'Order does not meet minimum spend for promotion.');
+    END IF;
+
+    -------------------------------------------------
+    -- Validate maximum discount
+    -------------------------------------------------
+    v_discount_amount := v_order_total * v_discount;
+
+    IF v_discount_amount > v_max_discount THEN
+        v_discount_amount := v_max_discount;
+    END IF;
+
+    -------------------------------------------------
+    -- Increase promotion redemption count
+    -------------------------------------------------
+    UPDATE PROMOTION
+    SET CurrentRedemptions = CurrentRedemptions + 1
+    WHERE PromotionID = v_promo_id;
+
+END;
+/

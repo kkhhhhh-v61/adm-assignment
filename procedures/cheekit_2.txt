@@ -1,89 +1,109 @@
-CREATE OR REPLACE PROCEDURE PR_PROCESS_ORDER_REFUND (
-    p_order_id IN ORDERS.OrderID%TYPE
+CREATE OR REPLACE PROCEDURE PR_AUDIT_MENU_PROFITABILITY (
+    p_restaurant_id IN VARCHAR2
 ) AS
-    -- Using %ROWTYPE to grab all order and payment details cleanly
-    v_order_rec      ORDERS%ROWTYPE;
-    v_payment_rec    PAYMENT%ROWTYPE;
-    
-    v_order_count    NUMBER;
+    -- Cursor to fetch all active items and their current price
+    CURSOR c_active_items IS
+        SELECT ItemID, ItemName, Price 
+        FROM ITEM 
+        WHERE RestaurantID = p_restaurant_id 
+        AND IsAvailable = 'Y';
 
-    -- Custom Exceptions
-    e_invalid_order  EXCEPTION;
+    v_total_qty          NUMBER;
+    v_total_revenue      NUMBER(8,2);
+    v_archived_qty       NUMBER := 0;
+    v_promo_flag_qty     NUMBER := 0;
+    v_rest_exists        NUMBER;
+    
+    -- Variables for Dynamic Math Extension
+    v_rest_total_rev     NUMBER(8,2) := 0;
+    v_active_item_count  NUMBER := 0;
+    v_dynamic_avg_rev    NUMBER(8,2) := 0;
+    
+    e_invalid_rest       EXCEPTION;
 BEGIN
-    SAVEPOINT start_refund;
+    SAVEPOINT start_audit;
 
-    -- 1. Validate if the Order actually exists
-    SELECT COUNT(*) INTO v_order_count FROM ORDERS WHERE OrderID = p_order_id;
-    IF v_order_count = 0 THEN
-        RAISE e_invalid_order;
+    -- Validate if the Restaurant actually exists
+    SELECT COUNT(*) INTO v_rest_exists FROM RESTAURANT WHERE RestaurantID = p_restaurant_id;
+    IF v_rest_exists = 0 THEN
+        RAISE e_invalid_rest;
     END IF;
 
-    -- 2. Fetch the records safely
-    SELECT * INTO v_order_rec FROM ORDERS WHERE OrderID = p_order_id;
-
-    -- Safely get payment (Using an inner block just in case an order has no payment yet)
-    BEGIN
-        SELECT * INTO v_payment_rec FROM PAYMENT WHERE OrderID = p_order_id;
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            v_payment_rec.PaymentStatus := 'No Payment Record';
-    END;
-
-    -- Lock tables to prevent users from updating the order while we are refunding it
-    LOCK TABLE ORDERS, PAYMENT IN EXCLUSIVE MODE;
-
-    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE('[ORDER STATE MACHINE] Target: ' || p_order_id);
-
-    -- ==========================================================
-    -- 3. STATE MACHINE LOGIC (Mapped to your exact schema constraints)
-    -- ==========================================================
+    -- 🌟 DYNAMIC MATH EXTENSION: Calculate Restaurant Average Revenue 🌟
+    -- 1. Count total active items
+    SELECT COUNT(*) INTO v_active_item_count 
+    FROM ITEM 
+    WHERE RestaurantID = p_restaurant_id AND IsAvailable = 'Y';
     
-    IF v_order_rec.OrderStatus = 'Pending' THEN
-        -- STATE 1: Before Dispatch -> Cancel the Order completely
-        UPDATE ORDERS SET OrderStatus = 'Cancelled' WHERE OrderID = p_order_id;
-
-        IF v_payment_rec.PaymentStatus = 'Completed' THEN
-            UPDATE PAYMENT SET PaymentStatus = 'Refunded' WHERE PaymentID = v_payment_rec.PaymentID;
-            DBMS_OUTPUT.PUT_LINE('Action  : Order Cancelled and Financial Refund Processed.');
-            DBMS_OUTPUT.PUT_LINE('Amount  : RM ' || TO_CHAR(v_order_rec.TotalAmount, '999.99') || ' Refunded.');
-        ELSE
-            DBMS_OUTPUT.PUT_LINE('Action  : Order Cancelled.');
-            DBMS_OUTPUT.PUT_LINE('Note    : No refund needed (Payment was ' || v_payment_rec.PaymentStatus || ').');
-        END IF;
-
-    ELSIF v_order_rec.OrderStatus = 'Completed' THEN
-        -- STATE 2: Already Delivered -> Process Financial Refund only (e.g., poor quality complaint)
-        IF v_payment_rec.PaymentStatus = 'Completed' THEN
-            UPDATE PAYMENT SET PaymentStatus = 'Refunded' WHERE PaymentID = v_payment_rec.PaymentID;
-            DBMS_OUTPUT.PUT_LINE('Action  : Post-Delivery Compensation Approved.');
-            DBMS_OUTPUT.PUT_LINE('Amount  : RM ' || TO_CHAR(v_order_rec.TotalAmount, '999.99') || ' Refunded.');
-            DBMS_OUTPUT.PUT_LINE('Note    : Order Status remains "Completed" for historical records.');
-        ELSE
-            DBMS_OUTPUT.PUT_LINE('Action  : Refund Denied.');
-            DBMS_OUTPUT.PUT_LINE('Note    : Original payment was not successfully Completed.');
-        END IF;
-
-    ELSIF v_order_rec.OrderStatus = 'Cancelled' THEN
-        -- STATE 3: Already Cancelled
-        DBMS_OUTPUT.PUT_LINE('Action  : Ignored. This order is already Cancelled.');
-
-    ELSIF v_order_rec.OrderStatus = 'Delivering' THEN
-        -- STATE 4: Rider currently has the food
-        DBMS_OUTPUT.PUT_LINE('Action  : Blocked. Order is currently "Delivering".');
-        DBMS_OUTPUT.PUT_LINE('Note    : Please contact Rider to abort delivery before cancelling.');
-
+    -- 2. Calculate total restaurant revenue from completed orders in last 6 months
+    SELECT NVL(SUM(oi.Quantity * oi.PriceEach), 0)
+    INTO v_rest_total_rev
+    FROM ORDERITEM oi
+    JOIN ORDERS o ON oi.OrderID = o.OrderID
+    JOIN ITEM i ON oi.ItemID = i.ItemID
+    WHERE i.RestaurantID = p_restaurant_id
+    AND o.OrderStatus = 'Completed'
+    AND o.OrderDate >= ADD_MONTHS(SYSDATE, -6);
+    
+    -- 3. Calculate dynamic average (Safeguard against division by zero)
+    IF v_active_item_count > 0 THEN
+        v_dynamic_avg_rev := ROUND(v_rest_total_rev / v_active_item_count, 2);
     END IF;
 
+    -- Print Header
+    DBMS_OUTPUT.PUT_LINE('==================================================');
+    DBMS_OUTPUT.PUT_LINE('📋 DYNAMIC MENU PROFITABILITY and LIFECYCLE AUDIT');
+    DBMS_OUTPUT.PUT_LINE('Target Restaurant : ' || p_restaurant_id);
+    DBMS_OUTPUT.PUT_LINE('Total Rest. Rev   : RM ' || v_rest_total_rev);
+    DBMS_OUTPUT.PUT_LINE('Dynamic Avg Rev   : RM ' || v_dynamic_avg_rev || ' (Threshold)');
+    DBMS_OUTPUT.PUT_LINE('Analysis Period   : Last 6 Months (Completed Orders)');
     DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+
+    -- Loop through every active item
+    FOR item_rec IN c_active_items LOOP
+        
+        -- Calculate Total Quantity Sold and Total Revenue for THIS specific item
+        SELECT NVL(SUM(oi.Quantity), 0), NVL(SUM(oi.Quantity * oi.PriceEach), 0)
+        INTO v_total_qty, v_total_revenue
+        FROM ORDERITEM oi
+        JOIN ORDERS o ON oi.OrderID = o.OrderID
+        WHERE oi.ItemID = item_rec.ItemID
+        AND o.OrderStatus = 'Completed'
+        AND o.OrderDate >= ADD_MONTHS(SYSDATE, -6);
+
+        -- LIFECYCLE DECISION TREE LOGIC
+        IF v_total_qty = 0 THEN
+            -- Condition 1: End of Lifecycle (0 Sales) -> Archive it
+            UPDATE ITEM SET IsAvailable = 'N' WHERE ItemID = item_rec.ItemID;
+            v_archived_qty := v_archived_qty + 1;
+            
+            DBMS_OUTPUT.PUT_LINE('❌ DEAD STOCK   : ' || item_rec.ItemName || ' -> ARCHIVED');
+            
+        ELSIF v_total_revenue < v_dynamic_avg_rev THEN
+            -- Condition 2: Underperforming (Below the dynamically calculated average)
+            v_promo_flag_qty := v_promo_flag_qty + 1;
+            
+            DBMS_OUTPUT.PUT_LINE('⚠️ BELOW AVG    : ' || item_rec.ItemName || ' -> PROMO RECOMMENDED (Rev: RM ' || v_total_revenue || ')');
+            
+        ELSE
+            -- Condition 3: Healthy Lifecycle (Above or equal to average)
+            DBMS_OUTPUT.PUT_LINE('✅ PROFITABLE   : ' || item_rec.ItemName || ' -> STATUS OK (Rev: RM ' || v_total_revenue || ')');
+        END IF;
+
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('Items Archived (End of Life) : ' || v_archived_qty);
+    DBMS_OUTPUT.PUT_LINE('Items Flagged for Promotion  : ' || v_promo_flag_qty);
+    DBMS_OUTPUT.PUT_LINE('==================================================');
+    
     COMMIT;
-    
+
 EXCEPTION
-    WHEN e_invalid_order THEN
-        ROLLBACK TO start_refund;
-        DBMS_OUTPUT.PUT_LINE('ERROR: Order ID (' || p_order_id || ') does not exist in the database.');
+    WHEN e_invalid_rest THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Restaurant ID (' || p_restaurant_id || ') does not exist.');
     WHEN OTHERS THEN
-        ROLLBACK TO start_refund;
-        DBMS_OUTPUT.PUT_LINE('CRITICAL ERROR: ' || SQLERRM);
+        ROLLBACK TO start_audit;
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
 END;
 /

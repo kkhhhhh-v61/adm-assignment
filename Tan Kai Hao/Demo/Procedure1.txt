@@ -1,0 +1,79 @@
+CL SCR;
+
+SET FEEDBACK OFF;
+SET PAGESIZE 100;
+SET LINESIZE 100;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 1: COMPLETED ORDER
+PROMPT Description: Valid OrderID, but OrderStatus is 'Completed'.
+EXEC prc_assign_rider('O10001', 'DR10001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2: INVALID ORDER ID
+PROMPT Description: Invalid OrderID that does not exist.
+EXEC prc_assign_rider('O99999', 'DR10001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 3: ORDER IS REGISTERED AS PICKUP
+PROMPT Description: Valid OrderID, but PickupType is 'Pickup'.
+EXEC prc_assign_rider('O10002', 'DR10001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 4: ORDER ALREADY HAS A DELIVERY ID
+PROMPT Description: Valid OrderID, but DeliveryID is not NULL.
+EXEC prc_assign_rider('O10003', 'DR10001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 5: ORDER IS CANCELLED
+PROMPT Description: Valid OrderID, but OrderStatus is 'Cancelled'.
+EXEC prc_assign_rider('O10004', 'DR10001');
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 6: INVALID RIDER ID
+PROMPT Description: Valid OrderID, but DeliveryRiderID does not exist.
+EXEC prc_assign_rider('O10005', 'DR99999');
+
+COLUMN OrderID FORMAT A7
+COLUMN DeliveryID FORMAT A10
+COLUMN DeliveryRiderID FORMAT A15
+COLUMN OrderStatus FORMAT A11
+COLUMN MAX(DeliveryID) FORMAT A15
+
+SELECT MAX(DELIVERYID) FROM DELIVERY;
+
+SELECT OrderID, DeliveryID, OrderStatus
+FROM ORDERS
+WHERE OrderID = 'O10005';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 7: VALID ASSIGNMENT (Bronze Rider)
+EXEC prc_assign_rider('O10005', 'DR10001');
+
+SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
+FROM ORDERS O
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+WHERE O.OrderID = 'O10005';
+
+SELECT OrderID, DeliveryID, OrderStatus
+FROM ORDERS
+WHERE OrderID = 'O10006';
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 8: VALID ASSIGNMENT (Diamond Rider)
+EXEC prc_assign_rider('O10006', 'DR10002');
+
+SELECT O.OrderID, O.DeliveryID, D.DeliveryRiderID, O.OrderStatus
+FROM ORDERS O
+JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+WHERE O.OrderID = 'O10006';
+
+SET FEEDBACK ON;

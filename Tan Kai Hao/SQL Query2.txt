@@ -1,0 +1,95 @@
+CL SCR
+
+SET SERVEROUTPUT ON FORMAT WRAPPED
+SET FEEDBACK OFF
+
+CREATE OR REPLACE VIEW vw_cancelled_revenue AS
+SELECT 
+    O.OrderID,
+    R.RestaurantName,
+    (OI.Quantity * OI.PriceEach) AS LostRevenue
+FROM ORDERS O
+JOIN ORDERITEM OI ON O.OrderID = OI.OrderID
+JOIN ITEM I ON OI.ItemID = I.ItemID
+JOIN RESTAURANT R ON I.RestaurantID = R.RestaurantID
+WHERE O.OrderStatus = 'Cancelled'
+UNION ALL
+SELECT 
+    O.OrderID,
+    R.RestaurantName,
+    (OP.Quantity * OP.PriceEach) AS LostRevenue
+FROM ORDERS O
+JOIN ORDERPACKAGE OP ON O.OrderID = OP.OrderID
+JOIN (
+    SELECT DISTINCT PI.PackageID, I.RestaurantID 
+    FROM PACKAGEITEM PI
+    JOIN ITEM I ON PI.ItemID = I.ItemID
+) PR ON OP.PackageID = PR.PackageID
+JOIN RESTAURANT R ON PR.RestaurantID = R.RestaurantID
+WHERE O.OrderStatus = 'Cancelled';
+
+SET LINESIZE 110
+SET PAGESIZE 100
+SET SQLBLANKLINES ON
+SET COLSEP ' | '
+
+COLUMN RestaurantName FORMAT A36 HEADING 'RESTAURANT NAME'
+COLUMN CANCELLED_ORDERS FORMAT 999,990 HEADING 'CANCELLED ORDERS'
+COLUMN LOST_REVENUE FORMAT $99,999,990.99 HEADING 'LOST REVENUE (RM)'
+COLUMN IMPACT_SHARE FORMAT 990.00 HEADING 'IMPACT (%)'
+
+TTITLE LEFT '========================================================================================' SKIP 1 -
+       LEFT '                 LOST REVENUE FROM INCOMPLETE ORDERS BY RESTAURANT                      ' SKIP 1 -
+       LEFT '========================================================================================' SKIP 1
+
+BREAK ON REPORT
+COMPUTE SUM LABEL 'GRAND TOTAL :' OF CANCELLED_ORDERS LOST_REVENUE IMPACT_SHARE ON REPORT
+
+SELECT
+    RestaurantName,
+    COUNT(DISTINCT OrderID) AS CANCELLED_ORDERS,
+    SUM(LostRevenue) AS LOST_REVENUE,
+    ROUND(RATIO_TO_REPORT(SUM(LostRevenue)) OVER () * 100, 2) AS IMPACT_SHARE
+FROM vw_cancelled_revenue
+GROUP BY RestaurantName
+ORDER BY LOST_REVENUE DESC;
+
+TTITLE OFF
+CLEAR BREAKS
+CLEAR COMPUTES
+SET HEADING OFF
+
+DECLARE
+    v_restaurant VARCHAR2(150);
+    v_orders NUMBER;
+    v_revenue NUMBER;
+    v_impact NUMBER;
+BEGIN
+    SELECT RestaurantName, CANCELLED_ORDERS, LOST_REVENUE, IMPACT_SHARE
+    INTO v_restaurant, v_orders, v_revenue, v_impact
+    FROM (
+        SELECT
+            RestaurantName,
+            COUNT(DISTINCT OrderID) AS CANCELLED_ORDERS,
+            SUM(LostRevenue) AS LOST_REVENUE,
+            ROUND(RATIO_TO_REPORT(SUM(LostRevenue)) OVER () * 100, 2) AS IMPACT_SHARE
+        FROM vw_cancelled_revenue
+        GROUP BY RestaurantName
+        ORDER BY LOST_REVENUE DESC
+    )
+    WHERE ROWNUM = 1;
+
+    DBMS_OUTPUT.PUT_LINE('========================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' [ LOST REVENUE SUMMARY ]');
+    DBMS_OUTPUT.PUT_LINE(' >> MOST AFFECTED RESTAURANT : ' || v_restaurant);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL CANCELLED ORDERS   : ' || v_orders);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL POTENTIAL LOSS     : RM ' || TO_CHAR(v_revenue, 'FM99,999,990.90'));
+    DBMS_OUTPUT.PUT_LINE(' >> OVERALL IMPACT SHARE     : ' || v_impact || '%');
+    DBMS_OUTPUT.PUT_LINE('========================================================================================');
+END;
+/
+
+SET HEADING ON
+SET FEEDBACK ON
+CLEAR COLUMNS
+SET COLSEP ' '

@@ -1,0 +1,418 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+COLUMN ISUSED FORMAT A6;
+
+PROMPT =====================================================
+PROMPT        PROCEDURE DEMO FILE INITIALIZATION
+PROMPT =====================================================
+
+
+/* =====================================================
+   CLEAN PREVIOUS DEMO DATA
+===================================================== */
+
+DROP PROCEDURE calculate_dynamic_delivery_fee;
+DROP PROCEDURE activate_vip_and_issue_perks;
+DROP TRIGGER trg_cross_city_safety_check;
+DROP TRIGGER trg_restaurant_hours_control;
+
+DELETE FROM ORDERITEM WHERE OrderID LIKE 'O6666%';
+DELETE FROM ORDERPACKAGE WHERE OrderID LIKE 'O6666%';
+DELETE FROM ORDERS WHERE OrderID LIKE 'O6666%';
+
+DELETE FROM MEMBERVOUCHER WHERE MemberID = 'M66666';
+
+DELETE FROM VOUCHER WHERE VoucherID LIKE 'V6666%';
+
+DELETE FROM DELIVERY WHERE DeliveryID = 'D66666';
+DELETE FROM DELIVERYRIDER WHERE DeliveryRiderID = 'DR66666';
+DELETE FROM DELIVERYTYPE WHERE DeliveryTypeID = 'DT66666';
+DELETE FROM DELIVERYCOMPANY WHERE DeliveryCompanyID = 'DC66666';
+
+DELETE FROM PACKAGE WHERE PackageID = 'PK66666';
+
+DELETE FROM ITEM WHERE ItemID LIKE 'I6666%';
+DELETE FROM ITEMSET WHERE ItemSetID = 'IS66666';
+
+DELETE FROM RESTAURANT WHERE RestaurantID = 'R66666';
+
+DELETE FROM CATEGORY WHERE CategoryID = 'C66666';
+
+DELETE FROM MEMBER WHERE MemberID = 'M66666';
+
+DELETE FROM VOUCHERTYPE WHERE VoucherTypeID = 'VT66666';
+
+DELETE FROM ADDRESS WHERE AddressID = 'A66666';
+
+COMMIT;
+
+
+
+PROMPT =====================================================
+PROMPT                INSERT DEMO DATA
+PROMPT =====================================================
+
+
+/* ADDRESS */
+
+INSERT INTO ADDRESS VALUES
+('A66666','666 Demo Street','Penang','Penang','14000');
+
+
+/* CATEGORY */
+
+INSERT INTO CATEGORY VALUES
+('C66666','Fast Food','Demo category');
+
+
+/* VOUCHER TYPE */
+
+INSERT INTO VOUCHERTYPE VALUES
+('VT66666','Discount Voucher','Demo voucher type');
+
+
+/* RESTAURANT */
+
+INSERT INTO RESTAURANT VALUES
+('R66666','A66666','Demo Burger Shop','0166666666',4.5,'Y','10AM-10PM');
+
+
+/* MEMBER */
+
+INSERT INTO MEMBER VALUES
+('M66666','Demo Member','seher@email.com','0166666666','password',SYSDATE);
+
+
+/* ITEM SET */
+
+INSERT INTO ITEMSET VALUES
+('IS66666','Demo Combo Set',0.20);
+
+
+/* ITEMS */
+
+INSERT INTO ITEM VALUES
+('I66661','R66666','C66666','Demo Burger','Burger demo',12,'Y');
+
+INSERT INTO ITEM VALUES
+('I66662','R66666','C66666','Demo Fries','Fries demo',6,'Y');
+
+
+/* PACKAGE */
+
+INSERT INTO PACKAGE VALUES
+('PK66666','Demo Family Package',40,0.10);
+
+
+/* DELIVERY SYSTEM */
+
+INSERT INTO DELIVERYCOMPANY VALUES
+('DC66666','Demo Delivery');
+
+INSERT INTO DELIVERYRIDER VALUES
+('DR66666','DC66666','Demo Rider','0176666666',4.8);
+
+INSERT INTO DELIVERYTYPE VALUES
+('DT66666','Standard Delivery',5);
+
+INSERT INTO DELIVERY VALUES
+(
+'D66666',
+'DT66666',
+'DR66666',
+'A66666',
+5,
+SYSDATE,
+'12:00PM',
+5,
+4
+);
+
+
+
+PROMPT =====================================================
+PROMPT                    VOUCHERS
+PROMPT =====================================================
+
+
+/* VALID VOUCHER */
+
+INSERT INTO VOUCHER VALUES
+(
+'V66661',
+'VT66666',
+'20 Percent Voucher',
+'DEMO20',
+0.20,
+NULL,
+50,
+10,
+SYSDATE+30
+);
+
+
+/* EXPIRED VOUCHER */
+
+INSERT INTO VOUCHER VALUES
+(
+'V66662',
+'VT66666',
+'Expired Voucher',
+'EXPIRE20',
+0.20,
+NULL,
+50,
+10,
+SYSDATE-5
+);
+
+
+/* HIGH MINIMUM SPEND */
+
+INSERT INTO VOUCHER VALUES
+(
+'V66663',
+'VT66666',
+'High Minimum Spend',
+'HIGH100',
+0.20,
+NULL,
+100,
+20,
+SYSDATE+30
+);
+
+
+
+PROMPT =====================================================
+PROMPT                MEMBER VOUCHERS
+PROMPT =====================================================
+
+INSERT INTO MEMBERVOUCHER VALUES
+('MV66661','M66666','V66661',SYSDATE,'N');
+
+INSERT INTO MEMBERVOUCHER VALUES
+('MV66662','M66666','V66662',SYSDATE,'N');
+
+INSERT INTO MEMBERVOUCHER VALUES
+('MV66663','M66666','V66663',SYSDATE,'N');
+
+INSERT INTO MEMBERVOUCHER VALUES
+('MV66664','M66666','V66661',SYSDATE,'Y');
+
+
+
+PROMPT =====================================================
+PROMPT                     ORDERS
+PROMPT =====================================================
+
+
+/* SUCCESS ORDER */
+
+INSERT INTO ORDERS VALUES
+(
+'O66661',
+'M66666',
+'D66666',
+NULL,
+'Delivery',
+SYSDATE,
+'12:00PM',
+0,
+'Pending'
+);
+
+
+/* LOW SPENDING ORDER */
+
+INSERT INTO ORDERS VALUES
+(
+'O66662',
+'M66666',
+'D66666',
+NULL,
+'Delivery',
+SYSDATE,
+'12:00PM',
+0,
+'Pending'
+);
+
+/* COMPLETED ORDER */
+
+INSERT INTO ORDERS VALUES
+(
+'O66663',
+'M66666',
+'D66666',
+NULL,
+'Delivery',
+SYSDATE,
+'12:00PM',
+0,
+'Completed'
+);
+
+/* ORDER WITH NO ITEM OR PACKAGE */
+
+INSERT INTO ORDERS VALUES
+(
+'O66664',
+'M66666',
+'D66666',
+NULL,
+'Delivery',
+SYSDATE,
+'12:00PM',
+0,
+'Pending'
+);
+
+/* ORDER WITH DELIVERY TYPE BUT NO DELIVERY ID */
+
+INSERT INTO ORDERS VALUES
+(
+'O66665',
+'M66666',
+NULL,
+NULL,
+'Delivery',
+SYSDATE,
+'12:00PM',
+0,
+'Pending'
+);
+
+
+
+PROMPT =====================================================
+PROMPT                  ORDER ITEMS
+PROMPT =====================================================
+
+
+INSERT INTO ORDERITEM VALUES
+('O66661','I66661',NULL,2,12);
+
+INSERT INTO ORDERITEM VALUES
+('O66661','I66662','IS66666',1,6);
+
+INSERT INTO ORDERITEM VALUES
+('O66662','I66661',NULL,1,12);
+
+INSERT INTO ORDERITEM VALUES
+('O66665','I66661',NULL,1,12);
+
+
+
+PROMPT =====================================================
+PROMPT                ORDER PACKAGE
+PROMPT =====================================================
+
+INSERT INTO ORDERPACKAGE VALUES
+('O66661','PK66666',1,40);
+
+
+COMMIT;
+
+
+
+PROMPT =====================================================
+PROMPT          PROCEDURE 1 DEMO : ORDER TOTAL
+PROMPT =====================================================
+
+
+PROMPT ---- BEFORE CALCULATION ----
+
+SELECT OrderID, TotalAmount
+FROM ORDERS
+WHERE OrderID='O66661';
+
+
+PROMPT ---- EXECUTE PROCEDURE ----
+
+EXEC calculate_update_order_total('O66661');
+
+
+PROMPT ---- AFTER CALCULATION ----
+
+SELECT OrderID, TotalAmount
+FROM ORDERS
+WHERE OrderID='O66661';
+
+
+
+PROMPT =====================================================
+PROMPT           VALIDATION TEST CASES
+PROMPT =====================================================
+
+
+PROMPT ---- INVALID ORDER FORMAT 
+EXEC calculate_update_order_total('66661');
+
+
+PROMPT ---- ORDER NOT EXIST 
+EXEC calculate_update_order_total('O30000');
+
+
+PROMPT ---- COMPLETED ORDER 
+
+EXEC calculate_update_order_total('O66663');
+
+PROMPT ---- ORDER WITH NO ITEM OR PACKAGE
+EXEC calculate_update_order_total('O66664');
+
+PROMPT ---- ORDER WITH DELIVERY TYPE BUT NO DELIVERY ID
+EXEC calculate_update_order_total('O66665');
+
+
+PROMPT =====================================================
+PROMPT       PROCEDURE 2 DEMO : VOUCHER REDEMPTION
+PROMPT =====================================================
+
+
+PROMPT ---- SUCCESS VOUCHER ----
+
+SELECT ISUSED
+FROM MEMBERVOUCHER
+WHERE MEMBERVOUCHERID='MV66661';
+
+SELECT TOTALAMOUNT FROM ORDERS WHERE ORDERID = 'O66661';
+
+EXEC redeem_voucher_for_order('O66661','MV66661');
+
+SELECT ISUSED
+FROM MEMBERVOUCHER
+WHERE MEMBERVOUCHERID='MV66661';
+
+SELECT TOTALAMOUNT
+FROM ORDERS
+WHERE ORDERID='O66661';
+
+
+
+PROMPT =====================================================
+PROMPT           FAILURE VALIDATIONS
+PROMPT =====================================================
+
+
+PROMPT ---- VOUCHER ALREADY USED
+EXEC redeem_voucher_for_order('O66661','MV66664');
+
+
+PROMPT ---- EXPIRED VOUCHER
+EXEC redeem_voucher_for_order('O66661','MV66662');
+
+
+PROMPT ---- MINIMUM SPEND NOT REACHED
+EXEC redeem_voucher_for_order('O66662','MV66663');
+
+
+PROMPT ---- INVALID VOUCHER
+EXEC redeem_voucher_for_order('O66661','MV99999');
+
+
+
+PROMPT =====================================================
+PROMPT                DEMO FINISHED
+PROMPT =====================================================

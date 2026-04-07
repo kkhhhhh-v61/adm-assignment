@@ -1,0 +1,24 @@
+CL SCR;
+
+CREATE OR REPLACE TRIGGER trg_limit_rider_workload
+BEFORE INSERT ON DELIVERY
+FOR EACH ROW
+DECLARE
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    v_active_count NUMBER;
+BEGIN
+    SELECT COUNT(O.OrderID)
+    INTO v_active_count
+    FROM ORDERS O
+    JOIN DELIVERY D ON O.DeliveryID = D.DeliveryID
+    WHERE D.DeliveryRiderID = :NEW.DeliveryRiderID
+    AND O.OrderStatus = 'Delivering';
+
+    IF v_active_count >= 3 THEN
+        ROLLBACK;
+        RAISE_APPLICATION_ERROR(-20010, 'Workload Limit Exceeded: Rider is currently handling the maximum of 3 active deliveries.');
+    END IF;
+    
+    COMMIT;
+END;
+/

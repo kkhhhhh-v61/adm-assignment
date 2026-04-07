@@ -1,0 +1,68 @@
+CL SCR;
+
+SET FEEDBACK OFF;
+SET PAGESIZE 100;
+SET LINESIZE 100;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 1: INVALID DISCOUNT FORMAT
+PROMPT Description: Discount is not > 0 or <= 1.
+EXEC prc_create_package('I10001', 1, 'I10002', 1, 1.50);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 2: INVALID QUANTITY (Zero/Negative)
+PROMPT Description: Quantity is not > 0.
+EXEC prc_create_package('I10001', 0, 'I10002', 1, 0.15);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 3: DUPLICATE ITEMS DETECTED
+PROMPT Description: Assigning the same item twice.
+EXEC prc_create_package('I10001', 1, 'I10001', 1, 0.15);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 4: ITEMS FROM DIFFERENT RESTAURANTS
+PROMPT Description: Assigning items from different restaurants.
+EXEC prc_create_package('I10001', 1, 'I10004', 1, 0.20);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 5: ITEM NOT FOUND / UNAVAILABLE
+PROMPT Description: Parsing a fake Item ID that does not exist in the database.
+EXEC prc_create_package('I99999', 1, 'I10002', 1, 0.15);
+
+COLUMN MAX(PackageID) FORMAT A14
+SELECT MAX(PackageID) FROM PACKAGE;
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 6: VALID PACKAGE CREATION (2 ITEMS)
+PROMPT Description: Package with 2 items from the same restaurant with a 15% discount.
+EXEC prc_create_package('I10001', 2, 'I10002', 1, 0.15);
+
+COLUMN PackageID FORMAT A10
+COLUMN ItemID FORMAT A7
+COLUMN Quantity FORMAT 9999
+COLUMN OriginalPrice FORMAT 9999.99
+COLUMN Discount FORMAT 0.99
+
+SELECT P.PackageID, PI.ItemID, PI.Quantity, P.OriginalPrice, P.Discount
+FROM PACKAGE P
+JOIN PACKAGEITEM PI ON P.PackageID = PI.PackageID
+WHERE P.PackageID = (SELECT MAX(PackageID) FROM PACKAGE);
+
+PROMPT
+PROMPT ====================================================================================================
+PROMPT CASE 7: VALID PACKAGE CREATION (3 ITEMS)
+PROMPT Description: Package with 3 items from the same restaurant with a 20% discount.
+EXEC prc_create_package('I10001', 2, 'I10002', 1, 0.20, 'I10003', 2);
+
+SELECT P.PackageID, PI.ItemID, PI.Quantity, P.OriginalPrice, P.Discount
+FROM PACKAGE P
+JOIN PACKAGEITEM PI ON P.PackageID = PI.PackageID
+WHERE P.PackageID = (SELECT MAX(PackageID) FROM PACKAGE);
+
+SET FEEDBACK ON;

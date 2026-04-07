@@ -1,0 +1,127 @@
+CL SCR
+SET SERVEROUTPUT ON FORMAT WRAPPED;
+
+CREATE OR REPLACE PROCEDURE redeem_voucher_for_order (
+    p_order_id          IN CHAR,
+    p_member_voucher_id IN CHAR
+)
+AS
+
+    -- Order variables
+    v_member_id        ORDERS.MemberID%TYPE;
+    v_order_total      ORDERS.TotalAmount%TYPE;
+
+    -- Member Voucher variables
+    v_voucher_id       MEMBERVOUCHER.VoucherID%TYPE;
+    v_is_used          MEMBERVOUCHER.IsUsed%TYPE;
+
+    -- Voucher conditions
+    v_min_spend        VOUCHER.MinSpendAmount%TYPE;
+    v_expiry_date      VOUCHER.ExpiryDate%TYPE;
+
+BEGIN
+
+    -- =========================================
+    -- Receipt Header
+    -- =========================================
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('         VOUCHER REDEMPTION             ');
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('Order ID : ' || p_order_id);
+    DBMS_OUTPUT.PUT_LINE('Voucher  : ' || p_member_voucher_id);
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+
+    -- =========================================
+    -- Validate Order
+    -- =========================================
+    SELECT MemberID, TotalAmount
+    INTO v_member_id, v_order_total
+    FROM ORDERS
+    WHERE OrderID = p_order_id;
+
+    DBMS_OUTPUT.PUT_LINE('Order Found');
+    DBMS_OUTPUT.PUT_LINE('Current Total : RM ' || TO_CHAR(v_order_total,'9990.99'));
+
+    -- =========================================
+    -- Validate Member Voucher
+    -- =========================================
+    SELECT VoucherID, IsUsed
+    INTO v_voucher_id, v_is_used
+    FROM MEMBERVOUCHER
+    WHERE MemberVoucherID = p_member_voucher_id
+    AND MemberID = v_member_id;
+
+    DBMS_OUTPUT.PUT_LINE('Voucher belongs to member');
+
+    IF v_is_used = 'Y' THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Voucher already used.');
+        RETURN;
+    END IF;
+
+    -- =========================================
+    -- Check Voucher Conditions
+    -- =========================================
+    SELECT MinSpendAmount, ExpiryDate
+    INTO v_min_spend, v_expiry_date
+    FROM VOUCHER
+    WHERE VoucherID = v_voucher_id;
+
+    -- Check expiry
+    IF SYSDATE > v_expiry_date THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Voucher expired.');
+        RETURN;
+    END IF;
+
+    -- Check minimum spending
+    IF v_order_total < v_min_spend THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Minimum spending not reached.');
+        DBMS_OUTPUT.PUT_LINE('Required : RM ' || TO_CHAR(v_min_spend,'9990.99'));
+        RETURN;
+    END IF;
+
+    -- =========================================
+    -- Apply Voucher to Order
+    -- =========================================
+    UPDATE ORDERS
+    SET MemberVoucherID = p_member_voucher_id
+    WHERE OrderID = p_order_id;
+
+    DBMS_OUTPUT.PUT_LINE('Voucher Applied Successfully');
+
+    -- =========================================
+    -- Mark Voucher as Used
+    -- =========================================
+    UPDATE MEMBERVOUCHER
+    SET IsUsed = 'Y'
+    WHERE MemberVoucherID = p_member_voucher_id;
+
+    DBMS_OUTPUT.PUT_LINE('Voucher marked as USED');
+
+    -- =========================================
+    -- Recalculate Order Total
+    -- =========================================
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('Recalculating Order Total...');
+    DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+
+    calculate_update_order_total(p_order_id);
+
+    -- =========================================
+    -- Commit Transaction
+    -- =========================================
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('Voucher Redemption Completed');
+    DBMS_OUTPUT.PUT_LINE('========================================');
+
+EXCEPTION
+
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Voucher not found.');
+
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Unexpected Error: ' || SQLERRM);
+
+END;
+/

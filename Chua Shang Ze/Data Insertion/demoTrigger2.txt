@@ -1,0 +1,228 @@
+CL SCR
+SET SERVEROUTPUT ON
+
+COLUMN RestaurantID FORMAT A10
+COLUMN RestaurantName FORMAT A25
+COLUMN AverageRating FORMAT 9990.00
+
+COLUMN OrderFeedbackID FORMAT A15
+COLUMN OrderID FORMAT A10
+COLUMN FeedbackComment FORMAT A25
+COLUMN FeedbackDate FORMAT A15
+
+PROMPT =========================================
+PROMPT DEMO SETUP DATA
+PROMPT =========================================
+
+DROP TRIGGER trg_orderitem_integrity;
+
+DELETE FROM ORDERFEEDBACK WHERE OrderID LIKE 'O2222%';
+DELETE FROM ORDERITEM WHERE OrderID LIKE 'O2222%';
+DELETE FROM ORDERS WHERE OrderID LIKE 'O2222%';
+DELETE FROM ITEM WHERE ItemID='I22222';
+DELETE FROM RESTAURANT WHERE RestaurantID='R22222';
+DELETE FROM MEMBER WHERE MemberID='M22222';
+DELETE FROM CATEGORY WHERE CategoryID='C22222';
+DELETE FROM ADDRESS WHERE AddressID='A22222';
+
+COMMIT;
+
+-- ADDRESS
+INSERT INTO ADDRESS VALUES
+('A22222','Demo Street','Kuala Lumpur','Selangor','42222');
+
+-- CATEGORY
+INSERT INTO CATEGORY VALUES
+('C22222','Demo Food','Food for trigger demo');
+
+-- MEMBER
+INSERT INTO MEMBER VALUES
+('M22222','Demo Member','demo22222@email.com','0122222222','pass',SYSDATE);
+
+-- RESTAURANT
+INSERT INTO RESTAURANT VALUES
+('R22222','A22222','Demo Restaurant','0128888888',2,'Y','10AM-10PM');
+
+-- ITEM
+INSERT INTO ITEM VALUES
+('I22222','R22222','C22222','Demo Burger','Burger Demo',20,'Y');
+
+-- COMPLETED ORDER
+INSERT INTO ORDERS VALUES
+('O22221','M22222',NULL,NULL,'Pickup',SYSDATE,'12:00',40,'Completed');
+INSERT INTO ORDERS VALUES
+('O22222','M22222',NULL,NULL,'Pickup',SYSDATE,'12:00',40,'Completed');
+INSERT INTO ORDERS VALUES
+('O22223','M22222',NULL,NULL,'Pickup',TO_DATE('2026-04-15','YYYY-MM-DD'),'12:00',40,'Completed');
+
+-- ORDER ITEM
+INSERT INTO ORDERITEM VALUES
+('O22221','I22222',NULL,2,20);
+INSERT INTO ORDERITEM VALUES
+('O22222','I22222',NULL,2,20);
+INSERT INTO ORDERITEM VALUES
+('O22223','I22222',NULL,2,20);
+
+--ORDERFEEDBACK
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22221','O22222',2,'Excellent food!',SYSDATE);
+
+COMMIT;
+
+PROMPT =========================================
+PROMPT BEFORE FEEDBACK (Restaurant Rating)
+PROMPT =========================================
+
+SELECT RestaurantID, RestaurantName, AverageRating
+FROM RESTAURANT
+WHERE RestaurantID='R22222';
+
+
+PROMPT =========================================
+PROMPT SUCCESS CASE : VALID FEEDBACK
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22222','O22222',5,'Excellent food!',SYSDATE);
+
+COMMIT;
+
+
+PROMPT =========================================
+PROMPT AFTER FEEDBACK (Rating Updated)
+PROMPT =========================================
+
+SELECT RestaurantID, RestaurantName, AverageRating
+FROM RESTAURANT
+WHERE RestaurantID='R22222';
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 1 : DUPLICATE FEEDBACK
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22222','O22222',4,'Duplicate feedback',SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 2 : RATING BELOW RANGE
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22223','O22222',0,'Invalid rating',SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 3 : RATING ABOVE RANGE
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22224','O22222',6,'Invalid rating',SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 4 : FEEDBACK DATE BEFORE TODAY
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22225','O22222',4,'Old feedback',SYSDATE-1);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 5 : FEEDBACK BEFORE ORDER DATE
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22226','O22223',4,'Before order date',TO_DATE('2026-04-10','YYYY-MM-DD'));
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 6 : FEEDBACK AFTER 30 DAYS
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22227','O22222',4,'Too late feedback',SYSDATE+40);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 7 : COMMENT TOO LONG
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22228','O22222',4,
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 8 : COMMENT ONLY SPACES
+PROMPT =========================================
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22229','O22222',4,'     ',SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 9 : ORDER NOT COMPLETED
+PROMPT =========================================
+
+INSERT INTO ORDERS VALUES
+('O22223','M22222',NULL,NULL,'Pickup',SYSDATE,'12:00',40,'Pending');
+
+INSERT INTO ORDERITEM VALUES
+('O22223','I22222',NULL,2,20);
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22230','O22223',4,'Order not completed',SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT VALIDATION TEST 10 : ORDER WITHOUT ITEMS
+PROMPT =========================================
+
+INSERT INTO ORDERS VALUES
+('O22224','M22222',NULL,NULL,'Pickup',SYSDATE,'12:00',40,'Completed');
+
+INSERT INTO ORDERFEEDBACK
+VALUES
+('OF22231','O22224',4,'Order without items',SYSDATE);
+
+
+
+PROMPT =========================================
+PROMPT FINAL FEEDBACK TABLE
+PROMPT =========================================
+
+SELECT *
+FROM ORDERFEEDBACK
+WHERE OrderID LIKE 'O2222%';
+
+
+PROMPT =========================================
+PROMPT FINAL RESTAURANT RATING
+PROMPT =========================================
+
+SELECT RestaurantID, RestaurantName, AverageRating
+FROM RESTAURANT
+WHERE RestaurantID='R22222';
