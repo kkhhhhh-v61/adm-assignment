@@ -1,7 +1,7 @@
-CLEAR SCREEN;
+CLEAR SCREEN
 
-SET LINESIZE 100;
-SET PAGESIZE 50000;
+SET LINESIZE 150
+SET PAGESIZE 50000
 
 -- =====================================================================
 -- 1. IMPLEMENTING INDEXES FOR OPTIMIZATION (Section 5.2.2)
@@ -90,17 +90,21 @@ FROM (
 -- 3. FORMATTING AND DISPLAYING THE VIEW (Section 5.2.5)
 -- =====================================================================
 PROMPT >>> Generating Report...
-CLEAR SCREEN;
+CLEAR SCREEN
 
 TTITLE LEFT '             ========================================================' SKIP 1 -
        LEFT '              PEAK HOUR ORDER VOLUME AND DELIVERY BOTTLENECK SUMMARY' SKIP 1 -
        LEFT '             ========================================================' SKIP 2
 
-COLUMN "Peak Hour" FORMAT A22;
-COLUMN "Delivery Company" FORMAT A20;
-COLUMN "Total Orders" FORMAT A12;
-COLUMN "Avg Wait (Min)" FORMAT A14;
-COLUMN "Performance Status" FORMAT A25;
-COLUMN "SortOrder" NOPRINT; -- Hides the sorting column from the final output
+COLUMN "Peak Hour" FORMAT A22
+COLUMN "Delivery Company" FORMAT A24
+COLUMN "Total Orders" FORMAT A12
+COLUMN "Avg Wait (Min)" FORMAT A14
+COLUMN "Performance Status" FORMAT A25
+COLUMN SortOrder NOPRINT
 
 SELECT * FROM VW_PEAK_HOUR_BOTTLENECK ORDER BY SortOrder, "Peak Hour", "Delivery Company";
+
+-- Turn off TTITLE after report so it doesn't affect other queries
+TTITLE OFF
+CLEAR COLUMNS
