@@ -8,6 +8,15 @@ CREATE OR REPLACE PROCEDURE PR_DOUBLE_STACK_REPORT (
     p_period_type IN VARCHAR2,
     p_period_val  IN VARCHAR2
 ) AS
+    -- ==========================================
+    -- ANSI COLOR CODES DECLARATION
+    -- ==========================================
+    c_reset  CONSTANT VARCHAR2(10) := CHR(27) || '[0m';
+    c_red    CONSTANT VARCHAR2(10) := CHR(27) || '[31m';
+    c_green  CONSTANT VARCHAR2(10) := CHR(27) || '[32m';
+    c_yellow CONSTANT VARCHAR2(10) := CHR(27) || '[33m';
+    c_cyan   CONSTANT VARCHAR2(10) := CHR(27) || '[36m';
+
     -- Outer Cursor: Upgraded to support Monthly, Quarterly, and Yearly filters
     CURSOR c_vulnerable_orders IS
         SELECT DISTINCT o.OrderID, o.OrderDate, m.FullName, v.VoucherCode, v.VoucherName
@@ -45,20 +54,22 @@ CREATE OR REPLACE PROCEDURE PR_DOUBLE_STACK_REPORT (
 BEGIN
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
     DBMS_OUTPUT.PUT_LINE('                              VOUCHER AND PROMOTION DOUBLE-STACKING VULNERABILITY REPORT                              ');
-    DBMS_OUTPUT.PUT_LINE('                                              PERIOD: ' || UPPER(p_period_type) || ' (' || UPPER(p_period_val) || ') ' || p_year);
+    DBMS_OUTPUT.PUT_LINE('                                              PERIOD: ' || c_cyan || UPPER(p_period_type) || ' (' || UPPER(p_period_val) || ') ' || p_year || c_reset);
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
     
-    DBMS_OUTPUT.PUT_LINE(RPAD('ORDER ID', 10) || RPAD('CUSTOMER', 18) || RPAD('DATE', 12) || RPAD('VOUCHER CODE', 15) || RPAD('ITEM PROMO APPLIED', 25) || RPAD('QTY', 5) || RPAD('ORI(RM)', 10) || 'PAID(RM)');
+    -- Adjusted Headers: Used LPAD for the numeric headers so they align to the right with the numbers below them
+    DBMS_OUTPUT.PUT_LINE(RPAD('ORDER ID', 10) || RPAD('CUSTOMER', 18) || RPAD('DATE', 12) || RPAD('VOUCHER CODE', 15) || RPAD('ITEM PROMO APPLIED', 25) || RPAD('QTY', 5) || LPAD('ORI(RM)', 10) || LPAD('PAID(RM)', 12));
     DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------------------------');
 
     FOR rec_order IN c_vulnerable_orders LOOP
         v_total_vulnerable_orders := v_total_vulnerable_orders + 1;
-
+        
         FOR rec_item IN c_stacked_items(rec_order.OrderID) LOOP
             v_total_stacked_items := v_total_stacked_items + rec_item.Quantity;
             v_total_revenue_lost := v_total_revenue_lost + ((rec_item.OriPrice - rec_item.PriceEach) * rec_item.Quantity);
             
-            -- PRINT EVERYTHING ON ONE FLAT ROW
+            -- PRINT EVERYTHING ON ONE FLAT ROW 
+            -- Fix applied: LPAD with FM formatting ensures strict right-alignment for currencies
             DBMS_OUTPUT.PUT_LINE(
                 RPAD(rec_order.OrderID, 10) || 
                 RPAD(SUBSTR(rec_order.FullName, 1, 16), 18) || 
@@ -66,22 +77,22 @@ BEGIN
                 RPAD(rec_order.VoucherCode, 15) || 
                 RPAD(SUBSTR(rec_item.PromoName, 1, 23), 25) || 
                 RPAD(rec_item.Quantity, 5) || 
-                RPAD(TO_CHAR(rec_item.OriPrice, '990.00'), 10) || 
-                TO_CHAR(rec_item.PriceEach, '990.00')
+                c_green || LPAD(TO_CHAR(rec_item.OriPrice, 'FM9990.00'), 10) || c_reset || 
+                c_yellow || LPAD(TO_CHAR(rec_item.PriceEach, 'FM9990.00'), 12) || c_reset
             );
         END LOOP;
     END LOOP;
 
     IF v_total_vulnerable_orders = 0 THEN
-        DBMS_OUTPUT.PUT_LINE('✅ No double-stacking vulnerabilities detected for this period.');
+        DBMS_OUTPUT.PUT_LINE(c_green || '✅ No double-stacking vulnerabilities detected for this period.' || c_reset);
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
     DBMS_OUTPUT.PUT_LINE('                                                    REPORT SUMMARY                                                    ');
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
-    DBMS_OUTPUT.PUT_LINE(RPAD('Total Orders with Double-Stacking', 40) || ': ' || v_total_vulnerable_orders);
-    DBMS_OUTPUT.PUT_LINE(RPAD('Total Menu Items Double-Discounted', 40) || ': ' || v_total_stacked_items);
-    DBMS_OUTPUT.PUT_LINE(RPAD('Est. Total Discount Variance', 40) || ': RM ' || LTRIM(TO_CHAR(v_total_revenue_lost, '990.00')));
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Orders with Double-Stacking', 40) || ': ' || c_yellow || v_total_vulnerable_orders || c_reset);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Total Menu Items Double-Discounted', 40) || ': ' || c_yellow || v_total_stacked_items || c_reset);
+    DBMS_OUTPUT.PUT_LINE(RPAD('Est. Total Discount Variance', 40) || ': ' || c_red || 'RM ' || TO_CHAR(v_total_revenue_lost, 'FM9990.00') || c_reset);
     DBMS_OUTPUT.PUT_LINE('======================================================================================================================');
 END;
 /
