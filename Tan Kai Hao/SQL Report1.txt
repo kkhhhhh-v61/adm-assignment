@@ -1,0 +1,159 @@
+CL SCR
+
+SET SERVEROUTPUT ON FORMAT WRAPPED
+
+CREATE OR REPLACE PROCEDURE prc_restaurant_rating_report (
+    p_start_date IN DATE,
+    p_end_date   IN DATE
+)
+AS
+    CURSOR c_rating_revenue IS
+        SELECT
+            RatingCategory,
+            COUNT(RestaurantID) AS TOTAL_RESTAURANTS,
+            SUM(Revenue) AS TOTAL_REVENUE,
+            ROUND(AVG(Revenue), 2) AS AVG_REVENUE
+        FROM (
+            SELECT 
+                CASE 
+                    WHEN R.AverageRating >= 4.0 THEN 'High Rating (4.0 - 5.0)'
+                    WHEN R.AverageRating >= 3.0 THEN 'Average Rating (3.0 - 3.9)'
+                    ELSE 'Low Rating (1.0 - 2.9)'
+                END AS RatingCategory,
+                R.RestaurantID,
+                NVL(SUM(REV.Revenue), 0) AS Revenue
+            FROM RESTAURANT R
+            LEFT JOIN (
+                SELECT I.RestaurantID, (OI.Quantity * OI.PriceEach) AS Revenue
+                FROM ORDERS O
+                JOIN ORDERITEM OI ON O.OrderID = OI.OrderID
+                JOIN ITEM I ON OI.ItemID = I.ItemID
+                WHERE O.OrderStatus = 'Completed'
+                  AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+                UNION ALL
+                SELECT PR.RestaurantID, (OP.Quantity * OP.PriceEach) AS Revenue
+                FROM ORDERS O
+                JOIN ORDERPACKAGE OP ON O.OrderID = OP.OrderID
+                JOIN (
+                    SELECT DISTINCT PI.PackageID, I.RestaurantID 
+                    FROM PACKAGEITEM PI
+                    JOIN ITEM I ON PI.ItemID = I.ItemID
+                ) PR ON OP.PackageID = PR.PackageID
+                WHERE O.OrderStatus = 'Completed'
+                  AND TRUNC(O.OrderDate) BETWEEN TRUNC(p_start_date) AND TRUNC(p_end_date)
+            ) REV ON R.RestaurantID = REV.RestaurantID
+            GROUP BY R.RestaurantID, R.AverageRating
+        )
+        GROUP BY RatingCategory
+        ORDER BY TOTAL_REVENUE DESC;
+
+    v_grand_restaurants NUMBER := 0;
+    v_grand_revenue     NUMBER := 0;
+    v_top_category      VARCHAR2(30) := 'N/A';
+    v_top_revenue       NUMBER := -1;
+    v_top_avg_revenue   NUMBER := 0;
+    v_top_restaurants   NUMBER := 0;
+    v_has_data          BOOLEAN := FALSE;
+    v_rank              NUMBER := 1;
+    
+    FUNCTION get_color_bar(p_revenue NUMBER, p_max_revenue NUMBER, p_rank NUMBER) RETURN VARCHAR2 IS
+        v_pct NUMBER;
+        v_len NUMBER;
+        v_bar VARCHAR2(200) := '';
+        v_color VARCHAR2(10);
+    BEGIN
+        IF NVL(p_max_revenue, 0) = 0 THEN
+            RETURN '';
+        END IF;
+        
+        v_pct := (p_revenue / p_max_revenue) * 100;
+        v_len := ROUND(v_pct / 5);
+        
+        FOR i IN 1..v_len LOOP
+            v_bar := v_bar || '#';
+        END LOOP;
+        
+        IF p_rank = 1 THEN
+            v_color := '32';
+        ELSIF p_rank = 2 THEN
+            v_color := '33';
+        ELSE
+            v_color := '31';
+        END IF;
+        
+        RETURN CHR(27) || '[' || v_color || 'm' || v_bar || CHR(27) || '[0m';
+    END;
+
+BEGIN
+    IF TRUNC(p_start_date) > TRUNC(p_end_date) THEN
+        RAISE_APPLICATION_ERROR(-20001, 'INVALID DATE RANGE: Start date cannot be later than end date.');
+    END IF;
+
+    FOR r IN c_rating_revenue LOOP
+        v_has_data := TRUE;
+        v_grand_restaurants := v_grand_restaurants + r.TOTAL_RESTAURANTS;
+        v_grand_revenue := v_grand_revenue + r.TOTAL_REVENUE;
+        
+        IF r.TOTAL_REVENUE > v_top_revenue THEN
+            v_top_revenue := r.TOTAL_REVENUE;
+            v_top_category := r.RatingCategory;
+            v_top_avg_revenue := r.AVG_REVENUE;
+            v_top_restaurants := r.TOTAL_RESTAURANTS;
+        END IF;
+    END LOOP;
+
+    IF NOT v_has_data THEN
+        DBMS_OUTPUT.PUT_LINE('>>> NO DATA FOUND FOR THIS DATE RANGE <<<');
+        RETURN;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('========================================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('                                         RESTAURANT REVENUE COMPARISON BY RATING                                    ');
+    DBMS_OUTPUT.PUT_LINE('========================================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' Period    : ' || TO_CHAR(p_start_date, 'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'));
+    DBMS_OUTPUT.PUT_LINE(' Generated : ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'));
+    DBMS_OUTPUT.PUT_LINE('------------------------------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('RATING CATEGORY', 28) || ' | ' ||
+        LPAD('TOTAL RESTAURANTS', 17) || ' | ' ||
+        LPAD('TOTAL REVENUE (RM)', 18) || ' | ' ||
+        LPAD('AVG REVENUE (RM)', 16) || ' | ' ||
+        'REVENUE SHARE'
+    );
+    DBMS_OUTPUT.PUT_LINE('-----------------------------|-------------------|--------------------|------------------|------------------------------');
+
+    FOR r IN c_rating_revenue LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(r.RatingCategory, 28) || ' | ' ||
+            LPAD(TO_CHAR(r.TOTAL_RESTAURANTS, '999,990'), 17) || ' | ' ||
+            LPAD(TO_CHAR(r.TOTAL_REVENUE, '999,999,990.99'), 18) || ' | ' ||
+            LPAD(TO_CHAR(r.AVG_REVENUE, '999,999,990.99'), 16) || ' | ' ||
+            LPAD(TO_CHAR(NVL(ROUND((r.TOTAL_REVENUE / NULLIF(v_grand_revenue, 0)) * 100, 2), 0), '90.00') || '% ', 8) || 
+            get_color_bar(r.TOTAL_REVENUE, v_top_revenue, v_rank)
+        );
+        v_rank := v_rank + 1;
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE('-----------------------------|-------------------|--------------------|------------------|------------------------------');
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('GRAND TOTAL :', 28) || ' | ' ||
+        LPAD(TO_CHAR(v_grand_restaurants, '999,990'), 17) || ' | ' ||
+        LPAD(TO_CHAR(v_grand_revenue, '999,999,990.99'), 18) || ' | ' ||
+        LPAD('-', 16) || ' | ' ||
+        LPAD('100.00% ', 8)
+    );
+    DBMS_OUTPUT.PUT_LINE('========================================================================================================================');
+    
+    DBMS_OUTPUT.PUT_LINE(' [ RESTAURANT REVENUE SUMMARY BY RATING ]');
+    DBMS_OUTPUT.PUT_LINE(' >> TOP PERFORMING CATEGORY : ' || v_top_category);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL RESTAURANTS       : ' || v_top_restaurants);
+    DBMS_OUTPUT.PUT_LINE(' >> TOTAL REVENUE           : RM ' || TRIM(TO_CHAR(v_top_revenue, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE(' >> AVERAGE REVENUE         : RM ' || TRIM(TO_CHAR(v_top_avg_revenue, '999,999,990.99')));
+    DBMS_OUTPUT.PUT_LINE('========================================================================================================================');
+    DBMS_OUTPUT.PUT_LINE(' End of Report.');
+
+EXCEPTION
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+END prc_restaurant_rating_report;
+/

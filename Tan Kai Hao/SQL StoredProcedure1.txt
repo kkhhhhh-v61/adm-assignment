@@ -123,7 +123,11 @@ BEGIN
     FROM DELIVERY;
 
     v_distance := ROUND(DBMS_RANDOM.VALUE(1.00, 15.00), 2);
-    v_base_delivery_fee := v_distance * 2.00;
+    IF v_distance <= 5.00 THEN
+        v_base_delivery_fee := 4.99;
+    ELSE
+        v_base_delivery_fee := 4.99 + (CEIL(v_distance - 5.00) * 1.50);
+    END IF;
 
     v_bonus_earned := v_base_delivery_fee * v_bonus_rate;
     v_total_earned := v_base_delivery_fee + v_bonus_earned;
@@ -165,7 +169,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(' ');
 
     DBMS_OUTPUT.PUT_LINE(' EARNINGS CALCULATION ');
-    DBMS_OUTPUT.PUT_LINE(RPAD('  * Base Delivery Earnings (RM 2.00/km)', 40) || ': RM ' || TO_CHAR(v_base_delivery_fee, 'FM99,990.90'));
+    DBMS_OUTPUT.PUT_LINE(RPAD('  * Base Delivery Earnings', 40) || ': RM ' || TO_CHAR(v_base_delivery_fee, 'FM99,990.90'));
     DBMS_OUTPUT.PUT_LINE(RPAD('  * Performance Bonus Earned', 40) || ': RM ' || TO_CHAR(v_bonus_earned, 'FM99,990.90'));
     DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
     DBMS_OUTPUT.PUT_LINE(RPAD(' >> TOTAL PROJECTED EARNINGS', 40) || ': RM ' || TO_CHAR(v_total_earned, 'FM99,990.90'));

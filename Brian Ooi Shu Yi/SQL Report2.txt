@@ -2,6 +2,7 @@ CL SCR
 
 SET DEFINE OFF;
 SET SERVEROUTPUT ON FORMAT WRAPPED;
+SET LINESIZE 150;
 
 CREATE OR REPLACE PROCEDURE generate_delivery_perf_report (
     p_start_date IN DATE,
@@ -14,7 +15,6 @@ CREATE OR REPLACE PROCEDURE generate_delivery_perf_report (
         ORDER BY CompanyName;
 
     -- inner cursor: find ALL rider performances for a specific company
-    -- Ordered by Volume DESC, then Fee DESC for accurate Star Rider per company
     CURSOR c_rider (v_company_id VARCHAR2) IS
         SELECT DR.RiderName,
                COUNT(O.OrderID) AS OrderVolume,
@@ -39,8 +39,16 @@ CREATE OR REPLACE PROCEDURE generate_delivery_perf_report (
     -- grand totals & overall executive summary variables
     v_grand_orders      NUMBER := 0;
     v_grand_fees        NUMBER(10,2) := 0;
+    
+    -- variables to track highest volume company
     v_top_comp_name     VARCHAR2(100) := 'N/A';
     v_top_comp_vol      NUMBER := -1;
+    
+    -- variables to track highest earning company
+    v_top_rev_comp_name VARCHAR2(100) := 'N/A';
+    v_top_rev_comp_fee  NUMBER(10,2) := -1;
+    
+    -- variables to track overall MVP rider
     v_top_overall_rider VARCHAR2(100) := 'N/A';
     v_top_overall_rvol  NUMBER := -1;
     v_top_overall_rfee  NUMBER(10,2) := -1;
@@ -55,14 +63,14 @@ BEGIN
         RAISE e_invalid_date;
     END IF;
 
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                          DELIVERY COMPANY PERFORMANCE COMPARISON REPORT                            ');
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
-    DBMS_OUTPUT.PUT_LINE('Period    : ' || TO_CHAR(p_start_date, 'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'));
-    DBMS_OUTPUT.PUT_LINE('Generated : ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'));
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE(RPAD('COMPANY NAME', 25) || LPAD('TOTAL ORDERS', 15) || LPAD('REVENUE (RM)', 16) || LPAD('ACTIVE RIDERS', 16) || '   ' || 'STAR RIDER (VOL)');
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('+====================================================================================================+');
+    DBMS_OUTPUT.PUT_LINE('|                           DELIVERY COMPANY PERFORMANCE COMPARISON REPORT                           |');
+    DBMS_OUTPUT.PUT_LINE('+====================================================================================================+');
+    DBMS_OUTPUT.PUT_LINE(RPAD('| Period    : ' || TO_CHAR(p_start_date, 'DD-MON-YYYY') || ' to ' || TO_CHAR(p_end_date, 'DD-MON-YYYY'), 101, ' ') || '|');
+    DBMS_OUTPUT.PUT_LINE(RPAD('| Generated : ' || TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI:SS'), 101, ' ') || '|');
+    DBMS_OUTPUT.PUT_LINE('+-------------------------+--------------+----------------+---------------+--------------------------+');
+    DBMS_OUTPUT.PUT_LINE('| ' || RPAD('COMPANY NAME', 23, ' ') || ' | ' || LPAD('TOTAL ORDERS', 12, ' ') || ' | ' || LPAD('REVENUE (RM)', 14, ' ') || ' | ' || LPAD('ACTIVE RIDERS', 13, ' ') || ' | ' || RPAD('STAR RIDER (VOL)', 24, ' ') || ' |');
+    DBMS_OUTPUT.PUT_LINE('+-------------------------+--------------+----------------+---------------+--------------------------+');
 
     -- loop through each delivery company
     FOR r_comp IN c_company LOOP
@@ -75,19 +83,16 @@ BEGIN
 
         -- loop through ALL riders under this company
         FOR r_rider IN c_rider(r_comp.DeliveryCompanyID) LOOP
-            -- accumulate company totals
             v_comp_orders := v_comp_orders + r_rider.OrderVolume;
             v_comp_fees := v_comp_fees + NVL(r_rider.TotalDeliveryFee, 0);
             v_active_riders := v_active_riders + 1;
 
-            -- Capture the very first rider as the Star Rider (Inner cursor is already sorted perfectly)
             IF v_is_first_rider THEN
                 v_top_rider_name := r_rider.RiderName;
                 v_top_rider_vol := r_rider.OrderVolume;
                 v_is_first_rider := FALSE;
             END IF;
 
-            -- Track Absolute Top Rider across ALL companies using TIEBREAKER logic
             IF (r_rider.OrderVolume > v_top_overall_rvol) OR 
                (r_rider.OrderVolume = v_top_overall_rvol AND NVL(r_rider.TotalDeliveryFee, 0) > v_top_overall_rfee) THEN
                 v_top_overall_rvol := r_rider.OrderVolume;
@@ -96,50 +101,54 @@ BEGIN
             END IF;
         END LOOP;
 
-        -- Print single summarized row per company
         IF v_comp_orders > 0 THEN
-            DBMS_OUTPUT.PUT_LINE(RPAD(r_comp.CompanyName, 25) || 
-                                 LPAD(TO_CHAR(v_comp_orders), 15) || 
-                                 LPAD(TO_CHAR(v_comp_fees, '999,990.99'), 16) || 
-                                 LPAD(TO_CHAR(v_active_riders), 16) || 
-                                 '   ' || v_top_rider_name || ' (' || v_top_rider_vol || ')');
+            DBMS_OUTPUT.PUT_LINE('| ' || RPAD(r_comp.CompanyName, 23, ' ') || ' | ' || 
+                                 LPAD(TO_CHAR(v_comp_orders), 12, ' ') || ' | ' || 
+                                 LPAD(TO_CHAR(v_comp_fees, 'FM999,990.00'), 14, ' ') || ' | ' || 
+                                 LPAD(TO_CHAR(v_active_riders), 13, ' ') || ' | ' || 
+                                 RPAD(v_top_rider_name || ' (' || v_top_rider_vol || ')', 24, ' ') || ' |');
         ELSE
-            DBMS_OUTPUT.PUT_LINE(RPAD(r_comp.CompanyName, 25) || 
-                                 LPAD('0', 15) || 
-                                 LPAD('0.00', 16) || 
-                                 LPAD('0', 16) || 
-                                 '   -');
+            DBMS_OUTPUT.PUT_LINE('| ' || RPAD(r_comp.CompanyName, 23, ' ') || ' | ' || 
+                                 LPAD('0', 12, ' ') || ' | ' || 
+                                 LPAD('0.00', 14, ' ') || ' | ' || 
+                                 LPAD('0', 13, ' ') || ' | ' || 
+                                 RPAD('-', 24, ' ') || ' |');
         END IF;
 
-        -- Track Top Delivery Company for Executive Summary
         IF v_comp_orders > v_top_comp_vol THEN
             v_top_comp_vol := v_comp_orders;
             v_top_comp_name := r_comp.CompanyName;
+        END IF;
+        
+        IF v_comp_fees > v_top_rev_comp_fee THEN
+            v_top_rev_comp_fee := v_comp_fees;
+            v_top_rev_comp_name := r_comp.CompanyName;
         END IF;
 
         v_grand_orders := v_grand_orders + v_comp_orders;
         v_grand_fees := v_grand_fees + v_comp_fees;
     END LOOP;
 
-    -- Raise exception if overall orders are zero
     IF v_grand_orders = 0 THEN
         RAISE e_no_data;
     END IF;
 
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE(RPAD('GRAND TOTAL :', 25) || 
-                         LPAD(TO_CHAR(v_grand_orders), 15) || 
-                         LPAD(TO_CHAR(v_grand_fees, '999,990.99'), 16));
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('+-------------------------+--------------+----------------+---------------+--------------------------+');
+    DBMS_OUTPUT.PUT_LINE('| ' || RPAD('GRAND TOTAL', 23, ' ') || ' | ' || 
+                         LPAD(TO_CHAR(v_grand_orders), 12, ' ') || ' | ' || 
+                         LPAD(TO_CHAR(v_grand_fees, 'FM999,990.00'), 14, ' ') || ' | ' || 
+                         RPAD(' ', 13, ' ') || ' | ' || 
+                         RPAD(' ', 24, ' ') || ' |');
+    DBMS_OUTPUT.PUT_LINE('+====================================================================================================+');
     
-    -- PRINT EXECUTIVE SUMMARY
     DBMS_OUTPUT.PUT_LINE(' '); 
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE('                                      [ EXECUTIVE SUMMARY ]                                         ');
-    DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE('>> TOP DELIVERY COMPANY : ' || UPPER(v_top_comp_name) || ' (' || v_top_comp_vol || ' Orders Handled)');
-    DBMS_OUTPUT.PUT_LINE('>> MVP RIDER (OVERALL)  : ' || UPPER(v_top_overall_rider) || ' (' || v_top_overall_rvol || ' Orders Handled)');
-    DBMS_OUTPUT.PUT_LINE('====================================================================================================');
+    DBMS_OUTPUT.PUT_LINE('+----------------------------------------------------------------------------------------------------+');
+    DBMS_OUTPUT.PUT_LINE('|                                       [ EXECUTIVE SUMMARY ]                                        |');
+    DBMS_OUTPUT.PUT_LINE('+----------------------------------------------------------------------------------------------------+');
+    DBMS_OUTPUT.PUT_LINE(RPAD('| >> TOP DELIVERY COMPANY : ' || UPPER(v_top_comp_name) || ' (' || v_top_comp_vol || ' Orders Handled)', 101, ' ') || '|');
+    DBMS_OUTPUT.PUT_LINE(RPAD('| >> TOP EARNING COMPANY  : ' || UPPER(v_top_rev_comp_name) || ' (RM ' || TO_CHAR(v_top_rev_comp_fee, 'FM999,990.00') || ')', 101, ' ') || '|');
+    DBMS_OUTPUT.PUT_LINE(RPAD('| >> MVP RIDER (OVERALL)  : ' || UPPER(v_top_overall_rider) || ' (' || v_top_overall_rvol || ' Orders Handled)', 101, ' ') || '|');
+    DBMS_OUTPUT.PUT_LINE('+====================================================================================================+');
     DBMS_OUTPUT.PUT_LINE('End of Report.');
 
 EXCEPTION
