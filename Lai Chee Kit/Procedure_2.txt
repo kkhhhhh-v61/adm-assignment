@@ -52,7 +52,7 @@ BEGIN
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('==================================================');
-    DBMS_OUTPUT.PUT_LINE('📋 DYNAMIC MENU PROFITABILITY and LIFECYCLE AUDIT');
+    DBMS_OUTPUT.PUT_LINE('DYNAMIC MENU PROFITABILITY and LIFECYCLE AUDIT');
     DBMS_OUTPUT.PUT_LINE('Target Restaurant : ' || v_rest_name || ' (' || p_restaurant_id || ')');
     DBMS_OUTPUT.PUT_LINE('Total Rest. Rev   : RM ' || v_rest_total_rev);
     DBMS_OUTPUT.PUT_LINE('Dynamic Avg Rev   : RM ' || v_dynamic_avg_rev || ' (Threshold)');
