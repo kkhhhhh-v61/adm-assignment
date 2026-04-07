@@ -10,67 +10,83 @@ FROM SUBSCRIPTIONPLAN SP
 JOIN SUBSCRIPTION S ON SP.SubscriptionPlanID = S.SubscriptionPlanID
 GROUP BY SP.SubscriptionPlanID, SP.PlanName;
 
-SET LINESIZE 100
+SET LINESIZE 150
 SET PAGESIZE 100
 SET FEEDBACK OFF
 SET SQLBLANKLINES ON
 SET SERVEROUTPUT ON
 
--- 3. format columns to align properly
+-- Format columns to align properly
 COLUMN PLANID            FORMAT A15          HEADING 'PLAN ID'           JUSTIFY LEFT
 COLUMN PLANNAME          FORMAT A28          HEADING 'SUBSCRIPTION PLAN' JUSTIFY LEFT
 COLUMN TOTAL_SUBSCRIBERS FORMAT 99,999,990   HEADING 'SUBSCRIBERS'       JUSTIFY RIGHT
 COLUMN PERCENTAGE        FORMAT 990.00       HEADING 'SHARE (%)'         JUSTIFY RIGHT
-COLUMN TOTAL_REVENUE     FORMAT $999,990.99  HEADING 'REVENUE (RM)'      JUSTIFY RIGHT
+COLUMN TOTAL_REVENUE     FORMAT 999,990.99   HEADING 'REVENUE (RM)'      JUSTIFY RIGHT
+COLUMN REVENUE_GRAPH     FORMAT A36          HEADING 'REVENUE GRAPH'     JUSTIFY LEFT
 
--- 4. report header
-TTITLE LEFT '===============================================================================' SKIP 1 -
-       LEFT '                 CURRENT VIP REVENUE BY SUBSCRIPTION PLAN TYPE' SKIP 1 -
-       LEFT '===============================================================================' SKIP 2
+-- Report header
+TTITLE LEFT '====================================================================================================================' SKIP 1 -
+       LEFT '                                  CURRENT VIP REVENUE BY SUBSCRIPTION PLAN TYPE                                     ' SKIP 1 -
+       LEFT '====================================================================================================================' SKIP 2
 
--- 5. calculate grand total at the bottom
+-- Calculate grand total at the bottom
 BREAK ON REPORT
 COMPUTE SUM LABEL 'GRAND TOTAL :' OF TOTAL_SUBSCRIBERS PERCENTAGE TOTAL_REVENUE ON REPORT
 
--- 6. main query: get total subscribers, percentage, and revenue using view
+-- Main query
 SELECT 
     PLANID,
     PLANNAME, 
     TOTAL_SUBSCRIBERS, 
-    ROUND(RATIO_TO_REPORT(TOTAL_SUBSCRIBERS) OVER () * 100, 2) AS PERCENTAGE,
-    TOTAL_REVENUE
+    PERCENTAGE,
+    TOTAL_REVENUE,
+    CASE
+        WHEN TOTAL_REVENUE = 0 THEN ' '
+        WHEN REVENUE_SHARE_PCT >= 50 THEN 
+            CHR(27)||'[1;32m'|| RPAD('#', ROUND(REVENUE_SHARE_PCT / 2), '#') ||CHR(27)||'[0m'
+        WHEN REVENUE_SHARE_PCT >= 20 THEN 
+            CHR(27)||'[1;33m'|| RPAD('#', ROUND(REVENUE_SHARE_PCT / 2), '#') ||CHR(27)||'[0m'
+        ELSE 
+            CHR(27)||'[1;31m'|| RPAD('#', ROUND(REVENUE_SHARE_PCT / 2), '#') ||CHR(27)||'[0m'
+    END AS REVENUE_GRAPH
 FROM (
-    -- get data for paid plans from view
-    SELECT PLANID, PLANNAME, TOTAL_SUBSCRIBERS, TOTAL_REVENUE 
-    FROM VIEW_VIP_REVENUE
-    
-    UNION ALL
-    
-    -- get data for free members
     SELECT 
-        '-' AS PLANID,
-        'Normal Member (Free)' AS PLANNAME, 
-        COUNT(M.MemberID) AS TOTAL_SUBSCRIBERS, 
-        0 AS TOTAL_REVENUE
-    FROM MEMBER M
-    WHERE M.MemberID NOT IN (SELECT MemberID FROM SUBSCRIPTION)
+        PLANID,
+        PLANNAME, 
+        TOTAL_SUBSCRIBERS, 
+        ROUND(RATIO_TO_REPORT(TOTAL_SUBSCRIBERS) OVER () * 100, 2) AS PERCENTAGE,
+        TOTAL_REVENUE,
+        ROUND(RATIO_TO_REPORT(TOTAL_REVENUE) OVER () * 100, 2) AS REVENUE_SHARE_PCT
+    FROM (
+        SELECT PLANID, PLANNAME, TOTAL_SUBSCRIBERS, TOTAL_REVENUE 
+        FROM VIEW_VIP_REVENUE
+        
+        UNION ALL
+        
+        SELECT 
+            '-' AS PLANID,
+            'Normal Member (Free)' AS PLANNAME, 
+            COUNT(M.MemberID) AS TOTAL_SUBSCRIBERS, 
+            0 AS TOTAL_REVENUE
+        FROM MEMBER M
+        WHERE M.MemberID NOT IN (SELECT MemberID FROM SUBSCRIPTION)
+    )
 )
-ORDER BY TOTAL_SUBSCRIBERS DESC;
+ORDER BY TOTAL_REVENUE DESC;
 
--- 7. disable headers before printing summary
+-- Disable headers before printing summary
 TTITLE OFF
 CLEAR BREAKS
 CLEAR COMPUTES
 SET HEADING OFF
 
--- 8. pl/sql block to print the summary box 
+-- PL/SQL block to print the summary box 
 DECLARE
     v_pop_plan VARCHAR2(50);
     v_pop_users NUMBER;
     v_prof_plan VARCHAR2(50);
     v_prof_rev NUMBER;
 BEGIN
-    -- find the most popular plan
     SELECT PLANNAME, TOTAL_SUBSCRIBERS INTO v_pop_plan, v_pop_users
     FROM (
         SELECT PLANNAME, TOTAL_SUBSCRIBERS 
@@ -78,7 +94,6 @@ BEGIN
         ORDER BY TOTAL_SUBSCRIBERS DESC
     ) WHERE ROWNUM = 1;
 
-    -- find the most profitable plan
     SELECT PLANNAME, TOTAL_REVENUE INTO v_prof_plan, v_prof_rev
     FROM (
         SELECT PLANNAME, TOTAL_REVENUE 
@@ -86,17 +101,16 @@ BEGIN
         ORDER BY TOTAL_REVENUE DESC
     ) WHERE ROWNUM = 1;
 
-    -- print output
-    DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------------------------------------------');
     DBMS_OUTPUT.PUT_LINE(' [ EXECUTIVE SUMMARY ]');
     DBMS_OUTPUT.PUT_LINE(' ');
     DBMS_OUTPUT.PUT_LINE(' >> MOST POPULAR PLAN    : ' || v_pop_plan || ' (' || v_pop_users || ' Users)');
-    DBMS_OUTPUT.PUT_LINE(' >> MOST PROFITABLE PLAN : ' || v_prof_plan || ' (RM ' || v_prof_rev || ')');
-    DBMS_OUTPUT.PUT_LINE('-------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE(' >> MOST PROFITABLE PLAN : ' || v_prof_plan || ' (RM ' || TO_CHAR(v_prof_rev, 'FM999,990.00') || ')');
+    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------------------------------------------');
 END;
 /
 
--- 9. reset settings
+-- Reset settings
 SET HEADING ON
 SET FEEDBACK ON
 CLEAR COLUMNS
