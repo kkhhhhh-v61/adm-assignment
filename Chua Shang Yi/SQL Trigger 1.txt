@@ -111,6 +111,7 @@ WHERE OrderID = g_orders(i);
 
 ------------------------------------------------
 -- VALIDATION 2
+-- Ensure member exists
 ------------------------------------------------
 SELECT COUNT(*)
 INTO v_member_exists
@@ -124,6 +125,7 @@ END IF;
 
 ------------------------------------------------
 -- VALIDATION 3
+-- Ensure order total is valid
 ------------------------------------------------
 IF v_order_total < 0 THEN
     RAISE_APPLICATION_ERROR(-20102,'Invalid order total amount.');
@@ -131,7 +133,9 @@ END IF;
 
 
 ------------------------------------------------
--- VALIDATION 4 & 5
+-- VALIDATION 4 and 5
+-- Ensure payment record exists
+-- Ensure payment is completed
 ------------------------------------------------
 SELECT COUNT(*)
 INTO v_payment_count
@@ -157,6 +161,7 @@ END IF;
 
 ------------------------------------------------
 -- VALIDATION 6
+-- Ensure order date is not in future
 ------------------------------------------------
 IF v_order_date > SYSDATE THEN
     RAISE_APPLICATION_ERROR(-20105,'Order date cannot be in the future.');
@@ -165,6 +170,7 @@ END IF;
 
 ------------------------------------------------
 -- VALIDATION 7
+-- Ensure member completed order count
 ------------------------------------------------
 SELECT COUNT(*)
 INTO v_member_orders
@@ -179,6 +185,7 @@ END IF;
 
 ------------------------------------------------
 -- VALIDATION 8
+-- Ensure reward not already issued
 ------------------------------------------------
 v_existing_reward := fn_member_has_reward(g_members(i));
 
@@ -189,6 +196,7 @@ END IF;
 
 ------------------------------------------------
 -- VALIDATION 9
+-- Ensure welcome voucher exists
 ------------------------------------------------
 SELECT COUNT(*)
 INTO v_voucher_valid
@@ -202,6 +210,7 @@ END IF;
 
 ------------------------------------------------
 -- VALIDATION 10
+-- Ensure voucher not expired
 ------------------------------------------------
 BEGIN
 
@@ -214,13 +223,14 @@ AND ROWNUM = 1;
 
 EXCEPTION
 WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('Voucher expired.');
+    RAISE_APPLICATION_ERROR(-20107, 'Voucher expired.');
     v_skip := TRUE;
 END;
 
 
 ------------------------------------------------
 -- VALIDATION 11
+-- Generate next MemberVoucherID safely
 ------------------------------------------------
 SELECT NVL(MAX(TO_NUMBER(SUBSTR(MemberVoucherID,3))),0) + 1
 INTO v_next_number
@@ -231,6 +241,7 @@ v_new_mv_id := 'MV' || LPAD(v_next_number,5,'0');
 
 ------------------------------------------------
 -- VALIDATION 12
+-- Ensure generated ID does not already exist
 ------------------------------------------------
 SELECT COUNT(*)
 INTO v_voucher_valid
@@ -238,7 +249,7 @@ FROM MEMBERVOUCHER
 WHERE MemberVoucherID = v_new_mv_id;
 
 IF v_voucher_valid > 0 THEN
-    RAISE_APPLICATION_ERROR(-20107,'Generated voucher ID conflict.');
+    RAISE_APPLICATION_ERROR(-20108,'Generated voucher ID conflict.');
 END IF;
 
 
@@ -278,8 +289,6 @@ DBMS_OUTPUT.PUT_LINE('Reward not issued: required data missing.');
 WHEN TOO_MANY_ROWS THEN
 DBMS_OUTPUT.PUT_LINE('Reward not issued: data inconsistency detected.');
 
-WHEN OTHERS THEN
-DBMS_OUTPUT.PUT_LINE('Unexpected system error: ' || SQLERRM);
 
 END AFTER STATEMENT;
 
